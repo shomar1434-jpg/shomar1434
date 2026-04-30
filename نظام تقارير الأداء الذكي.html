@@ -132,8 +132,12 @@
         .bg-header { background-color: var(--primary) !important; color: white !important; font-weight: bold; }
         .bg-light-accent { background-color: var(--archive-bg) !important; }
 
-        .editable-cell { min-height: 24px; outline: none; cursor: text; border-bottom: none !important; }
+        /* تعديل توسيط جميع الخانات التي تعبأ يدوياً */
+        .editable-cell { min-height: 24px; outline: none; cursor: text; border-bottom: none !important; text-align: center; }
         .editable-cell:focus { background-color: #fffbeb; }
+
+        /* تعديل توسيط القوائم المنسدلة */
+        select { text-align: center; text-align-last: center; }
 
         .header-section {
             display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center;
@@ -183,6 +187,7 @@
                 box-shadow: none !important; 
                 width: 210mm !important; 
                 height: 297mm !important; 
+                max-height: 297mm !important; /* قيد إضافي لمنع التجاوز في iOS */
                 border-radius: 0 !important; 
                 padding: 10mm !important;
                 border: none !important;
@@ -193,8 +198,8 @@
 
             /* الالتزام بصفحتين فقط ومنع صفحة ثالثة فارغة */
             #page1 { page-break-after: always !important; }
-            #page2 { page-break-after: avoid !important; }
-            .page-container:nth-child(n+3) { display: none !important; } /* حظر أي صفحة إضافية برمجياً */
+            #page2 { page-break-after: avoid !important; page-break-before: avoid !important; }
+            .page-container:nth-child(n+3) { display: none !important; visibility: hidden !important; } 
 
             .border-double-frame { border: 2px solid var(--primary) !important; }
             .header-section { border: 1.5px solid var(--archive-border) !important; background-color: var(--archive-bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -206,6 +211,10 @@
             .bg-header { background-color: var(--primary) !important; }
             .placeholder-watermark { display: none !important; }
             .delete-btn-box { display: none !important; }
+
+            /* إظهار الخط الفاصل بين خانتي التوقيع والختم في التذييل */
+            td, th { border: 1.5px solid var(--primary) !important; }
+            table { border-collapse: collapse !important; }
         }
 
         #toast { visibility: hidden; min-width: 200px; background: #1e293b; color: white; text-align: center; border-radius: 12px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 11000; opacity: 0; transition: opacity 0.3s; }
@@ -747,7 +756,7 @@
                 <!-- أيقونة الثيم اللوني -->
                 <button onclick="openThemeModal()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all" title="مكتبة الألوان">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                     </svg>
                 </button>
             </div>
@@ -897,7 +906,8 @@
                                     <td class="bg-header py-2 text-xs w-1/4">المنفذ/ة</td>
                                 </tr>
                                 <tr>
-                                    <td id="field_desc" class="editable-cell text-right p-3 h-36 text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
+                                    <!-- تعديل توسيط الخط وجعله عريضاً في خانة آلية التنفيذ -->
+                                    <td id="field_desc" class="editable-cell text-center font-bold p-3 h-36 text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
                                     <td id="field_time" class="editable-cell text-center font-bold text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
                                     <td id="executorName" class="editable-cell text-center font-bold text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
                                 </tr>
@@ -1250,7 +1260,7 @@
             "تحليل": [
                 "إجراء اختبارات قبلية (تشخيصية) لتحديد مستويات الطلاب في بداية العام.",
                 "تصنيف الطلاب إلى فئات (متفوق، متوسط، دون المتوسط) بناءً على البيانات.",
-                "استخدام برامج إحصائية (أو Excel) لتحليل نتائج الاختبارات الدورية.",
+                "استخدام برامج إحصائية (أو Excel) تحليل نتائج الاختبارات الدورية.",
                 "تحديد المهارات التي لم يتقنها أغلب الطلاب لإعادة شرحها.",
                 "تقديم تغذية راجعة فردية لكل طالب بناءً على تحليل أخطائه.",
                 "مقارنة نتائج الطلاب الحالية بنتائجهم في الأعوام السابقة.",
