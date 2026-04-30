@@ -160,7 +160,7 @@
 
         .delete-btn-box { position: absolute; top: 8px; left: 8px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 50; cursor: pointer; }
 
-        #selection-modal, #confirm-modal, #goal-setter-modal, #magic-goals-modal, #support-goals-modal, #link-input-modal, #exit-modal, #theme-modal, #reminder-modal { 
+        #selection-modal, #confirm-modal, #goal-setter-modal, #magic-goals-modal, #support-goals-modal, #link-input-modal, #exit-modal, #theme-modal, #reminder-modal, #app-settings-modal { 
             display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); 
             backdrop-filter: blur(4px); z-index: 10005; align-items: center; justify-content: center; padding: 20px; 
         }
@@ -560,7 +560,14 @@
                     <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="h-12 object-contain" alt="Logo">
                     <h1 class="font-bold text-slate-800 text-sm">نظام تقارير الأداء الذكي</h1>
                 </div>
-                <button onclick="exitApp()" class="bg-white text-slate-600 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 shadow-sm transition-all active:scale-95">إغلاق التطبيق</button>
+                <!-- تعديل الهيدر لإضافة زر الإعدادات المخصصة -->
+                <div class="flex gap-2">
+                    <button onclick="openAppSettings()" class="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-xs font-bold border border-teal-100 shadow-sm transition-all active:scale-95 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        إعدادات مخصصة
+                    </button>
+                    <button onclick="exitApp()" class="bg-white text-slate-600 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 shadow-sm transition-all active:scale-95">إغلاق التطبيق</button>
+                </div>
             </header>
 
             <main class="max-w-4xl mx-auto p-8 flex flex-col items-center">
@@ -577,7 +584,6 @@
                     </div>
                     
                     <div onclick="openArchiveView()" class="bg-white/90 backdrop-blur p-10 rounded-[45px] shadow-lg border border-white hover:border-amber-400 cursor-pointer transition-all flex flex-col items-center gap-4 group hover:-translate-y-2">
-                        <!-- تم تعديل لون الأيقونة هنا إلى اللون الأصفر text-yellow-500 -->
                         <div class="w-20 h-20 bg-amber-50 text-yellow-500 rounded-3xl flex items-center justify-center shadow-lg group-hover:-rotate-6 transition-transform">
                             <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                         </div>
@@ -967,6 +973,46 @@
         </div>
     </div>
 
+    <!-- نافذة الإعدادات المخصصة الجديدة -->
+    <div id="app-settings-modal" class="no-print">
+        <div class="modal-content !max-w-md text-center">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-lg font-bold text-slate-800">الإعدادات المخصصة المثبتة</h3>
+                <button onclick="closeAppSettings()" class="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            
+            <div class="space-y-4 text-right">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 mr-2 uppercase">اسم معد التقرير الافتراضي:</label>
+                    <input type="text" id="setting_name_m" class="w-full mt-1 bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold outline-none focus:border-teal-500" placeholder="اكتب الاسم هنا">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 mr-2 uppercase">اسم قائد المدرسة الافتراضي:</label>
+                    <input type="text" id="setting_name_p" class="w-full mt-1 bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold outline-none focus:border-teal-500" placeholder="اكتب الاسم هنا">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="triggerPersistentSignature()" class="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 hover:border-teal-500 transition-all">
+                        <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        <span class="text-[10px] font-bold text-slate-600" id="sig-setting-status">تثبيت التوقيع</span>
+                    </button>
+                    <button onclick="triggerPersistentStamp()" class="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 hover:border-teal-500 transition-all">
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        <span class="text-[10px] font-bold text-slate-600" id="stamp-setting-status">تثبيت الختم</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 mt-8">
+                <button onclick="savePersistentSettings()" class="w-full bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-lg">حفظ التثبيت ✅</button>
+                <button onclick="resetPersistentSettings()" class="w-full bg-red-50 text-red-500 font-bold py-3 rounded-2xl text-[10px]">تراجع عن جميع الخيارات المثبتة 🗑️</button>
+            </div>
+            
+            <input type="file" id="persistSigInput" class="hidden" accept="image/*" onchange="handlePersistentSig(event)">
+            <input type="file" id="persistStampInput" class="hidden" accept="image/*" onchange="handlePersistentStamp(event)">
+        </div>
+    </div>
+
     <div id="toast" class="no-print">تمت العملية!</div>
 
     <div id="exit-modal" class="no-print">
@@ -1037,6 +1083,10 @@
         let pendingGoalCatId = null;
         let insightDemoMode = 'auto'; // 'auto', 'sunday', 'thursday'
         let pendingReportIdToOpen = null; // للمنبه الذكي
+
+        // متغيرات مؤقتة للإعدادات المخصصة
+        let tempPersistSig = localStorage.getItem('persist_sig_data') || null;
+        let tempPersistStamp = localStorage.getItem('persist_stamp_data') || null;
 
         // مكتبة العبارات التحفيزية
         const SUNDAY_QUOTES = [
@@ -1236,7 +1286,7 @@
                 "الاستجابة واحتواء المخاوف: معالجة ملاحظات أولياء الأمور عبر الاستماع النشط والعمل المشترك لإيجاد حلول تربوية تدعم الطالب."
             ],
             "استراتيجيات": [
-                "ملاءمة الاستراتيجية: تطبيق استراتيجيات تدريس (كالتعلم النشط) بما يتناسب مع طبيعة الدرس واحتياجات الموقف التعليمي.",
+                "ملاءمة الاستراتيجية: تطبيق استراتيجيات تدريس (كالتعلم النشط) بما يتناسب مع طبيعة الدرس وااحتياجات الموقف التعليمي.",
                 "تلبية الفروق الفردية: تنفيذ أساليب تدريس تراعي ميول واحتياجات المتعلمين المختلفة لضمان شمولية التعلم لجميع المستويات.",
                 "تحفيز الإبداع: استخدام استراتيجيات تعزز التفكير الناقد والعصف الذهني لتحفيز الابتكار لدى الطلاب.",
                 "تنمية التواصل: تفعيل استراتيجيات الحوار والمناقشة لتمكين المتعلمين من مهارات التعبير عن الرأي."
@@ -1331,6 +1381,110 @@
 
         function openThemeModal() { document.getElementById('theme-modal').style.display = 'flex'; renderThemeGrid(); }
         function closeThemeModal() { document.getElementById('theme-modal').style.display = 'none'; }
+
+        // --- وظائف الإعدادات المخصصة الجديدة ---
+        function openAppSettings() {
+            document.getElementById('setting_name_m').value = localStorage.getItem('persist_name_m') || "";
+            document.getElementById('setting_name_p').value = localStorage.getItem('persist_name_p') || "";
+            
+            updatePersistentStatusLabels();
+            document.getElementById('app-settings-modal').style.display = 'flex';
+        }
+
+        function closeAppSettings() {
+            document.getElementById('app-settings-modal').style.display = 'none';
+        }
+
+        function triggerPersistentSignature() { document.getElementById('persistSigInput').click(); }
+        function triggerPersistentStamp() { document.getElementById('persistStampInput').click(); }
+
+        function handlePersistentSig(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader(); reader.onload = e => {
+                tempPersistSig = e.target.result;
+                showToast("تم اختيار التوقيع للتثبيت 🖊️");
+                updatePersistentStatusLabels();
+            }; reader.readAsDataURL(file);
+        }
+
+        function handlePersistentStamp(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader(); reader.onload = e => {
+                tempPersistStamp = e.target.result;
+                showToast("تم اختيار الختم للتثبيت 💮");
+                updatePersistentStatusLabels();
+            }; reader.readAsDataURL(file);
+        }
+
+        function updatePersistentStatusLabels() {
+            const sigLabel = document.getElementById('sig-setting-status');
+            const stampLabel = document.getElementById('stamp-setting-status');
+            
+            if (tempPersistSig) {
+                sigLabel.innerText = "توقيع جاهز للتثبيت";
+                sigLabel.classList.add('text-teal-600');
+            }
+            if (tempPersistStamp) {
+                stampLabel.innerText = "ختم جاهز للتثبيت";
+                stampLabel.classList.add('text-amber-600');
+            }
+        }
+
+        function savePersistentSettings() {
+            const nameM = document.getElementById('setting_name_m').value;
+            const nameP = document.getElementById('setting_name_p').value;
+            
+            localStorage.setItem('persist_name_m', nameM);
+            localStorage.setItem('persist_name_p', nameP);
+            
+            if (tempPersistSig) localStorage.setItem('persist_sig_data', tempPersistSig);
+            if (tempPersistStamp) localStorage.setItem('persist_stamp_data', tempPersistStamp);
+            
+            showToast("تم حفظ الإعدادات المخصصة بنجاح ✅");
+            closeAppSettings();
+        }
+
+        function resetPersistentSettings() {
+            if (confirm('هل تريد فعلاً التراجع عن جميع الخيارات المثبتة (الأسماء والتواقيع)؟')) {
+                localStorage.removeItem('persist_name_m');
+                localStorage.removeItem('persist_name_p');
+                localStorage.removeItem('persist_sig_data');
+                localStorage.removeItem('persist_stamp_data');
+                tempPersistSig = null;
+                tempPersistStamp = null;
+                
+                document.getElementById('setting_name_m').value = "";
+                document.getElementById('setting_name_p').value = "";
+                document.getElementById('sig-setting-status').innerText = "تثبيت التوقيع";
+                document.getElementById('stamp-setting-status').innerText = "تثبيت الختم";
+                
+                showToast("تم مسح الإعدادات المثبتة 🗑️");
+            }
+        }
+
+        function applyPersistentSettingsToReport() {
+            const pNameM = localStorage.getItem('persist_name_m');
+            const pNameP = localStorage.getItem('persist_name_p');
+            const pSig = localStorage.getItem('persist_sig_data');
+            const pStamp = localStorage.getItem('persist_stamp_data');
+
+            if (pNameM) document.getElementById('name_m').innerText = pNameM;
+            if (pNameP) document.getElementById('name_p').innerText = pNameP;
+            
+            if (pSig) {
+                document.getElementById('sig-display').innerHTML = `<img src="${pSig}">`;
+                document.getElementById('sig-placeholder').style.display = 'none';
+                document.getElementById('del-btn-sig').classList.remove('hidden');
+                document.getElementById('sig-box').style.cursor = 'default';
+            }
+            
+            if (pStamp) {
+                document.getElementById('stamp-display').innerHTML = `<img src="${pStamp}">`;
+                document.getElementById('stamp-placeholder').style.display = 'none';
+                document.getElementById('del-btn-stamp').classList.remove('hidden');
+                document.getElementById('stamp-box').style.cursor = 'default';
+            }
+        }
 
         // إدارة الأهداف (Dashboard Goals)
         function openGoalSetter(catId, catName) {
@@ -1750,6 +1904,10 @@
             document.getElementById('mainGoal').innerText = "";
             document.querySelectorAll('[id^="del-btn-"]').forEach(btn => btn.click());
             clearSignature(null); clearStamp(null);
+            
+            // تطبيق الإعدادات المخصصة بعد التصفير
+            applyPersistentSettingsToReport();
+            
             updateReportProgress();
         }
 
