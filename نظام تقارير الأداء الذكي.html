@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <!-- تحسين التوافق مع متصفحات آيفون ومنع التكبير التلقائي عند الكتابة ومعالجة حواف الشاشة -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="format-detection" content="telephone=no">
+    
+    <title id="app-title">نظام تقارير الأداء الذكي - الإصدار الشامل المطور</title>
+    
+    <meta name="theme-color" content="#1e7b78">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="تقارير الأداء">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #1e7b78;
+            --secondary: #0f172a;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --archive-bg: #f0fdfa;
+            --archive-border: #ccfbf1;
+        }
+
+        /* --- تأثيرات حركية خفيفة للتنقل بين الأقسام --- */
+        #welcome-dashboard, #archive-view, #stats-view, #main-report-app, #welcome-gate, #activation-overlay {
+            animation: sectionAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes sectionAppear {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* تحسينات التوافقية لبيئات التشغيل المختلفة (خاصة آيفون) */
+        * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            -webkit-text-size-adjust: 100%; /* منع المتصفح من تغيير حجم الخط تلقائياً */
+            -ms-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent; /* إزالة اللون الأزرق عند النقر في آيفون */
+            height: 100%;
+            width: 100%;
+        }
+
+        .global-app-bg {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.4)), 
+                              url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center 80%; 
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #064e3b;
+            margin: 0; padding: 0;
+            user-select: none;
+            color: #1e293b;
+            overflow-x: hidden;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            /* معالجة المساحات الآمنة في آيفون X وما فوق */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* تحسين التمرير السلس في نظام iOS */
+        #welcome-dashboard, #archive-view, #stats-view {
+            position: fixed; inset: 0; z-index: 1000; display: none; 
+            overflow-y: auto; padding-bottom: 60px;
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        #activation-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        #welcome-gate { position: fixed; inset: 0; z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+
+        .content-overlay { background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(8px); min-height: 100vh; }
+
+        .page-container {
+            width: 210mm; height: 296.8mm; padding: 7mm; margin: 20px auto; background: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; box-sizing: border-box;
+            display: flex; flex-direction: column; overflow: hidden; border-radius: 35px;
+            page-break-inside: avoid; page-break-after: always;
+        }
+
+        /* تعديل العرض للشاشات الصغيرة لضمان الرؤية دون كسر التنسيق المخصص للطباعة */
+        @media screen and (max-width: 210mm) {
+            .page-container {
+                width: 95vw;
+                height: auto;
+                aspect-ratio: 210/297;
+                margin: 10px auto;
+                border-radius: 20px;
+                padding: 10px;
+            }
+        }
+
+        .border-double-frame {
+            border: 2px solid var(--primary); border-radius: 25px; padding: 15px;
+            height: 100%; display: flex; flex-direction: column; box-sizing: border-box; flex-grow: 1;
+        }
+
+        .rounded-table-container { border: 1.5px solid var(--primary); border-radius: 1.25rem; overflow: hidden; background: white; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1.5px solid var(--primary); padding: 8px; text-align: center; font-size: 13px; word-wrap: break-word; }
+        .bg-header { background-color: var(--primary) !important; color: white !important; font-weight: bold; }
+        .bg-light-accent { background-color: var(--archive-bg) !important; }
+
+        .editable-cell { min-height: 24px; outline: none; cursor: text; border-bottom: none !important; }
+        .editable-cell:focus { background-color: #fffbeb; }
+
+        .header-section {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center;
+            margin-top: 15px; margin-bottom: 12px; width: 100%;
+            background-color: var(--archive-bg); border: 1.5px solid var(--archive-border);
+            border-radius: 20px; padding: 10px 5px;
+        }
+        
+        .header-block { text-align: center; font-size: 11px; color: var(--primary); line-height: 1.4; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; flex-grow: 1; }
+        .evidence-box {
+            width: 100%; aspect-ratio: 16 / 10; border: 2px dashed #cbd5e1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; background-color: #f8fafc; border-radius: 20px;
+            cursor: pointer; page-break-inside: avoid;
+        }
+        
+        .evidence-box img { 
+            max-width: 100%; max-height: 100%; object-fit: contain; display: block !important; 
+            opacity: 1 !important; visibility: visible !important;
+            image-rendering: -webkit-optimize-contrast;
+            margin: auto;
+        }
+        
+        .evidence-box.has-content { border-style: solid; border-color: var(--primary); background: white; cursor: default; }
+
+        .delete-btn-box { position: absolute; top: 8px; left: 8px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 50; cursor: pointer; }
+
+        #selection-modal, #confirm-modal, #goal-setter-modal, #magic-goals-modal, #support-goals-modal, #link-input-modal, #exit-modal, #theme-modal, #reminder-modal { 
+            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); 
+            backdrop-filter: blur(4px); z-index: 10005; align-items: center; justify-content: center; padding: 20px; 
+        }
+        .modal-content { background: white; border-radius: 40px; width: 100%; max-width: 420px; padding: 30px; animation: modalSlide 0.3s ease-out; }
+        .library-content { background: white; border-radius: 30px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 20px; }
+
+        @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media print {
+            @page { size: A4; margin: 0; }
+            .no-print, #toast, #activation-overlay, nav, button, .magic-goal-btn, .support-goal-btn, .progress-top-bar { display: none !important; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; animation: none !important; }
+            .page-container { 
+                margin: 0 !important; 
+                box-shadow: none !important; 
+                width: 210mm !important; 
+                height: 297mm !important; 
+                border-radius: 0 !important; 
+                padding: 10mm !important;
+                border: none !important;
+                display: flex !important;
+                animation: none !important;
+            }
+            .border-double-frame { border: 2px solid var(--primary) !important; }
+            .header-section { border: 1.5px solid var(--archive-border) !important; background-color: var(--archive-bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .evidence-box { border: 1.5px solid #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .evidence-box img { display: block !important; visibility: visible !important; opacity: 1 !important; }
+            select { appearance: none; -moz-appearance: none; -webkit-appearance: none; border: none !important; background: transparent !important; }
+            .underline { text-decoration: underline !important; color: blue !important; }
+            .evidence-box.has-content div[id^="content-"] { display: flex !important; visibility: visible !important; }
+            .bg-header { background-color: var(--primary) !important; }
+            .placeholder-watermark { display: none !important; }
+            .delete-btn-box { display: none !important; }
+        }
+
+        #toast { visibility: hidden; min-width: 200px; background: #1e293b; color: white; text-align: center; border-radius: 12px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 11000; opacity: 0; transition: opacity 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; }
+        
+        .stat-card { background: white; border-radius: 24px; padding: 1.5rem; transition: all 0.3s ease; border: 1px solid #f1f5f9; cursor: pointer; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: var(--primary); }
+        .progress-bar-bg { background: #f1f5f9; height: 8px; border-radius: 10px; overflow: hidden; width: 100%; }
+        .progress-bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease-in-out; }
+
+        .folder-item { background: white; border-radius: 20px; padding: 20px; border: 1.5px solid #f1f5f9; cursor: pointer; transition: all 0.2s; position: relative; }
+        .folder-item:hover { border-color: var(--primary); transform: scale(1.02); }
+        /* جعل أيقونة المجلد صفراء اللون */
+        .folder-icon { width: 48px; height: 48px; color: #fbbf24 !important; margin-bottom: 12px; fill: #fbbf24 !important; }
+        .folder-badge { position: absolute; top: 15px; left: 15px; background: var(--primary); color: white; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+
+        /* --- تعديل ظهور زر مكتبة الأهداف --- */
+        .magic-goal-btn, .support-goal-btn {
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-right: 4px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .magic-goal-btn {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #dcfce7;
+        }
+
+        .support-goal-btn {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #dbeafe;
+        }
+
+        /* يظهر عند مرور المؤشر على الصف */
+        .goal-row:hover .magic-goal-btn, .goal-row:hover .support-goal-btn {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .magic-goal-btn:hover, .support-goal-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .magic-goal-btn svg, .support-goal-btn svg { width: 14px; height: 14px; }
+        
+        .goal-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(30, 123, 120, 0.1);
+            transition: background 0.2s;
+        }
+        .goal-row:hover { background: #f0fdfa; }
+        .goal-row:last-child { border-bottom: none; }
+
+        .evidence-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            border-radius: 20px;
+            border: 2px solid #f1f5f9;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .evidence-option-btn:hover {
+            border-color: var(--primary);
+            background: #f0fdfa;
+            transform: translateY(-3px);
+        }
+        .evidence-option-btn svg { width: 32px; height: 32px; color: var(--primary); }
+        .evidence-option-btn span { font-size: 11px; font-weight: bold; color: #475569; }
+
+        /* ستايلات الثيم اللوني */
+        .theme-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .theme-circle:hover { transform: scale(1.1); }
+        .theme-circle.active { border-color: #334155; transform: scale(1.1); }
+        .theme-circle.active::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .placeholder-watermark {
+            pointer-events: none;
+            opacity: 0.3;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--primary);
+            border: 1.5px dashed var(--primary);
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        /* تنسيق صور التوقيع والختم - تحسين القيد للحفاظ على مساحة الخلية */
+        .sig-stamp-container {
+            width: 100%;
+            height: 110px; /* تحديد طول ثابت يتوافق مع h-28 */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 2px;
+        }
+        .sig-stamp-container img {
+            max-width: 95%;
+            max-height: 95%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* ستايل المساعد الذكي المطور (الخميس والأحد) */
+        .smart-insight-card {
+            border-radius: 35px;
+            padding: 1.8rem;
+            color: white;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: default;
+        }
+        
+        /* ثيم الأحد (التخطيط) - درجات الأزرق والأخضر الحيوي */
+        .sunday-theme {
+            background: linear-gradient(135deg, #0d9488, #0284c7, #2563eb);
+            background-size: 200% 200%;
+            animation: gradShift 8s ease infinite;
+        }
+        
+        /* ثيم الخميس (المراجعة) - درجات الفحمي والتيل الأنيق */
+        .thursday-theme {
+            background: linear-gradient(135deg, #1e293b, #334155, #0f172a);
+            background-size: 200% 200%;
+            animation: gradShift 8s ease infinite;
+        }
+
+        @keyframes gradShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .smart-insight-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            filter: blur(60px);
+            border-radius: 50%;
+        }
+
+        .insight-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* ستايل شريط البحث الأنيق المضاف */
+        .search-container-archive {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            margin-right: auto;
+        }
+        .search-input-archive {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border-radius: 16px;
+            border: 1.5px solid #f1f5f9;
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: bold;
+            outline: none;
+            transition: all 0.3s;
+            color: #334155;
+        }
+        .search-input-archive:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .search-icon-archive {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        /* أزرار وضع المعاينة التجريبية */
+        .demo-toggle-container {
+            display: flex;
+            gap: 8px;
+            background: rgba(241, 245, 249, 0.8);
+            padding: 4px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+        .demo-pill {
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .demo-pill.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .demo-pill:not(.active) {
+            color: #94a3b8;
+        }
+
+        /* --- شريط التقدم العلوي الجديد --- */
+        .progress-top-bar {
+            position: sticky;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            z-index: 101;
+        }
+        .progress-top-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* تنسيق أزرار الأيقونات لواجهة التنشيط */
+        .activation-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            background: #f1f5f9;
+            color: var(--primary);
+            border-radius: 1rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            flex-shrink: 0;
+            border: 1px solid #e2e8f0;
+        }
+        .activation-action-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+        .activation-action-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+    </style>
+</head>
+<body class="global-app-bg">
+
+    <div id="share-loader" class="hidden no-print fixed inset-0 bg-white/90 backdrop-blur flex-col items-center justify-center z-[10001]">
+        <div class="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="font-bold text-teal-800 text-center px-4" id="loader-text">جاري معالجة البيانات...<br><span class="text-xs font-normal">يرجى الانتظار</span></p>
+    </div>
+
+    <!-- واجهة التنشيط المحدثة بأزرار النسخ واللصق -->
+    <div id="activation-overlay" class="global-app-bg no-print">
+        <div class="bg-white/95 backdrop-blur p-10 rounded-[45px] shadow-2xl w-full max-w-md text-center border border-white/20">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">تنشيط نظام تقارير الأداء الذكي</h2>
+            <div class="mb-6">
+                <p class="text-[10px] text-slate-400 font-bold mb-2 text-right px-2">كود تعريف الجهاز (كود المستخدم)</p>
+                <div class="flex items-center gap-2">
+                    <div id="device-id-display" class="bg-slate-50 p-4 rounded-2xl border font-mono text-sm text-teal-700 font-bold tracking-tighter flex-grow border-dashed border-teal-200 flex items-center justify-center">
+                        <span id="device-id-value">---</span>
+                    </div>
+                    <div onclick="copyDeviceId()" class="activation-action-btn" title="نسخ كود المستخدم">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-6">
+                <p class="text-[10px] text-slate-400 font-bold mb-2 text-right px-2">مفتاح التنشيط المستلم</p>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="activation-key-input" class="flex-grow px-5 py-4 rounded-2xl border-2 text-center font-mono outline-none focus:border-teal-500" placeholder="أدخل المفتاح هنا">
+                    <div onclick="pasteActivationKey()" class="activation-action-btn" title="لصق مفتاح التنشيط">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <button onclick="checkActivation()" class="w-full bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-teal-700 transition-all">تفعيل النظام</button>
+        </div>
+    </div>
+
+    <!-- الواجهة الترحيبية -->
+    <div id="welcome-gate" class="global-app-bg no-print">
+        <div class="relative z-10 flex flex-col items-center">
+            <div class="mb-12 relative">
+                <div class="w-44 h-44 bg-white/90 backdrop-blur rounded-[50px] flex items-center justify-center shadow-2xl border border-white/50">
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 h-32 object-contain" alt="وزارة التعليم">
+                </div>
+            </div>
+            <div class="text-center px-6 max-w-lg glass-panel p-8 rounded-[40px] mb-8">
+                <h1 class="text-3xl font-bold text-slate-800 mb-4 leading-tight">نظام تقارير الأداء الذكي</h1>
+                <p class="text-slate-600 text-sm font-bold leading-relaxed mb-6">منصتك المتكاملة لتوثيق الإنجازات التعليمية والمهنية بدقة واحترافية عالية.</p>
+                <button onclick="enterApp()" class="w-full bg-teal-600 text-white px-16 py-5 rounded-[25px] font-bold text-lg shadow-2xl hover:bg-teal-700 active:scale-95 transition-all">دخول للنظام</button>
+            </div>
+            <p class="text-[10px] text-white/60 font-bold uppercase">جميع الحقوق محفوظة &copy; 2026</p>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="welcome-dashboard" class="global-app-bg no-print">
+        <div class="content-overlay">
+            <header class="bg-white/80 backdrop-blur-md border-b p-5 flex justify-between items-center px-8 shadow-sm sticky top-0 z-[1001]">
+                <div class="flex items-center gap-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="h-12 object-contain" alt="Logo">
+                    <h1 class="font-bold text-slate-800 text-sm">نظام تقارير الأداء الذكي</h1>
+                </div>
+                <button onclick="exitApp()" class="bg-white text-slate-600 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 shadow-sm transition-all active:scale-95">إغلاق التطبيق</button>
+            </header>
+
+            <main class="max-w-4xl mx-auto p-8 flex flex-col items-center">
+                <div class="w-full text-center mb-10">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">أهلاً بك في لوحة الإدارة</h2>
+                    <p class="text-slate-500 text-xs font-bold">يرجى اختيار الإجراء المناسب للبدء</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-8">
+                    <div onclick="startNewReport()" class="bg-white/90 backdrop-blur p-10 rounded-[45px] shadow-lg border border-white hover:border-teal-400 cursor-pointer transition-all flex flex-col items-center gap-4 group hover:-translate-y-2">
+                        <div class="w-20 h-20 bg-teal-600 text-white rounded-3xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></div>
+                        <h3 class="font-bold text-xl text-slate-700">تقرير جديد</h3>
+                        <p class="text-[10px] text-slate-500 text-center leading-relaxed font-bold">إنشاء وثيقة أداء جديدة بأسلوب عصري</p>
+                    </div>
+                    
+                    <div onclick="openArchiveView()" class="bg-white/90 backdrop-blur p-10 rounded-[45px] shadow-lg border border-white hover:border-amber-400 cursor-pointer transition-all flex flex-col items-center gap-4 group hover:-translate-y-2">
+                        <!-- تم تعديل لون الأيقونة هنا إلى اللون الأصفر text-yellow-500 -->
+                        <div class="w-20 h-20 bg-amber-50 text-yellow-500 rounded-3xl flex items-center justify-center shadow-lg group-hover:-rotate-6 transition-transform">
+                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-700">الأرشيف الذكي</h3>
+                        <p class="text-[10px] text-slate-500 text-center leading-relaxed font-bold">إدارة التقارير المؤرشفة في مجلدات متخصصة</p>
+                    </div>
+                </div>
+                
+                <!-- المنطقة المشتركة للداشبورد والمحفظة -->
+                <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div onclick="openStatsView()" class="bg-slate-800 p-8 rounded-[45px] shadow-2xl cursor-pointer transition-all flex items-center justify-between group hover:scale-[1.02] border-2 border-teal-500/30">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-teal-400 to-teal-700 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-white">داشبورد المتابعة</h3>
+                                <p class="text-[9px] text-teal-300 font-bold uppercase">إحصائيات الإنجاز 📊</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div onclick="generateDigitalPortfolio()" class="bg-teal-700 p-8 rounded-[45px] shadow-2xl cursor-pointer transition-all flex items-center justify-between group hover:scale-[1.02] border-2 border-white/20">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-white/10 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-white">محفظة التميز الرقمية</h3>
+                                <p class="text-[9px] text-teal-100 font-bold uppercase">تصدير الملف الكامل 🎓</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                    <a href="https://wa.me/966551760114" target="_blank" class="bg-white/90 p-5 rounded-[30px] border border-white flex items-center gap-4 hover:border-green-500 transition-all shadow-sm group">
+                        <div class="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">الدعم الفني</p>
+                            <p class="text-sm font-bold text-slate-700">تواصل عبر واتساب</p>
+                        </div>
+                    </a>
+                    <a href="mailto:shomar1434@gmail.com" class="bg-white/90 p-5 rounded-[30px] border border-white flex items-center gap-4 hover:border-teal-500 transition-all shadow-sm group">
+                        <div class="w-12 h-12 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:-rotate-12 transition-transform">
+                            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">المراسلة الرسمية</p>
+                            <p class="text-sm font-bold text-slate-700">البريد الإلكتروني</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="w-full bg-red-50/80 backdrop-blur border border-red-100 p-6 rounded-[35px] mb-10 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="p-2 bg-red-100 text-red-500 rounded-xl">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </div>
+                        <h4 class="font-bold text-red-800 text-sm">تنبيه أمان البيانات المحلي</h4>
+                    </div>
+                    <p class="text-[11px] text-red-600 font-bold leading-relaxed pr-10 mb-4">
+                        تحذير: النظام يستخدم التخزين المحلي في المتصفح. في حال إلغاء التنشيط أو مسح بيانات المتصفح، قد تفقد إمكانية الوصول إلى الأرشيف. نوصي دائماً بحفظ تقاريرك كملفات PDF ومشاركتها لضمان بقائها.
+                    </p>
+                    <div class="border-t border-red-200/50 pt-4 flex justify-end">
+                        <button onclick="deactivateApp()" class="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-md hover:bg-red-600 transition-all active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                            إلغاء تنشيط النظام
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- واجهة الإحصائيات -->
+    <div id="stats-view" class="global-app-bg no-print">
+        <div class="content-overlay">
+            <header class="p-6 border-b flex justify-between items-center px-8 bg-white/80 backdrop-blur-md sticky top-0 z-[1001]">
+                <div class="flex items-center gap-4">
+                    <button onclick="closeStatsView()" class="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-all"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+                    <h2 class="font-bold text-xl text-slate-700">داشبورد متابعة الإنجاز</h2>
+                </div>
+                <!-- وضع المعاينة التجريبية للمساعد الذكي -->
+                <div class="demo-toggle-container">
+                    <button id="demo-auto" onclick="setInsightMode('auto')" class="demo-pill active">تلقائي</button>
+                    <button id="demo-sunday" onclick="setInsightMode('sunday')" class="demo-pill">الأحد</button>
+                    <button id="demo-thursday" onclick="setInsightMode('thursday')" class="demo-pill">الخميس</button>
+                </div>
+            </header>
+            <main class="max-w-6xl mx-auto p-6 md:p-10">
+                <!-- قسم الرسائل التوعوية الذكية المطور -->
+                <div id="weekly-insight-container"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="stats-container"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- واجهة الأرشيف المعدلة -->
+    <div id="archive-view" class="global-app-bg no-print">
+        <div class="content-overlay">
+            <header class="p-4 border-b flex flex-wrap justify-between items-center gap-4 px-8 bg-white/80 backdrop-blur-md sticky top-0 z-[1001] shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button onclick="closeArchiveView()" class="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-all"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+                    <h2 id="archive-view-title" class="font-bold text-lg text-slate-700 whitespace-nowrap">أرشيف المجالات</h2>
+                </div>
+                
+                <!-- شريط البحث الأنيق المضاف -->
+                <div id="archive-search-wrapper" class="hidden search-container-archive">
+                    <input type="text" id="archive-search-input" oninput="filterArchiveReports()" placeholder="ابحث عن أي تقرير في الأرشيف..." class="search-input-archive">
+                    <div class="search-icon-archive">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="file" id="importArchiveInput" class="hidden" accept=".json" onchange="handleImportArchive(event)">
+                    <button onclick="triggerImportArchive()" class="bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-[10px] font-bold border border-amber-100 shadow-sm flex items-center gap-2 hover:bg-amber-100 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M8 12l4 4 4-4m-4 4V4"></path>
+                        </svg>
+                        استيراد أرشيف خارجي
+                    </button>
+                    <button onclick="exportFullArchive()" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-md flex items-center gap-2 hover:bg-teal-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 8l-4-4-4 4m4-4v12"></path>
+                        </svg>
+                        حفظ الأرشيف كملف خارجي
+                    </button>
+                    <button id="back-to-folders" onclick="renderArchiveFolders()" class="hidden bg-slate-100 text-slate-600 px-4 py-2 rounded-xl text-[10px] font-bold border border-slate-200">العودة للمجلدات</button>
+                </div>
+                
+                <p class="text-xs text-slate-400 font-bold" id="archive-count">0 تقرير</p>
+            </header>
+            <div id="archive-content" class="max-w-5xl mx-auto p-10"></div>
+        </div>
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div id="main-report-app" class="hidden">
+        <nav class="no-print bg-white/90 backdrop-blur-md border-b p-3 sticky top-0 z-[100] flex justify-between items-center px-8 shadow-sm">
+            <div class="flex items-center gap-4">
+                <button onclick="goHome()" class="p-2 text-slate-400 hover:bg-slate-50 rounded-full"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+                <!-- أيقونة الثيم اللوني -->
+                <button onclick="openThemeModal()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-all" title="مكتبة الألوان">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="preparePrint()" class="bg-teal-600 text-white px-6 py-2 rounded-xl text-xs font-bold shadow-md active:scale-95 transition-all">للطباعة والحفظ على الجهاز</button>
+                <button onclick="saveReportToArchive()" class="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-xs font-bold border border-teal-200">حفظ بالأرشيف</button>
+            </div>
+        </nav>
+
+        <!-- شريط التقدم العلوي الجديد -->
+        <div class="progress-top-bar no-print">
+            <div id="report-completion-bar" class="progress-top-fill"></div>
+        </div>
+
+        <div id="report-content-container">
+            <!-- التقرير يظهر هنا كما في الأصل -->
+             <div class="page-container" id="page1">
+                <div class="border-double-frame">
+                    <header class="header-section">
+                        <div class="header-block font-bold">
+                            <p>المملكة العربية السعودية</p><p>وزارة التعليم</p>
+                            <p>إدارة التعليم بمنطقة / <span id="field_region" class="inline-block min-w-[70px] editable-cell font-bold" contenteditable="true" oninput="updateReportProgress()"></span></p>
+                        </div>
+                        <div class="header-block"><img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="h-16 object-contain" alt="Logo"></div>
+                        <div class="header-block font-bold">
+                            <p>مدرسة / <span id="field_school" class="inline-block min-w-[90px] editable-cell font-bold" contenteditable="true" oninput="updateReportProgress()"></span></p>
+                            <!-- تمت إضافة الجمعة والسبت هنا -->
+                            <p>اليوم / <select class="bg-transparent font-bold cursor-pointer" id="daySelectHeader" onchange="updateReportProgress()">
+                                <option>الأحد</option>
+                                <option>الأثنين</option>
+                                <option>الثلاثاء</option>
+                                <option>الأربعاء</option>
+                                <option>الخميس</option>
+                                <option>الجمعة</option>
+                                <option>السبت</option>
+                            </select></p>
+                            <!-- تمت إضافة استدعاء دالة المزامنة syncDayFromDate عند تغيير التاريخ -->
+                            <p>التاريخ / <select class="bg-transparent text-[11px] font-bold cursor-pointer" id="dateInputHeader" onchange="syncDayFromDate(); updateReportProgress();"></select></p>
+                        </div>
+                    </header>
+                    <div class="text-center my-4"><h2 class="text-2xl font-bold text-[var(--primary)] inline-block px-10">تقرير تنفيذ</h2></div>
+                    
+                    <section class="mb-2">
+                        <h3 class="font-bold text-sm mb-3 text-[var(--primary)]">أولاً : معلومات عامة عن البرنامج</h3>
+                        <div class="rounded-table-container shadow-sm mb-3">
+                            <table>
+                                <tr class="h-12">
+                                    <td class="bg-header w-[15%] text-xs">اسم البرنامج</td>
+                                    <td id="field_prog_name" class="editable-cell font-bold text-teal-800 text-base w-[35%]" contenteditable="true" oninput="updateReportProgress()"></td>
+                                    <td class="bg-header w-[15%] text-xs">المجال</td>
+                                    <td class="p-0 w-[35%]">
+                                        <select id="categorySelect" class="w-full h-full text-center text-[11px] font-bold cursor-pointer" onchange="updateRelatedElements(); updateReportProgress();">
+                                            <option value="">اختر المجال</option>
+                                            <option value="واجبات">أداء الواجبات الوظيفية</option>
+                                            <option value="تطوير">التفاعل مع المجتمع المهني</option>
+                                            <option value="أولياء">التفاعل مع أولياء الأمور</option>
+                                            <option value="استراتيجيات">التنويع في استراتيجيات التدريس</option>
+                                            <option value="نتائج">تحسين نتائج المتعلمين</option>
+                                            <option value="خطة_تعلم">إعداد وتنفيذ خطة التعلم</option>
+                                            <option value="تقنيات">توظيف تقنيات ووسائل التعلم</option>
+                                            <option value="بيئة">تهيئة بيئة تعليمية</option>
+                                            <option value="إدارة">الإدارة الصفية</option>
+                                            <option value="تحليل">تحليل نتائج المتعلمين وتشخيص مستوياتهم</option>
+                                            <option value="تقويم">تنوع أساليب التقويم</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="rounded-table-container shadow-sm mb-3">
+                            <table>
+                                <tr class="h-12">
+                                    <td class="bg-header w-[15%] text-xs">الفئة المستهدفة</td>
+                                    <td class="p-0 w-[35%]"><select id="targetSelect" class="w-full h-full text-center text-[11px] font-bold" onchange="updateReportProgress()"><option value="الطلاب">الطلاب</option><option value="الطالبات">الطالبات</option><option value="المعلمون">المعلمون</option><option value="المعلمات">المعلمات</option><option value="المجتمع المدرسي">المجتمع المدرسي</option><option value="يخص المعلم/ة">يخص المعلم/ة</option><option value="أولياء الأمور">أولياء الأمور</option></select></td>
+                                    <td class="bg-header w-[15%] text-xs">عدد المستفيدين</td>
+                                    <td class="p-0 w-[35%]"><select id="beneficiariesSelect" class="w-full h-full text-center text-[11px] font-bold" onchange="updateReportProgress()"></select></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="rounded-table-container shadow-sm mb-3">
+                            <table>
+                                <tr class="h-12">
+                                    <td class="bg-header w-[15%] text-xs">العنصر المرتبط</td>
+                                    <td id="relatedElement" class="editable-cell font-bold text-teal-900 text-center px-4 leading-tight w-[85%]" contenteditable="true" oninput="updateReportProgress()">اختر المجال ليتم التعبئة...</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="mt-2">
+                        <h3 class="font-bold text-sm mb-3 text-[var(--primary)]">ثانياً : أهداف البرنامج</h3>
+                        <div class="border-[1.5px] border-[var(--primary)] rounded-[1.5rem] overflow-hidden shadow-sm">
+                            <div class="flex border-b-[1.5px] border-[var(--primary)]">
+                                <div class="w-1/4 bg-header p-2 text-xs font-bold flex items-center justify-center text-center">الهدف العام</div>
+                                <div class="w-3/4 p-2 editable-cell font-bold text-teal-900 text-center flex items-center justify-center min-h-[50px]" id="mainGoal" contenteditable="true" oninput="updateReportProgress()"></div>
+                            </div>
+                            <div class="flex min-h-[160px]">
+                                <div class="w-1/4 bg-light-accent p-2 text-xs font-bold text-[var(--primary)] flex items-center justify-center border-l-[1.5px] border-[var(--primary)]">الأهداف التفصيلية</div>
+                                <div class="w-3/4 flex flex-col divide-y-[1.5px] divide-[var(--primary)]/30" id="subGoalsContainer">
+                                    <div class="goal-row">
+                                        <div class="editable-cell text-[11px] font-bold flex-grow" contenteditable="true" id="subGoal-0" oninput="updateReportProgress()"></div>
+                                        <div class="flex">
+                                            <div class="magic-goal-btn no-print" onclick="openMagicGoals(0)" title="أهداف مقترحة"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg></div>
+                                            <div class="support-goal-btn no-print" onclick="openSupportGoals(0)" title="أهداف مهنية"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg></div>
+                                        </div>
+                                    </div>
+                                    <div class="goal-row">
+                                        <div class="editable-cell text-[11px] font-bold flex-grow" contenteditable="true" id="subGoal-1" oninput="updateReportProgress()"></div>
+                                        <div class="flex">
+                                            <div class="magic-goal-btn no-print" onclick="openMagicGoals(1)" title="أهداف مقترحة"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg></div>
+                                            <div class="support-goal-btn no-print" onclick="openSupportGoals(1)" title="أهداف مهنية"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg></div>
+                                        </div>
+                                    </div>
+                                    <div class="goal-row">
+                                        <div class="editable-cell text-[11px] font-bold flex-grow" contenteditable="true" id="subGoal-2" oninput="updateReportProgress()"></div>
+                                        <div class="flex">
+                                            <div class="magic-goal-btn no-print" onclick="openMagicGoals(2)" title="أهداف مقترحة"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg></div>
+                                            <div class="support-goal-btn no-print" onclick="openSupportGoals(2)" title="أهداف مهنية"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg></div>
+                                        </div>
+                                    </div>
+                                    <div class="goal-row">
+                                        <div class="editable-cell text-[11px] font-bold flex-grow" contenteditable="true" id="subGoal-3" oninput="updateReportProgress()"></div>
+                                        <div class="flex">
+                                            <div class="magic-goal-btn no-print" onclick="openMagicGoals(3)" title="أهداف مقترحة"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg></div>
+                                            <div class="support-goal-btn no-print" onclick="openSupportGoals(3)" title="أهداف مهنية"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg></div>
+                                        </div>
+                                    </div>
+                                    <div class="goal-row">
+                                        <div class="editable-cell text-[11px] font-bold flex-grow" contenteditable="true" id="subGoal-4" oninput="updateReportProgress()"></div>
+                                        <div class="flex">
+                                            <div class="magic-goal-btn no-print" onclick="openMagicGoals(4)" title="أهداف مقترحة"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg></div>
+                                            <div class="support-goal-btn no-print" onclick="openSupportGoals(4)" title="أهداف مهنية"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mt-4">
+                        <h3 class="font-bold text-sm mb-3 text-[var(--primary)]">ثالثاً : وصف البرنامج و آلية التنفيذ</h3>
+                        <div class="rounded-table-container shadow-sm">
+                            <table>
+                                <tr class="h-10">
+                                    <td class="bg-header py-2 text-xs w-2/4">وصف البرنامج وآلية التنفيذ</td>
+                                    <td class="bg-header py-2 text-xs w-1/4">وقت التنفيذ</td>
+                                    <td class="bg-header py-2 text-xs w-1/4">المنفذ/ة</td>
+                                </tr>
+                                <tr>
+                                    <td id="field_desc" class="editable-cell text-right p-3 h-36 text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
+                                    <td id="field_time" class="editable-cell text-center font-bold text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
+                                    <td id="executorName" class="editable-cell text-center font-bold text-xs" contenteditable="true" oninput="updateReportProgress()"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- الصفحة الثانية -->
+            <div class="page-container" id="page2">
+                <div class="border-double-frame">
+                    <section class="h-full flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-base mt-8 mb-8 text-[var(--primary)] text-center">رابعاً : شواهد التنفيذ والتوثيق</h3>
+                            <div class="evidence-grid" id="evidence-grid-root">
+                                <div class="evidence-box" id="box-1" onclick="openSelectionModal(1)"><div id="content-1" class="w-full h-full flex flex-col items-center justify-center text-slate-300 no-print"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span class="text-[10px] font-bold mt-2">إضافة شاهد 1</span></div><div class="delete-btn-box no-print hidden" id="del-btn-1" onclick="clearEvidence(event, 1)">✕</div></div>
+                                <div class="evidence-box" id="box-2" onclick="openSelectionModal(2)"><div id="content-2" class="w-full h-full flex flex-col items-center justify-center text-slate-300 no-print"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span class="text-[10px] font-bold mt-2">إضافة شاهد 2</span></div><div class="delete-btn-box no-print hidden" id="del-btn-2" onclick="clearEvidence(event, 2)">✕</div></div>
+                                <div class="evidence-box" id="box-3" onclick="openSelectionModal(3)"><div id="content-3" class="w-full h-full flex flex-col items-center justify-center text-slate-300 no-print"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span class="text-[10px] font-bold mt-2">إضافة شاهد 3</span></div><div class="delete-btn-box no-print hidden" id="del-btn-3" onclick="clearEvidence(event, 3)">✕</div></div>
+                                <div class="evidence-box" id="box-4" onclick="openSelectionModal(4)"><div id="content-4" class="w-full h-full flex flex-col items-center justify-center text-slate-300 no-print"><svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span class="text-[10px] font-bold mt-2">إضافة شاهد 4</span></div><div class="delete-btn-box no-print hidden" id="del-btn-4" onclick="clearEvidence(event, 4)">✕</div></div>
+                            </div>
+                        </div>
+                        
+                        <input type="file" id="imageInput" class="hidden" accept="image/*" onchange="handleImageSelection(event)">
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="handleFileSelection(event)">
+                        <!-- حقل الكاميرا الجديد -->
+                        <input type="file" id="cameraInput" class="hidden" accept="image/*" capture="environment" onchange="handleCameraSelection(event)">
+                        
+                        <!-- إدخالات التوقيع والختم -->
+                        <input type="file" id="signatureInput" class="hidden" accept="image/png, image/jpeg" onchange="handleSignatureSelection(event)">
+                        <input type="file" id="stampInput" class="hidden" accept="image/png, image/jpeg" onchange="handleStampSelection(event)">
+
+                        <footer class="mt-8 pb-4">
+                            <div class="rounded-table-container mb-0 border-t-[3px] border-teal-600 shadow-sm overflow-hidden">
+                                <table>
+                                    <tr>
+                                        <td class="bg-header p-2 text-xs font-bold text-white">معد/ة التقرير</td>
+                                        <td class="bg-header p-2 text-xs font-bold text-white">قائد/ة المدرسة</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="h-16 px-4 bg-slate-50"><span id="name_m" class="editable-cell font-bold text-sm w-full block text-center" contenteditable="true" oninput="updateReportProgress()"></span></td>
+                                        <td class="h-16 px-4 bg-slate-50"><span id="name_p" class="editable-cell font-bold text-sm w-full block text-center" contenteditable="true" oninput="updateReportProgress()"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="bg-light-accent py-2 text-[10px] font-bold">التوقيع والمصادقة</td>
+                                        <td class="bg-light-accent py-2 text-[10px] font-bold">الختم الرسمي للمدرسة</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="h-28 bg-white relative cursor-pointer group" id="sig-box" onclick="triggerSignatureUpload()" style="height: 112px; max-height: 112px; overflow: hidden;">
+                                            <div id="sig-placeholder" class="no-print absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span class="placeholder-watermark">أضف التوقيع الرقمي</span>
+                                            </div>
+                                            <div id="sig-display" class="sig-stamp-container"></div>
+                                            <div class="delete-btn-box no-print hidden" id="del-btn-sig" onclick="clearSignature(event)">✕</div>
+                                        </td>
+                                        <td class="h-28 bg-white relative cursor-pointer group" id="stamp-box" onclick="triggerStampUpload()" style="height: 112px; max-height: 112px; overflow: hidden;">
+                                            <div id="stamp-placeholder" class="no-print absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span class="placeholder-watermark">أضف الختم الرقمي</span>
+                                            </div>
+                                            <div id="stamp-display" class="sig-stamp-container"></div>
+                                            <div class="delete-btn-box no-print hidden" id="del-btn-stamp" onclick="clearStamp(event)">✕</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </footer>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الثيمات اللونية (أكثر من 20 لون) -->
+    <div id="theme-modal" class="no-print">
+        <div class="modal-content !max-w-md text-center">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-lg font-bold text-slate-800">مكتبة التنسيقات اللونية الذكية</h3>
+                <button onclick="closeThemeModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <div class="grid grid-cols-4 gap-4 max-h-[350px] overflow-y-auto p-2" id="theme-grid">
+                <!-- المربعات تظهر هنا عبر JS -->
+            </div>
+            <p class="text-[10px] text-slate-400 font-bold mt-6">اختر لوناً لتغيير هوية التطبيق والتقرير بالكامل</p>
+            <button onclick="closeThemeModal()" class="w-full mt-4 bg-slate-800 text-white font-bold py-3 rounded-2xl">تم</button>
+        </div>
+    </div>
+
+    <div id="toast" class="no-print">تمت العملية!</div>
+
+    <div id="exit-modal" class="no-print">
+        <div class="modal-content text-center">
+            <div id="exit-icon" class="w-16 h-16 bg-teal-50 text-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">❓</div>
+            <h3 id="exit-message" class="text-sm font-bold mb-6 text-slate-800 leading-relaxed">هل قمت بحفظ نسخة من تقريرك في الأرشيف لمزامنة تقدم إنجازك؟</h3>
+            <div id="exit-buttons" class="flex gap-3">
+                <button onclick="confirmExit(true)" class="flex-1 bg-teal-600 text-white font-bold py-3 rounded-2xl shadow-lg transition-all">نعم</button>
+                <button onclick="confirmExit(false)" class="flex-1 bg-slate-100 py-3 rounded-2xl text-slate-600 font-bold transition-all">لا</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة المنبه الذكي الجديدة -->
+    <div id="reminder-modal" class="no-print">
+        <div class="modal-content text-center border-t-8 border-amber-500">
+            <div class="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-bounce">⏳</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">منبه ذكي: تقرير غير مكتمل</h3>
+            <p id="reminder-report-details" class="text-xs text-slate-600 mb-6 leading-relaxed bg-amber-50 p-4 rounded-2xl border border-amber-100 font-bold"></p>
+            <div class="flex flex-col gap-3">
+                <button onclick="openPendingReport()" class="bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-lg">فتح التقرير للإكمال 📝</button>
+                <button onclick="closeReminderModal()" class="bg-slate-100 py-3 rounded-2xl text-slate-500 text-[10px] font-bold">تذكيري لاحقاً ⏰</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نوافذ إضافية معدلة لتشمل الكاميرا -->
+    <div id="selection-modal" class="no-print">
+        <div class="modal-content text-center">
+            <h3 class="text-lg font-bold mb-6 text-slate-800">إضافة شاهد</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="triggerCameraUpload()" class="evidence-option-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>كاميرا</span>
+                </button>
+                <button onclick="triggerImageUpload()" class="evidence-option-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>صور</span>
+                </button>
+                <button onclick="triggerFileUpload()" class="evidence-option-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>ملف</span>
+                </button>
+                <button onclick="triggerLinkInput()" class="evidence-option-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    <span>رابط</span>
+                </button>
+            </div>
+            <button onclick="closeSelectionModal()" class="mt-8 w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="link-input-modal" class="no-print"><div class="modal-content"><h3 class="text-lg font-bold mb-4 text-slate-800 text-center">إضافة رابط</h3><input type="url" id="link-url-input" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-left font-sans text-sm outline-none focus:border-teal-500 transition-all" placeholder="https://example.com" dir="ltr"><div class="flex gap-3 mt-4"><button onclick="saveEvidenceLink()" class="flex-1 bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-lg">إدراج</button><button onclick="closeLinkModal()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl">إلغاء</button></div></div></div>
+    <div id="confirm-modal" class="no-print"><div class="modal-content text-center"><h3 class="text-lg font-bold mb-4 text-slate-800">حذف التقرير؟</h3><div class="flex gap-3"><button id="confirm-delete-btn" onclick="confirmDeleteReport()" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-2xl shadow-lg">حذف</button><button onclick="closeConfirmModal()" class="flex-1 bg-slate-100 py-3 rounded-2xl text-slate-600 font-bold">إلغاء</button></div></div></div>
+    <div id="goal-setter-modal" class="no-print"><div class="modal-content text-center"><h3 class="text-lg font-bold text-slate-800 mb-2">تحديد الهدف</h3><p id="target-cat-name" class="text-xs text-teal-600 font-bold mb-6"></p><input type="number" id="goal-input-value" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-center font-bold text-xl outline-none focus:border-teal-500" min="1"><div class="flex gap-3 mt-4"><button onclick="saveCategoryGoal()" class="flex-1 bg-teal-600 text-white font-bold py-4 rounded-2xl">حفظ</button><button onclick="closeGoalSetter()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-2xl">إلغاء</button></div></div></div>
+    
+    <!-- نوافذ المكتبات -->
+    <div id="magic-goals-modal" class="no-print"><div class="library-content"><div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-xl font-bold text-slate-800">الأهداف المقترحة</h3><button onclick="closeMagicGoals()" class="text-slate-400">✕</button></div><div id="magic-goals-list" class="space-y-3"></div></div></div>
+    <div id="support-goals-modal" class="no-print"><div class="library-content"><div class="flex justify-between items-center mb-6 border-b pb-4"><h3 class="text-xl font-bold text-slate-800">أهداف مهنية</h3><button onclick="closeSupportGoals()" class="text-slate-400">✕</button></div><div id="support-goals-list" class="space-y-3"></div></div></div>
+
+    <script>
+        const SECRET_SALT = "ELITE-REPORT-KEY-2026"; 
+        let currentEditingId = null;
+        let activeGoalIndex = -1;
+        let pendingDeleteId = null;
+        let currentUploadId = 1;
+        let currentArchiveViewCatId = null;
+        let pendingGoalCatId = null;
+        let insightDemoMode = 'auto'; // 'auto', 'sunday', 'thursday'
+        let pendingReportIdToOpen = null; // للمنبه الذكي
+
+        // مكتبة العبارات التحفيزية
+        const SUNDAY_QUOTES = [
+            "صباح البدايات المتجددة والهمم العالية.",
+            "\"أسبوع جديد، وبصمة جديدة؛ تذكر أن كلماتك اليوم قد تبني مستقبلاً مديناً لك طوال العمر.\"",
+            "\"ابدأ أسبوعك بيقين أنك لا تُدرّس مادة علمية فحسب، بل تصنع إنساناً.\"",
+            "\"كل حصة دراسية هي فرصة لتغيير حياة طالب، اجعل هذا الأسبوع مليئاً بالفرص.\"",
+            "\"طاقتك الإيجابية هي المحرك الحقيقي للفصل، فليكن إشراقك هو العنوان لهذا الأسبوع.\"",
+            "\"التميز ليس فعلاً، بل هو عادة ستمارسها ببراعة من اليوم وحتى نهاية الأسبوع.\"",
+            "\"جدد نيتك مع إشراقة الأحد، فأنت في أعظم مهمة عرفتها البشرية.\"",
+            "\"ليكن هدفك هذا الأسبوع ليس فقط إنهاء المنهج، بل إشعال شمعة الفضول في عقول طلابك.\"",
+            "\"أنت القائد في ميدان العلم، سر بخطى واثقة فالجميع يستمد القوة من حماسك.\"",
+            "\"صباح الأحد هو لوحة بيضاء، ارسم عليها قصة نجاح ملهمة لك ولطلابك.\"",
+            "\"تذكر أن تعب اليوم هو فخر الغد، ابدأ أسبوعك بهمة الأبطال.\""
+        ];
+
+        const THURSDAY_QUOTES = [
+            "\"لقد بذلت جهداً عظيماً هذا الأسبوع، استرح الآن لتعود بوهجٍ أقوى، فالعطاء المستمر يتطلب قلباً راضياً.\"",
+            "\"نهاية الأسبوع ليست للتوقف، بل هي استراحة محارب يخطط لنجاحات أكبر في الأسبوع القادم.\"",
+            "\"انظر إلى ما أنجزته بخر، فكل معلومة وصلت لطلابك هي لبنة في بناء حضارة.\"",
+            "\"الاجتهاد هو الصديق الوفي للنجاح؛ شكراً لأنك لم تتنازل عن تميزك طوال الأيام الماضية.\"",
+            "\"الأهداف الكبيرة تتحقق بالخطوات الصغيرة والمتسقة، وأنت هذا الأسبوع قطعت شوطاً رائعاً.\"",
+            "\"استمتع بإجازتك، فأنت تستحق وقتاً لنفسك بقدر ما منحت من وقتك وفكرك للآخرين.\"",
+            "\"تذكر أن الاستمرارية هي ما يحول الجهد العادي إلى إنجاز استثنائي، واصل المسير.\"",
+            "\"كل مهمة أنجزتها بضمير هذا الأسبوع هي رصيد فخر يضاف إلى مسيرتك المهنية.\"",
+            "\"اجعل هدفك في الأسبوع القادم أن تكون أفضل بنسبة 1% فقط عما كنت عليه؛ فالتراكم يصنع المعجزات.\"",
+            "\"ختام أسبوعك بنجاح هو أكبر دافع لبداية قوية؛ دمتم مناراً للعلم ومثالاً للجد.\""
+        ];
+
+        const APP_THEMES = [
+            { id: 'teal', name: 'أصلي', color: '#1e7b78', bg: '#f0fdfa', border: '#ccfbf1' },
+            { id: 'indigo', name: 'نيلي', color: '#4338ca', bg: '#eef2ff', border: '#e0e7ff' },
+            { id: 'emerald', name: 'زمردي', color: '#059669', bg: '#ecfdf5', border: '#d1fae5' },
+            { id: 'rose', name: 'وردي', color: '#e11d48', bg: '#fff1f2', border: '#ffe4e6' },
+            { id: 'amber', name: 'كهرماني', color: '#d97706', bg: '#fffbeb', border: '#fef3c7' },
+            { id: 'blue', name: 'أزرق', color: '#2563eb', bg: '#eff6ff', border: '#dbeafe' },
+            { id: 'purple', name: 'بنفسجي', color: '#7c3aed', bg: '#f5f3ff', border: '#ede9fe' },
+            { id: 'slate', name: 'فحمي', color: '#475569', bg: '#f8fafc', border: '#f1f5f9' },
+            { id: 'burgundy', name: 'عنابي', color: '#991b1b', bg: '#fef2f2', border: '#fee2e2' },
+            { id: 'ocean', name: 'محيطي', color: '#0891b2', bg: '#ecfeff', border: '#cffafe' },
+            { id: 'forest', name: 'غابة', color: '#166534', bg: '#f0fdf4', border: '#dcfce7' },
+            { id: 'bronze', name: 'برونزي', color: '#92400e', bg: '#fff7ed', border: '#ffedd5' },
+            { id: 'lavender', name: 'لافندر', color: '#8b5cf6', bg: '#fdf4ff', border: '#fae8ff' },
+            { id: 'cherry', name: 'كرزي', color: '#be123c', bg: '#fff1f2', border: '#ffe4e6' },
+            { id: 'olive', name: 'زيتوني', color: '#65a30d', bg: '#f7fee7', border: '#ecfccb' },
+            { id: 'navy', name: 'كحلي', color: '#1e3a8a', bg: '#eff6ff', border: '#dbeafe' },
+            { id: 'plum', name: 'خوخي', color: '#581c87', bg: '#faf5ff', border: '#f3e8ff' },
+            { id: 'rust', name: 'صدأ', color: '#b91c1c', bg: '#fdf2f2', border: '#fee2e2' },
+            { id: 'gold', name: 'ذهبي', color: '#b45309', bg: '#fffbeb', border: '#fef3c7' },
+            { id: 'mint', name: 'نعناع', color: '#0d9488', bg: '#f0fdfa', border: '#ccfbf1' },
+            { id: 'brown', name: 'بني', color: '#78350f', bg: '#fff7ed', border: '#ffedd5' },
+            { id: 'pink', name: 'زهري', color: '#db2777', bg: '#fdf2f8', border: '#fce7f3' },
+            { id: 'violet', name: 'ليلكي', color: '#4c1d95', bg: '#f5f3ff', border: '#ede9fe' },
+            { id: 'lime', name: 'ليموني', color: '#4d7c0f', bg: '#f7fee7', border: '#ecfccb' }
+        ];
+
+        // --- مكتبة الأهداف الذكية ---
+        const SMART_GOALS_LIBRARY = {
+            "واجبات": [
+                "الالتزام التام بمواعيد الحضور والانصراف وبداية الحصص الدراسية.",
+                "المشاركة الفعالة في الإشراف اليومي والمناوبات المدرسية.",
+                "تنفيذ التكليفات الإدارية والفنية الموكلة إليه من إدارة المدرسة بدقة.",
+                "الالتزام بأخلاقيات المهنة والأنظمة واللوائح التعليمية.",
+                "المحافظة على سجلات التحضير والغياب والنتائج وتحديثها بانتظام.",
+                "إنجاز المهام المطلوبة في المواعيد المحددة دون تأخير.",
+                "المساهمة في الأنشطة المدرسية اللاصفية والفعاليات العامة.",
+                "إظهار القدوة الحسنة للطلاب في المظهر والسلوك والانضباط."
+            ],
+            "تطوير": [
+                "المشاركة النشطة في اجتماعات الأقسام والمجالس المدرسية.",
+                "تبادل الخبرات التعليمية والتربوية مع الزملاء (تبادل الزيارات).",
+                "المساهمة في حل المشكلات المدرسية وتقديم مقترحات تطويرية.",
+                "التعاون مع المعلمين الآخرين في مشاريع تعليمية مشتركة.",
+                "تطبيق ونشر ممارسات \"مجتمعات التعلم المهنية\" (PLCs).",
+                "استقبال الملاحظات من المشرفين والزملاء بروح إيجابية وتطبيقها.",
+                "المشاركة في الدورات التدريبية وورش العمل الداخلية والخارجية.",
+                "دعم المعلمين الجدد وتوجيههم لسرعة الاندماج في البيئة المدرسية."
+            ],
+            "أولياء": [
+                "التواصل المستمر مع أولياء الأمور لإطلاعهم على مستوى أبنائهم.",
+                "الرد على استفسارات أولياء الأمور بمهنية وعبر القنوات الرسمية.",
+                "إشراك أولياء الأمور في خطط دعم الطلاب ذوي التحصيل المنخفض.",
+                "تنظيم لقاءات دورية (افتراضية أو حضورية) لمناقشة تقدم الطلاب.",
+                "تزويد أولياء الأمور بإرشادات لتعزيز التعلم المنزلي.",
+                "التعامل بكياسة وصبر مع شكاوى وملاحظات أولياء الأمور.",
+                "تفعيل المنصات التعليمية (مثل مدرستي) كوسيلة تواصل مع الأسرة.",
+                "دعوة أولياء الأمور المتميزين للمشاركة في تقديم خبراتهم للطلاب."
+            ],
+            "استراتيجيات": [
+                "تطبيق استراتيجيات التعلم النشط (مثل: فكر-زاوج-شارك، العصف الذهني).",
+                "توظيف استراتيجيات التفكير الناقد والإبداعي خلال الحصة.",
+                "استخدام أسلوب التعلم القائم على المشاريع أو حل المشكلات.",
+                "تطبيق استراتيجيات التدريس المتمايز لتناسب أنماط التعلم المختلفة.",
+                "تفعيل أسلوب \"الفصل المقلوب\" لتعزيز التفاعل داخل الصف.",
+                "تنويع الأنشطة صفية بين الفردية والجماعية والتعاونية.",
+                "استخدام أسلوب الحوار والمناقشة لإشراك جميع الطلاب.",
+                "ربط الدروس بالواقع العملي والحياة اليومية للطالب."
+            ],
+            "نتائج": [
+                "رفع نسبة النجاح في المادة الدراسية مقارنة بالفترات السابقة.",
+                "تحقيق تقدم ملموس في درجات الطلاب ذوي التحصيل الضعيف.",
+                "تقليص الفجوة بين نتائج الاختبارات الدورية والاختبارات المركزية.",
+                "تدريب الطلاب على مهارات حل اختبارات \"نافس\" أو الاختبارات المعيارية.",
+                "وضع خطط علاجية واضحة وموثقة للطلاب المتعثرين.",
+                "تحفيز الطلاب المتفوقين للمحافظة على مستواهم وتطويره.",
+                "تنمية مهارات التعلم الذاتي لدى الطلاب لضمان استدامة النتائج.",
+                "تحليل بيانات النتائج السابقة لتحديد الفجوات التعليمية ومعالجتها."
+            ],
+            "خطة_تعلم": [
+                "إعداد خطة زمنية سنوية وفصلية دقيقة للمنهج الدراسي.",
+                "صياغة أهداف تعليمية ذكية (SMART) قابلة للقياس لكل درس.",
+                "الربط المنطقي بين الأهداف والأنشطة والتقويم في التحضير.",
+                "تغطية كافة مفردات المنهج خلال المدة الزمنية المحددة.",
+                "تجهيز الوسائل والمصادر التعليمية قبل بدء الدرس بوقت كافٍ.",
+                "المرونة في تعديل الخطة بناءً على احتياجات الطلاب الطارئة.",
+                "توثيق تنفيذ الدروس في المنصة الرسمية بشكل يومي.",
+                "تضمين مهارات القرن الحادي والعشرين والقيم الوطنية في الخطة."
+            ],
+            "تقنيات": [
+                "استخدام المنصات التعليمية الرقمية بكفاءة عالية (مثل Microsoft Teams).",
+                "دمج تطبيقات الذكاء الاصطناعي في العملية التعليمية.",
+                "توظيف السبورات الذكية والبرامج التفاعلية لجذب انتباه الطلاب.",
+                "استخدام مصادر التعلم الرقمية (فيديوهات، محاكاة، مختبرات افتراضية).",
+                "تدريب الطلاب على استخدام الأدوات التقنية في أبحاثهم وواجباتهم.",
+                "اختيار الوسائل التعليمية التي تناسب موضوع الدرس وعمر الطلاب.",
+                "استخدام برامج العروض التقديمية بطريقة احترافية وغير تقليدية.",
+                "مواكبة المستجدات التقنية في التخصص وتوظيفها داخل الصف."
+            ],
+            "بيئة": [
+                "تنظيم المقاعد الصفية بما يخدم استراتيجية التدريس المتبعة.",
+                "خلق مناخ صفي يسوده الاحترام المتبادل والمودة.",
+                "تشجيع الطلاب على التعبير عن آرائهم بحرية ودون خوف.",
+                "العناية بجمالية الفصل ولوحات التعزيز والمصادر التعليمية.",
+                "توفير بيئة آمنة في المعامل أو الملاعب أثناء التطبيق العملي.",
+                "تعزيز الانتماء الصفي من خلال تسمية المجموعات وتوزيع الأدوار.",
+                "مراعاة الفروق الفردية في توزيع الطلاب داخل الصف.",
+                "استثمار المساحات المدرسية (المكتبة، الساحة) كبيئات تعلم بديلة."
+            ],
+            "إدارة": [
+                "السيطرة على الصف بطريقة تربوية بعيدة عن التسلط.",
+                "إدارة وقت الحصة بفعالية بين الشرح والتطبيق والتقويم.",
+                "التعامل بحكمة مع المشكلات السلوكية الطارئة داخل الفصل.",
+                "وضع قواعد صفية واضحة (ميثاق الفصل) والالتزام بها.",
+                "النتقال السلس بين الأنشطة الصفية دون ضجيج أو ضياع للوقت.",
+                "توزيع الانتباه والتركيز على جميع الطلاب دون استثناء.",
+                "تحفيز الطلاب وجذب انتباههم طوال زمن الحصة.",
+                "استخدام لغة جسد ونبرة صوت مؤثرة في التواصل مع الطلاب."
+            ],
+            "تحليل": [
+                "إجراء اختبارات قبلية (تشخيصية) لتحديد مستويات الطلاب في بداية العام.",
+                "تصنيف الطلاب إلى فئات (متفوق، متوسط، دون المتوسط) بناءً على البيانات.",
+                "استخدام برامج إحصائية (أو Excel) لتحليل نتائج الاختبارات الدورية.",
+                "تحديد المهارات التي لم يتقنها أغلب الطلاب لإعادة شرحها.",
+                "تقديم تغذية راجعة فردية لكل طالب بناءً على تحليل أخطائه.",
+                "مقارنة نتائج الطلاب الحالية بنتائجهم في الأعوام السابقة.",
+                "رصد التطور في مستوى الطالب وربطه بالجهد المبذول.",
+                "كتابة تقارير دورية دقيقة عن المستوى التحصيلي لكل طالب."
+            ],
+            "تقويم": [
+                "استخدام التقويم القبلي، التكويني (البنائي)، والختامي.",
+                "تنويع أدوات التقويم (اختبارات، ملاحظة، مشاريع، ملف إنجاز).",
+                "تطبيق \"التقويم الذاتي\" ليقوم الطالب بتقييم عمله بنفسه.",
+                "تطبيق \"تقويم الأقران\" ليعطي الطلاب ملاحظات لبعضهم البعض.",
+                "بناء جداول مواصفات للاختبارات لضمان شموليتها ومصداقيتها.",
+                "استخدام تطبيقات التقويم الرقمية السريعة (مثل Kahoot, Quizziz).",
+                "تصميم سلالم تقدير (Rubrics) واضحة لتقييم المشاريع والمهام الأدائية.",
+                "الاستفادة من نتائج التقويم في تعديل خطة التدريس القادمة."
+            ],
+            "وطنية": [
+                "تصميم وتقديم فعالية واحدة (عرض مرئي، مسابقة، كلمة) في الإذاعة المدرسية.",
+                "ربط موضوع الدرس بالقيم الوطنية والهوية السعودية في حصة واحدة على الأقل.",
+                "الإشراف على إنتاج الطلاب لأعمال فنية أو رقمية تعبر عن الانتماء الوطني.",
+                "المشاركة الفاعلة في اللجان التنظيمية للاحتفالات الكبرى بالمدرسة.",
+                "نشر محتوى توعوي أو احتفالي عن المناسبة الوطنية عبر حساب المدرسة الرسمي."
+            ]
+        };
+
+        // --- مكتبة الأهداف المهنية (قائمة الدعم سابقاً) ---
+        const SUPPORT_GOALS_LIBRARY = {
+            "واجبات": [
+                "السلوك المهني: تمثيل القدوة الحسنة عبر التطبيق الدقيق لقواعد السلوك الوظيفي وأخلاقيات المهنة في كافة التعاملات الميدانية.",
+                "تعزيز الانتماء: تفعيل قيم الولاء للوطن والاعتزاز بالقيم السعودية من خلال دمجها في الأنشطة الصفية والبيئة التعليمية.",
+                "أمن المعلومات: ضمان سرية وخصوصية البيانات المهنية والطلابية عبر استخدام المنصات الرسمية المعتمدة ومنع الوصول غير المصرح به.",
+                "الامتثال التنظيمي: مطابقة كافة الممارسات التعليمية والإدارية مع السياسات والقوانين وإجراءات العمل المحدثة."
+            ],
+            "تطوير": [
+                "التعلم المستمر: رفع الكفاءة المهنية من خلال الحضور النوعي للدورات والورش والمؤتمرات ونقل أثرها للبيئة المدرسية.",
+                "التعاون والتواصل: بناء شبكات مهنية لتبادل الأفكار المبتكرة ومعالجة التحديات التعليمية بروح الفريق الواحد.",
+                "الإسهام في التطوير: المشاركة في الأبحاث التربوية وتطوير المناهج لتقديم ممارسات تخدم السياسات التعليمية الحديثة.",
+                "الإرشاد والتوجيه: استدامة المعرفة عبر تقديم الدعم الفني والمهني للمعلمين الجدد وتزويدهم بالخبرات الميدانية.",
+                "التفكير الذاتي: تحسين المخرجات التعليمية عبر التقييم الدوري للممارسات الشخصية وتوثيق خطط التحسين في سجلات التأمل."
+            ],
+            "أولياء": [
+                "الاتصال الفعال: مأسسة التواصل الدوري مع أولياء الأمور لمناقشة مستويات الطلاب وتحدياتهم عبر القنوات الرسمية بأساليب إيجابية.",
+                "تعزيز الشراكة: تحفيز أولياء الأمور على الانخراط في العملية التعليمية كدعم الواجبات المنزلية والأنظمة المدرسية.",
+                "التخطيط للمستقبل: وضع خطط تطويرية مشتركة (علمية واجتماعية) للمتعلمين تضمن تكامل الأدوار بين البيت والمدرسة.",
+                "الاستجابة واحتواء المخاوف: معالجة ملاحظات أولياء الأمور عبر الاستماع النشط والعمل المشترك لإيجاد حلول تربوية تدعم الطالب."
+            ],
+            "استراتيجيات": [
+                "ملاءمة الاستراتيجية: تطبيق استراتيجيات تدريس (كالتعلم النشط) بما يتناسب مع طبيعة الدرس واحتياجات الموقف التعليمي.",
+                "تلبية الفروق الفردية: تنفيذ أساليب تدريس تراعي ميول واحتياجات المتعلمين المختلفة لضمان شمولية التعلم لجميع المستويات.",
+                "تحفيز الإبداع: استخدام استراتيجيات تعزز التفكير الناقد والعصف الذهني لتحفيز الابتكار لدى الطلاب.",
+                "تنمية التواصل: تفعيل استراتيجيات الحوار والمناقشة لتمكين المتعلمين من مهارات التعبير عن الرأي."
+            ],
+            "نتائج": [
+                "تحديد المستهدفات: صياغة أهداف ومعايير أداء واضحة مسبقاً ليعرف المتعلمون ما يتوقع منهم إنجازه بدقة.",
+                "التغذية الراجعة الفورية: تقديم إفادات سريعة ومحددة تركز على الإيجابيات مع تقديم مقترحات إجرائية واضحة للتحسين.",
+                "التفريد والتمكين: تكييف أساليب الإفادة وفق الاحتياجات الفردية لضمان التفاعل الفعال وتشجيع الطلاب على التطبيق.",
+                "الدعم المعنوي والتقني: تعزيز ثقة المتعلمين بملاحظات تشجيعية، واستخدام المنصات التقنية لتقديم إفادات مبتكرة وموثقة."
+            ],
+            "خطة_تعلم": [
+                "التخطيط المنظم: إعداد خطة تعلم تشخص واقع المتعلمين الفعلي وتتسق مع السياسات التعليمية المعتمدة.",
+                "تحقيق الأهداف التشغيلية: تنفيذ الأنشطة بكفاءة لضمان تحقيق كافة الأهداف التعليمية وعناصر المواد المسندة.",
+                "شمولية الأنشطة والتكامل: التخطيط الدقيق للأنشطة الصفية وغير الصفية بالتعاون بين المعلم الممارس والمتقدم لضمان جودة المحتوى.",
+                "المراعاة السيكولوجية: صياغة الخطط بناءً على فهم الخصائص النفسية والمراحل العمرية لضمان ملاءمة الأنشطة للطلاب."
+            ],
+            "تقنيات": [
+                "تنويع الوسائط: استخدام مزيج من التقنيات (سمعية، بصرية، حركية) لضمان تحقيق الأهداف التعليمية بفاعلية.",
+                "تيسير الخبرات: توظيف الوسائل التقنية لتبسيط المفاهيم المعقدة ونقل الخبرات التعليمية بوضوح وسهولة.",
+                "مواءمة الأنماط: اختيار التقنيات التي تتناسب مع أنماط تعلم الطلاب وتلبي الاحتياجات الخاصة لكل فرد.",
+                "التفكير العلمي: استخدام الوسائل (كالمحاكاة) لإكساب الطلاب مهارات الملاحظة والتفكير العلمي لحل المشكلات."
+            ],
+            "بيئة": [
+                "الدعم الأكاديمي والشخصي: توفير بيئة تعليمية آمنة تدمج بين التحصيل العلمي والنمو الشخصي لتشجيع الابتكار.",
+                "تعزيز الأمان النفسي: تهيئة مناخ صفّي قائم على الاحترام المتبادل لضمان شعور المتعلم بالقدرة على المشاركة.",
+                "التعبير والمشاركة: تمكين المتعلمين من القنوات اللازمة للتعبير عن آرائهم ومشاركة أفكارهم مع أقرانهم بحرية.",
+                "إثارة الدافعية: توظيف أساليب متنوعة تعمل على جذب انتباه المتعلمين ورفع مستويات دافعيتهم للتعلم."
+            ],
+            "إدارة": [
+                "مراعاة الفروق الفردية: إدارة الموقف التعليمي بمرونة تضمن تلبية احتياجات الطلاب (الصحية والعقلية والاجتماعية).",
+                "تطبيق الأنظمة والانضباط: توجيه المتعلمين نحو الالتزام بالقوانين الصفية، وتنظيم التواصل بينهم لضمان بيئة منضبطة.",
+                "التنظيم المكاني والبشري: ترتيب وتوزيع الطلاب داخل الصف بما يتناسب مع طبيعة كل نشاط لتحقيق أقصى فاعلية."
+            ],
+            "تحليل": [
+                "شمولية التقييم: تنويع مصادر التقييم لضمان الحصول على نتائج موضوعية وقياس القدرة على التطبيق العملي.",
+                "اتخاذ القرار بالبيانات: تفسير بيانات الطلاب لاتخاذ قرارات تربوية مستنيرة لتطوير التدريس وتحسين المناهج.",
+                "التحليل التشاركي: إشراك المتعلمين في فهم نتائجهم لتحديد نقاط القوة والضعف ووضع خطط تطور شخصية."
+            ],
+            "تقويم": [
+                "الاختيار المهني للأدوات: استخدام أساليب (شفهية، تحريرية، أدائية) تتناسب مع طبيعة مخرجات التعلم المستهدفة.",
+                "تعدد مصادر البيانات: جمع أدلة التعلم عبر الملاحظة، الاستبانات، والتقارير الذاتية لضمان مصداقية التقييم.",
+                "التقويم الزمني (قبلي/بنائي/ختامي): تفعيل التقويم التشخيصي للبدايات، والتكويني للتطوير أثناء المسار، والختامي لقياس تحقق الأهداف.",
+                "التطوير بالنتائج: استثمار نتائج التقويم في بناء خطط علاجية وإثرائية تضمن التحسين المستمر لأداء المتعلمين."
+            ]
+        };
+
+        const ALL_CATEGORIES = [
+            { id: "واجبات", name: "أداء الواجبات الوظيفية" },
+            { id: "تطوير", name: "التفاعل مع المجتمع المهني" },
+            { id: "أولياء", name: "التفاعل مع أولياء الأمور" },
+            { id: "استراتيجيات", name: "التنويع في استراتيجيات التدريس" },
+            { id: "نتائج", name: "تحسين نتائج المتعلمين" },
+            { id: "خطة_تعلم", name: "إعداد وتنفيذ خطة التعلم" },
+            { id: "تقنيات", name: "توظيف تقنيات ووسائل التعلم" },
+            { id: "بيئة", name: "تهيئة بيئة تعليمية" },
+            { id: "إدارة", name: "الإدارة الصفية" },
+            { id: "تحليل", name: "تحليل نتائج المتعلمين وتشخيص مستوياتهم" },
+            { id: "تقويم", name: "تنوع أساليب التقويم" }
+        ];
+
+        // وظائف الثيمات والألوان
+        function loadSavedTheme() {
+            const savedThemeId = localStorage.getItem('app_theme_id') || 'teal';
+            const theme = APP_THEMES.find(t => t.id === savedThemeId) || APP_THEMES[0];
+            applyTheme(theme);
+            renderThemeGrid();
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.style.setProperty('--primary', theme.color);
+            document.documentElement.style.setProperty('--archive-bg', theme.bg);
+            document.documentElement.style.setProperty('--archive-border', theme.border);
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.color);
+            localStorage.setItem('app_theme_id', theme.id);
+            renderThemeGrid();
+        }
+
+        function renderThemeGrid() {
+            const grid = document.getElementById('theme-grid');
+            if (!grid) return;
+            const currentId = localStorage.getItem('app_theme_id') || 'teal';
+            grid.innerHTML = "";
+            APP_THEMES.forEach(theme => {
+                const circle = document.createElement('div');
+                circle.className = `theme-circle ${theme.id === currentId ? 'active' : ''}`;
+                circle.style.backgroundColor = theme.color;
+                circle.title = theme.name;
+                circle.onclick = () => applyTheme(theme);
+                grid.appendChild(circle);
+            });
+        }
+
+        function openThemeModal() { document.getElementById('theme-modal').style.display = 'flex'; renderThemeGrid(); }
+        function closeThemeModal() { document.getElementById('theme-modal').style.display = 'none'; }
+
+        // إدارة الأهداف (Dashboard Goals)
+        function openGoalSetter(catId, catName) {
+            pendingGoalCatId = catId;
+            document.getElementById('target-cat-name').innerText = catName;
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
+            document.getElementById('goal-input-value').value = goals[catId] || 5;
+            document.getElementById('goal-setter-modal').style.display = 'flex';
+        }
+
+        function closeGoalSetter() { document.getElementById('goal-setter-modal').style.display = 'none'; }
+
+        function saveCategoryGoal() {
+            const val = parseInt(document.getElementById('goal-input-value').value);
+            if (isNaN(val) || val < 1) return showToast("أدخل رقماً صحيحاً ⚠️");
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
+            goals[pendingGoalCatId] = val;
+            localStorage.setItem('category_goals', JSON.stringify(goals));
+            closeGoalSetter();
+            showToast("تم تحديث الهدف المستهدف 🎯");
+            if (document.getElementById('stats-view').style.display === 'block') renderStatsDashboard();
+            else renderArchiveFolders();
+        }
+
+        // إدارة الأرشيف والحذف
+        function requestDeleteReport(id) {
+            pendingDeleteId = id;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() { document.getElementById('confirm-modal').style.display = 'none'; }
+
+        function confirmDeleteReport() {
+            let reports = JSON.parse(localStorage.getItem('reports_archive') || '[]');
+            reports = reports.filter(r => r.id !== pendingDeleteId);
+            localStorage.setItem('reports_archive', JSON.stringify(reports));
+            closeConfirmModal();
+            showToast("تم حذف التقرير بنجاح 🗑️");
+            if (currentArchiveViewCatId) openArchiveFolder(currentArchiveViewCatId);
+            else renderArchiveFolders();
+        }
+
+        // الوظائف الأساسية للنظام
+        function getDeviceId() { let id = localStorage.getItem('app_stable_device_id'); if (!id) { id = "ELT-" + Math.random().toString(36).substring(2,10).toUpperCase(); localStorage.setItem('app_stable_device_id', id); } return id; }
+        
+        function copyDeviceId() { 
+            const text = document.getElementById('device-id-value').innerText;
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+            showToast("تم نسخ كود المستخدم بنجاح ✅");
+        }
+
+        async function pasteActivationKey() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('activation-key-input').value = text;
+                showToast("تم لصق المفتاح بنجاح 📋");
+            } catch (err) {
+                showToast("فشل اللصق، يرجى اللصق يدوياً ⚠️");
+            }
+        }
+
+        function checkActivation() { 
+            const input = document.getElementById('activation-key-input').value.trim().toUpperCase(); 
+            if (input) { 
+                localStorage.setItem('app_activated', 'true'); 
+                showWelcomeGate(); 
+                showToast("تم التنشيط بنجاح ✅"); 
+            } else {
+                showToast("يرجى إدخال مفتاح التنشيط أولاً ⚠️");
+            }
+        }
+
+        function deactivateApp() { if (confirm('هل أنت متأكد من إلغاء تنشيط النظام؟')) { localStorage.removeItem('app_activated'); location.reload(); } }
+        function showWelcomeGate() { document.getElementById('activation-overlay').style.display = 'none'; document.getElementById('welcome-gate').style.display = 'flex'; }
+        function enterApp() { document.getElementById('welcome-gate').style.display = 'none'; document.getElementById('welcome-dashboard').style.display = 'block'; }
+        function exitApp() { document.getElementById('exit-modal').style.display = 'flex'; }
+        function confirmExit(saved) { if (saved) { location.reload(); } else { saveReportToArchive(); setTimeout(() => location.reload(), 1000); } }
+        function startNewReport() { resetFormOnly(); currentEditingId = null; document.getElementById('welcome-dashboard').style.display = 'none'; document.getElementById('main-report-app').classList.remove('hidden'); updateReportProgress(); }
+        function goHome() { document.getElementById('main-report-app').classList.add('hidden'); document.getElementById('welcome-dashboard').style.display = 'block'; }
+        
+        function checkReportCompletionStatus() {
+            const fields = [
+                document.getElementById('field_region').innerText.trim(),
+                document.getElementById('field_school').innerText.trim(),
+                document.getElementById('field_prog_name').innerText.trim(),
+                document.getElementById('categorySelect').value,
+                document.getElementById('targetSelect').value,
+                document.getElementById('beneficiariesSelect').value,
+                document.getElementById('mainGoal').innerText.trim(),
+                document.getElementById('field_desc').innerText.trim(),
+                document.getElementById('field_time').innerText.trim(),
+                document.getElementById('executorName').innerText.trim(),
+                document.getElementById('name_m').innerText.trim(),
+                document.getElementById('name_p').innerText.trim()
+            ];
+            
+            const filledCount = fields.filter(f => f !== "" && f !== "اختر المجال ليتم التعبئة...").length;
+            const subGoalsCount = [0,1,2,3,4].filter(i => document.getElementById(`subGoal-${i}`).innerText.trim() !== "").length;
+            
+            const totalRequired = 13;
+            const currentTotal = filledCount + (subGoalsCount > 0 ? 1 : 0);
+            const percentage = Math.min(Math.round((currentTotal / totalRequired) * 100), 100);
+            
+            return { percentage, isComplete: percentage === 100 };
+        }
+
+        function updateReportProgress() {
+            const { percentage } = checkReportCompletionStatus();
+            const bar = document.getElementById('report-completion-bar');
+            if (bar) bar.style.width = percentage + "%";
+        }
+
+        function saveReportToArchive() { 
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]'); 
+            const cat = document.getElementById('categorySelect').value; 
+            if (!cat) return showToast("اختر المجال أولاً ⚠️"); 
+            
+            const completion = checkReportCompletionStatus();
+            
+            const data = { 
+                id: currentEditingId || Date.now(), 
+                title: document.getElementById('field_prog_name').innerText || 'تقرير جديد', 
+                category: cat, 
+                date: new Date().toLocaleDateString('ar-SA'), 
+                content: document.getElementById('report-content-container').innerHTML,
+                isComplete: completion.isComplete,
+                saveTimestamp: Date.now()
+            }; 
+            
+            if (currentEditingId) { 
+                const idx = reports.findIndex(r => r.id === currentEditingId); 
+                if(idx !== -1) reports[idx] = data; 
+            } else { 
+                reports.push(data); 
+                currentEditingId = data.id; 
+            } 
+            localStorage.setItem('reports_archive', JSON.stringify(reports)); 
+            showToast("تم الحفظ في الأرشيف ✅"); 
+        }
+
+        function checkPendingReminders() {
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]');
+            const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+            const pending = reports.find(r => !r.isComplete && (now - r.saveTimestamp >= twoDaysInMs));
+            
+            if (pending) {
+                const cat = ALL_CATEGORIES.find(c => c.id === pending.category);
+                const catName = cat ? cat.name : 'غير محدد';
+                document.getElementById('reminder-report-details').innerHTML = `التقرير: "${pending.title}"<br>المجال: "${catName}"<br>تاريخ الحفظ: ${pending.date}`;
+                pendingReportIdToOpen = pending.id;
+                document.getElementById('reminder-modal').style.display = 'flex';
+            }
+        }
+
+        function openPendingReport() { if (pendingReportIdToOpen) { closeReminderModal(); editReport(pendingReportIdToOpen); } }
+        function closeReminderModal() { document.getElementById('reminder-modal').style.display = 'none'; }
+        function openArchiveView() { document.getElementById('welcome-dashboard').style.display = 'none'; document.getElementById('archive-view').style.display = 'block'; renderArchiveFolders(); }
+        function closeArchiveView() { document.getElementById('archive-view').style.display = 'none'; document.getElementById('welcome-dashboard').style.display = 'block'; }
+        
+        function renderArchiveFolders() { 
+            currentArchiveViewCatId = null; 
+            document.getElementById('archive-search-wrapper').classList.remove('hidden'); 
+            const container = document.getElementById('archive-content'); 
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]'); 
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}'); 
+            document.getElementById('archive-view-title').innerText = "أرشيف المجالات"; 
+            document.getElementById('back-to-folders').classList.add('hidden'); 
+            document.getElementById('archive-count').innerText = `${reports.length} تقرير كلي`; 
+            container.innerHTML = ""; 
+            const grid = document.createElement('div'); 
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"; 
+            ALL_CATEGORIES.forEach(cat => { 
+                const catReports = reports.filter(r => r.category === cat.id); 
+                const target = goals[cat.id] || 5; 
+                const folder = document.createElement('div'); 
+                folder.className = "folder-item flex flex-col items-center text-center group"; 
+                folder.onclick = () => openArchiveFolder(cat.id); 
+                folder.innerHTML = `<div class="folder-badge">${catReports.length} / ${target}</div><svg class="folder-icon group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg><span class="text-xs font-bold text-slate-700 leading-tight h-10 overflow-hidden">${cat.name}</span>`; 
+                grid.appendChild(folder); 
+            }); 
+            container.appendChild(grid); 
+        }
+
+        function openArchiveFolder(catId) { 
+            currentArchiveViewCatId = catId; 
+            const cat = ALL_CATEGORIES.find(c => c.id === catId); 
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]'); 
+            const catReports = reports.filter(r => r.category === catId); 
+            document.getElementById('archive-view-title').innerText = `مجلد: ${cat.name}`; 
+            document.getElementById('back-to-folders').classList.remove('hidden'); 
+            document.getElementById('archive-search-wrapper').classList.add('hidden');
+            const container = document.getElementById('archive-content'); 
+            container.innerHTML = ""; 
+            if (catReports.length === 0) { 
+                container.innerHTML = `<div class="text-center py-20 text-slate-400 font-bold">لا توجد تقارير في هذا المجلد.</div>`; 
+                return; 
+            } 
+            const list = document.createElement('div'); 
+            list.className = "space-y-4"; 
+            catReports.reverse().forEach(report => { 
+                const item = document.createElement('div'); 
+                item.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-all archive-item-card"; 
+                item.innerHTML = `<div><h4 class="font-bold text-slate-700 text-sm report-title">${report.title}</h4><p class="text-[10px] text-slate-400 font-bold">${report.date} ${report.isComplete ? '✅' : '⏳'}</p></div><div class="flex gap-2"><button onclick="editReport(${report.id})" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">فتح</button><button onclick="requestDeleteReport(${report.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">حذف</button></div>`; 
+                list.appendChild(item); 
+            }); 
+            container.appendChild(list); 
+        }
+
+        function filterArchiveReports() {
+            const query = document.getElementById('archive-search-input').value.toLowerCase().trim();
+            const container = document.getElementById('archive-content');
+            if (!currentArchiveViewCatId) {
+                if (query === "") { renderArchiveFolders(); return; }
+                const allReports = JSON.parse(localStorage.getItem('reports_archive') || '[]');
+                const filtered = allReports.filter(r => r.title.toLowerCase().includes(query));
+                container.innerHTML = "";
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="text-center py-20 text-slate-400 font-bold">لم يتم العثور على تقارير مطابقة.</div>`;
+                    return;
+                }
+                const list = document.createElement('div');
+                list.className = "space-y-4";
+                filtered.reverse().forEach(report => {
+                    const cat = ALL_CATEGORIES.find(c => c.id === report.category);
+                    const item = document.createElement('div');
+                    item.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-all archive-item-card";
+                    item.innerHTML = `<div><h4 class="font-bold text-slate-700 text-sm report-title">${report.title}</h4><p class="text-[10px] text-slate-400 font-bold">${report.date} | ${cat ? cat.name : ''} ${report.isComplete ? '✅' : '⏳'}</p></div><div class="flex gap-2"><button onclick="editReport(${report.id})" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">فتح</button><button onclick="requestDeleteReport(${report.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">حذف</button></div>`; 
+                    list.appendChild(item);
+                });
+                container.appendChild(list);
+            }
+        }
+
+        function editReport(id) { 
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]'); 
+            const report = reports.find(r => r.id === id); 
+            if (report) { 
+                document.getElementById('report-content-container').innerHTML = report.content; 
+                currentEditingId = id; 
+                if(report.category) document.getElementById('categorySelect').value = report.category; 
+                document.getElementById('archive-view').style.display = 'none'; 
+                document.getElementById('main-report-app').classList.remove('hidden'); 
+                updateReportProgress();
+            } 
+        }
+
+        function openStatsView() { document.getElementById('welcome-dashboard').style.display = 'none'; document.getElementById('stats-view').style.display = 'block'; renderStatsDashboard(); }
+        function closeStatsView() { document.getElementById('stats-view').style.display = 'none'; document.getElementById('welcome-dashboard').style.display = 'block'; }
+        
+        function setInsightMode(mode) { insightDemoMode = mode; renderStatsDashboard(); }
+
+        function renderStatsDashboard() { 
+            const container = document.getElementById('stats-container'); 
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]'); 
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}'); 
+            container.innerHTML = ""; 
+            let statsData = ALL_CATEGORIES.map(cat => {
+                const count = reports.filter(r => r.category === cat.id).length;
+                const target = goals[cat.id] || 5;
+                const percent = Math.min(Math.round((count / target) * 100), 100);
+                return { ...cat, count, target, percent };
+            });
+            renderWeeklyInsights(statsData);
+            statsData.forEach(cat => { 
+                const card = document.createElement('div'); 
+                card.className = "stat-card flex flex-col justify-between"; 
+                card.innerHTML = `<div><div class="flex justify-between items-start mb-2"><span class="text-[10px] font-bold text-slate-400 uppercase">المجال</span><button onclick="event.stopPropagation(); openGoalSetter('${cat.id}', '${cat.name}')" class="text-[10px] text-teal-600 font-bold hover:underline">ضبط الهدف 🎯</button></div><h4 class="font-bold text-slate-700 text-sm leading-tight h-10 overflow-hidden">${cat.name}</h4></div><div><div class="flex justify-between items-end mb-2"><div class="flex items-baseline gap-1"><span class="text-2xl font-bold text-slate-800">${cat.count}</span><span class="text-xs text-slate-400">/ ${cat.target}</span></div><span class="text-xs font-bold text-slate-500">${cat.percent}%</span></div><div class="progress-bar-bg"><div class="progress-bar-fill bg-teal-500" style="width: ${cat.percent}%"></div></div></div>`; 
+                container.appendChild(card); 
+            }); 
+        }
+
+        function renderWeeklyInsights(statsData) {
+            const container = document.getElementById('weekly-insight-container');
+            const day = new Date().getDay();
+            let isSunday = (insightDemoMode === 'sunday') || (insightDemoMode === 'auto' && day === 0);
+            let isThursday = (insightDemoMode === 'thursday') || (insightDemoMode === 'auto' && day === 4);
+            container.innerHTML = "";
+            if (isSunday) {
+                const q = SUNDAY_QUOTES[Math.floor(Math.random() * SUNDAY_QUOTES.length)];
+                container.innerHTML = `<div class="smart-insight-card sunday-theme"><h3 class="text-xl font-bold mb-4 leading-tight">${q}</h3><p class="text-xs font-bold opacity-80">خطط لأسبوعك بذكاء!</p></div>`;
+            } else if (isThursday) {
+                const q = THURSDAY_QUOTES[Math.floor(Math.random() * THURSDAY_QUOTES.length)];
+                container.innerHTML = `<div class="smart-insight-card thursday-theme"><h3 class="text-xl font-bold mb-4 leading-tight">${q}</h3><p class="text-xs font-bold opacity-80">استمتع بحصاد إنجازك.</p></div>`;
+            } else {
+                container.innerHTML = `<div class="bg-white p-8 rounded-[40px] shadow-sm mb-10 border border-slate-100 flex items-center justify-between"><h3 class="font-bold text-slate-700 text-base">مستكشف التقارير الذكي نشط</h3><div class="insight-badge bg-slate-50 text-slate-400 border">وضع الانتظار</div></div>`;
+            }
+        }
+
+        function generateDigitalPortfolio() {
+            const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]');
+            if (reports.length === 0) return showToast("الأرشيف فارغ! لا توجد تقارير لتصدير المحفظة ⚠️");
+            const loader = document.getElementById('share-loader');
+            const loaderText = document.getElementById('loader-text');
+            loaderText.innerHTML = "جاري تجميع محفظة التميز الرقمية...<br><span class='text-[10px] font-normal'>يتم ترتيب التقارير بحسب المجالات</span>";
+            loader.classList.remove('hidden');
+            const sortedPortfolio = [];
+            ALL_CATEGORIES.forEach(category => {
+                const matched = reports.filter(r => r.category === category.id);
+                sortedPortfolio.push(...matched);
+            });
+            let portfolioHTML = "";
+            sortedPortfolio.forEach((report) => { portfolioHTML += `<div style="page-break-after: always;">${report.content}</div>`; });
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`<html><head><title>محفظة التميز الرقمية</title>${document.head.innerHTML}<style>body { background: white !important; margin: 0; padding: 0; }.no-print { display: none !important; }.page-container { margin: 0 auto !important; box-shadow: none !important; border: none !important; }@media print { body { margin: 0; padding: 0; } }</style></head><body dir="rtl"><div id="portfolio-root">${portfolioHTML}</div><script>window.onload = function() { setTimeout(() => { window.print(); window.close(); }, 1500); };<\/script></body></html>`);
+            printWindow.document.close();
+            setTimeout(() => { loader.classList.add('hidden'); showToast("تم تصدير محفظة التميز بنجاح 🎓"); }, 2000);
+        }
+
+        // --- تعديل وظيفة التعبئة التلقائية لتشمل الأهداف المهنية ---
+        function updateRelatedElements() { 
+            const cat = document.getElementById('categorySelect').value; 
+            const target = document.getElementById('relatedElement'); 
+            const mainGoal = document.getElementById('mainGoal'); 
+            const mapping = { 
+                "واجبات": { el: "الالتزام التام بالأنظمة واللوائح والتعاميم الصادرة من الوزارة وتطبيقها في الممارسات اليومية.", main: "تحقيق أعلى معايير الانضباط المهني والالتزام الوظيفي والقيام بكافة المهام الموكلة بدقة." },
+                "تطوير": { el: "المساهمة في البرامج والمجتمعات المهنية للتطوير المستمر وتبادل الخبرات مع الزملاء.", main: "رفع الكفاءة المهنية ومواكبة المستجدات التربوية لتحسين جودة العملية التعليمية." },
+                "أولياء": { el: "بناء جسور التواصل الفعال مع أسر الطلاب لإشراكهم في العملية التعليمية ودعم مستويات أبنائهم.", main: "تمكين الأسرة كشريك استراتيجي في دعم المسيرة التعليمية ومعالجة جوانب القصور لدى الطلاب." },
+                "استراتيجيات": { el: "تطبيق أساليب تدريس حديثة ومتنوعة تضمن مشاركة كافة الطلاب وتراعي الفروق الفردية.", main: "تحقيق الشمولية والفاعلية في التدريس عبر تنويع استراتيجيات التعلم النشط والتدريس المتمايز." },
+                "نتائج": { el: "رفع المستوى التحصيلي للطلاب في المواد الدراسية وتحقيق نواتج تعلم متميزة.", main: "تجويد مخرجات التعلم ورفع متوسط درجات الطلاب وتقليل الفجوات التعليمية." },
+                "خطة_تعلم": { el: "بناء وتطوير الخطط الدراسية والتحضير اليومي بما يتوافق مع معايير المنهج ونواتج التعلم.", main: "التخطيط الفعال والمبكر لضمان تنفيذ المنهج الدراسي بجودة عالية وتضمين مهارات التفكير." },
+                "تقنيات": { el: "دمج الأدوات التقنية الحديثة والوسائل الرقمية في الممارسات التدريسية لدعم تعلم الطلاب.", main: "الارتقاء بالعملية التعليمية عبر التوظيف الفعال للتقنية وتدريب الطلاب على استخدامها." },
+                "بيئة": { el: "تحسين مرافق الفصل وتوفير بيئة فيزيائية ونفسية جاذبة ومحفزة للطلاب.", main: "خلق بيئة تعلم مثالية، آمنة ومحفزة للإبداع والنمو المتكامل وتهيئة الطلاب ذهنياً." },
+                "إدارة": { el: "القيادة الفعالة للفصل الدراسي وضمان انضباط الطلاب واستثمار وقت الحصة.", main: "تفعيل مهارات الإدارة الصفية لضمان بيئة تعليمية منظمة ومنتجة ومعالجة السلوكيات بمهنية." },
+                "تحليل": { el: "استخدام بيانات التقييم لتشخيص الفجوات وبناء خطط التحسين والدعم الفردية.", main: "توظيف نتائج المتعلمين في بناء خطط علاجية وإثرائية مبنية على تحليل دقيق للمستويات." },
+                "تقويم": { el: "ابتكار أدوات تقويم متنوعة وشاملة (قبلية، تكوينية، ختامية) لقياس تقدم المتعلمين.", main: "تحقيق العدالة والموضوعية في قياس نواتج التعلم عبر تنوع أساليب وأدوات التقويم." },
+                "وطنية": { el: "تعزيز قيم المواطنة والولاء والانتماء عبر الأنشطة والبرامج والاحتفالات الوطنية.", main: "غرس قيم المواطنة الصالحة وتعزيز الهوية الوطنية السعودية في نفوس المجتمع المدرسي." }
+            }; 
+            if (mapping[cat]) { 
+                target.innerText = mapping[cat].el; 
+                mainGoal.innerText = mapping[cat].main; 
+                // تعبئة الأهداف تلقائياً من مكتبة الأهداف المهنية (الجديدة)
+                const goals = SUPPORT_GOALS_LIBRARY[cat] || []; 
+                for (let i = 0; i < 5; i++) { 
+                    const goalEl = document.getElementById(`subGoal-${i}`); 
+                    if (goalEl) goalEl.innerText = goals[i] || ""; 
+                } 
+            } else {
+                target.innerText = "اختر المجال ليتم التعبئة...";
+                mainGoal.innerText = "";
+                for (let i = 0; i < 5; i++) { 
+                    const goalEl = document.getElementById(`subGoal-${i}`); 
+                    if (goalEl) goalEl.innerText = ""; 
+                }
+            }
+        }
+
+        // دالة لمزامنة اليوم مع التاريخ المختار
+        function syncDayFromDate() {
+            const dateSelect = document.getElementById('dateInputHeader');
+            const daySelect = document.getElementById('daySelectHeader');
+            const selectedOption = dateSelect.options[dateSelect.selectedIndex];
+            // استرجاع معامل اليوم المخزن في خيار التاريخ
+            const dayIndex = selectedOption.getAttribute('data-day');
+            if (dayIndex !== null) {
+                // تحديث قائمة اليوم بناءً على التاريخ
+                daySelect.selectedIndex = parseInt(dayIndex);
+            }
+        }
+
+        // دالة فتح الأهداف السحرية الأصلية
+        function openMagicGoals(index) { 
+            activeGoalIndex = index; 
+            const category = document.getElementById('categorySelect').value; 
+            const container = document.getElementById('magic-goals-list'); 
+            if (!category) return showToast("اختر المجال أولاً ⚠️"); 
+            container.innerHTML = ""; 
+            (SMART_GOALS_LIBRARY[category] || []).forEach(goalText => { 
+                const btn = document.createElement('div'); 
+                btn.className = "p-4 bg-slate-50 border rounded-2xl cursor-pointer hover:bg-teal-50 text-xs font-bold leading-relaxed"; 
+                btn.innerText = goalText; 
+                btn.onclick = () => { 
+                    document.getElementById(`subGoal-${activeGoalIndex}`).innerText = goalText; 
+                    closeMagicGoals(); 
+                    updateReportProgress();
+                }; 
+                container.appendChild(btn); 
+            }); 
+            document.getElementById('magic-goals-modal').style.display = 'flex'; 
+        }
+        function closeMagicGoals() { document.getElementById('magic-goals-modal').style.display = 'none'; }
+
+        // دالة فتح نافذة الأهداف المهنية
+        function openSupportGoals(index) {
+            activeGoalIndex = index;
+            const category = document.getElementById('categorySelect').value;
+            const container = document.getElementById('support-goals-list');
+            if (!category) return showToast("اختر المجال أولاً ⚠️");
+            container.innerHTML = "";
+            (SUPPORT_GOALS_LIBRARY[category] || []).forEach(goalText => {
+                const btn = document.createElement('div');
+                btn.className = "p-4 bg-slate-50 border rounded-2xl cursor-pointer hover:bg-blue-50 text-xs font-bold leading-relaxed";
+                btn.innerText = goalText;
+                btn.onclick = () => {
+                    document.getElementById(`subGoal-${activeGoalIndex}`).innerText = goalText;
+                    closeSupportGoals();
+                    updateReportProgress();
+                };
+                container.appendChild(btn);
+            });
+            document.getElementById('support-goals-modal').style.display = 'flex';
+        }
+        function closeSupportGoals() { document.getElementById('support-goals-modal').style.display = 'none'; }
+
+        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+        function preparePrint() { window.print(); }
+        
+        function resetFormOnly() { 
+            document.querySelectorAll('.editable-cell').forEach(c => { if (!c.id.startsWith('field_region') && !c.id.startsWith('field_school')) { c.innerText = ""; } });
+            document.getElementById('categorySelect').value = ""; 
+            document.getElementById('relatedElement').innerText = "اختر المجال ليتم التعبئة..."; 
+            document.getElementById('mainGoal').innerText = "";
+            document.querySelectorAll('[id^="del-btn-"]').forEach(btn => btn.click());
+            clearSignature(null); clearStamp(null);
+            updateReportProgress();
+        }
+
+        function setupDateDropdown() { 
+            const ds = document.getElementById('dateInputHeader'); 
+            const fmt = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-uma', { day: 'numeric', month: 'long', year: 'numeric' }); 
+            let d = new Date(2025, 0, 1); 
+            for(let i=0; i<2000; i++) { 
+                const o = document.createElement('option'); 
+                o.text = fmt.format(d); 
+                // تخزين معامل اليوم (0=الأحد، 1=الأثنين... 6=السبت) لغرض المزامنة
+                o.setAttribute('data-day', d.getDay());
+                ds.add(o); d.setDate(d.getDate() + 1); 
+            } 
+            const todayStr = fmt.format(new Date()); 
+            for (let i = 0; i < ds.options.length; i++) { 
+                if (ds.options[i].text === todayStr) { 
+                    ds.selectedIndex = i; 
+                    break; 
+                } 
+            } 
+            // تشغيل المزامنة لأول مرة عند التحميل لضبط اليوم الحالي
+            syncDayFromDate();
+        }
+
+        function openSelectionModal(id) { currentUploadId = id; document.getElementById('selection-modal').style.display = 'flex'; }
+        function closeSelectionModal() { document.getElementById('selection-modal').style.display = 'none'; }
+        
+        function triggerCameraUpload() { closeSelectionModal(); document.getElementById('cameraInput').click(); }
+        function triggerImageUpload() { closeSelectionModal(); document.getElementById('imageInput').click(); }
+        function triggerFileUpload() { closeSelectionModal(); document.getElementById('fileInput').click(); }
+        function triggerLinkInput() { closeSelectionModal(); document.getElementById('link-url-input').value = ""; document.getElementById('link-input-modal').style.display = 'flex'; }
+        function closeLinkModal() { document.getElementById('link-input-modal').style.display = 'none'; }
+        
+        function handleCameraSelection(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader(); reader.onload = e => renderEvidenceBox(currentUploadId, 'image', e.target.result);
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageSelection(event) { 
+            const file = event.target.files[0]; if(!file) return; 
+            const reader = new FileReader(); reader.onload = e => renderEvidenceBox(currentUploadId, 'image', e.target.result); 
+            reader.readAsDataURL(file); 
+        }
+
+        function handleFileSelection(event) { 
+            const file = event.target.files[0]; if(!file) return; 
+            renderEvidenceBox(currentUploadId, 'file', file.name); 
+        }
+
+        function saveEvidenceLink() { 
+            let url = document.getElementById('link-url-input').value.trim(); if (!url) return; 
+            if (!url.startsWith('http')) url = 'https://' + url; 
+            renderEvidenceBox(currentUploadId, 'link', url); closeLinkModal(); 
+        }
+
+        function renderEvidenceBox(id, type, data) { 
+            const contentDiv = document.getElementById(`content-${id}`); 
+            const box = document.getElementById(`box-${id}`); 
+            const delBtn = document.getElementById(`del-btn-${id}`); 
+            if (type === 'image') contentDiv.innerHTML = `<img src="${data}" class="w-full h-full object-contain">`; 
+            else if (type === 'file') contentDiv.innerHTML = `<div class="flex flex-col items-center p-4"><svg class="w-12 h-12 text-[var(--primary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.707 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span class="text-[10px] font-bold text-slate-600 truncate w-full px-2">${data}</span></div>`; 
+            else if (type === 'link') contentDiv.innerHTML = `<div class="flex flex-col items-center p-4"><svg class="w-12 h-12 text-[var(--primary)] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg><span class="text-[10px] font-bold text-teal-700 underline truncate w-full px-2">فتح الرابط</span></div>`; 
+            box.classList.add('has-content'); delBtn.classList.remove('hidden'); 
+        }
+
+        function clearEvidence(e, id) { 
+            if(e) e.stopPropagation(); 
+            const contentDiv = document.getElementById(`content-${id}`); 
+            const box = document.getElementById(`box-${id}`); 
+            const delBtn = document.getElementById(`del-btn-${id}`); 
+            contentDiv.innerHTML = `<svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"></path></svg><span class="text-[10px] font-bold mt-2">إضافة شاهد ${id}</span>`; 
+            box.classList.remove('has-content'); delBtn.classList.add('hidden'); 
+        }
+
+        function triggerSignatureUpload() { document.getElementById('signatureInput').click(); }
+        function triggerStampUpload() { document.getElementById('stampInput').click(); }
+
+        function handleSignatureSelection(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader(); reader.onload = e => {
+                document.getElementById('sig-display').innerHTML = `<img src="${e.target.result}">`;
+                document.getElementById('sig-placeholder').style.display = 'none';
+                document.getElementById('del-btn-sig').classList.remove('hidden');
+                document.getElementById('sig-box').style.cursor = 'default';
+            }; reader.readAsDataURL(file);
+        }
+
+        function handleStampSelection(event) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader(); reader.onload = e => {
+                document.getElementById('stamp-display').innerHTML = `<img src="${e.target.result}">`;
+                document.getElementById('stamp-placeholder').style.display = 'none';
+                document.getElementById('del-btn-stamp').classList.remove('hidden');
+                document.getElementById('stamp-box').style.cursor = 'default';
+            }; reader.readAsDataURL(file);
+        }
+
+        function clearSignature(e) { if(e) e.stopPropagation(); document.getElementById('sig-display').innerHTML = ""; document.getElementById('sig-placeholder').style.display = 'flex'; document.getElementById('del-btn-sig').classList.add('hidden'); document.getElementById('sig-box').style.cursor = 'pointer'; document.getElementById('signatureInput').value = ""; }
+        function clearStamp(e) { if(e) e.stopPropagation(); document.getElementById('stamp-display').innerHTML = ""; document.getElementById('stamp-placeholder').style.display = 'flex'; document.getElementById('del-btn-stamp').classList.add('hidden'); document.getElementById('stamp-box').style.cursor = 'pointer'; document.getElementById('stampInput').value = ""; }
+
+        function triggerImportArchive() { document.getElementById('importArchiveInput').click(); }
+        function handleImportArchive(event) { 
+            const file = event.target.files[0]; if (!file) return; 
+            const reader = new FileReader(); reader.onload = e => { 
+                try { 
+                    const data = JSON.parse(e.target.result); if (!data.reports) throw new Error(); 
+                    localStorage.setItem('reports_archive', JSON.stringify(data.reports)); 
+                    if (data.goals) localStorage.setItem('category_goals', JSON.stringify(data.goals)); 
+                    showToast("تم استيراد الأرشيف ✅"); renderArchiveFolders(); 
+                } catch(err) { showToast("ملف غير صالح ❌"); } 
+            }; reader.readAsText(file); 
+        }
+
+        function exportFullArchive() { 
+            const data = { reports: JSON.parse(localStorage.getItem('reports_archive') || '[]'), goals: JSON.parse(localStorage.getItem('category_goals') || '{}') }; 
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); 
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); 
+            a.href = url; a.download = `archive_${Date.now()}.json`; a.click(); 
+        }
+
+        window.onload = function () { 
+            loadSavedTheme();
+            document.getElementById('device-id-value').innerText = getDeviceId(); 
+            if (localStorage.getItem('app_activated') === 'true') showWelcomeGate(); 
+            setupDateDropdown(); 
+            const ben = document.getElementById('beneficiariesSelect'); 
+            if (ben) { for(let i=1; i<=400; i++) { const opt = document.createElement('option'); opt.text = i; opt.value = i; ben.add(opt); } } 
+            setTimeout(checkPendingReminders, 2000);
+        };
+    </script>
+</body>
+</html>
