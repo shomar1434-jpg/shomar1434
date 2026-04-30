@@ -30,6 +30,17 @@
             --archive-border: #ccfbf1;
         }
 
+        /* حماية البيئة من التحديث بالسحب ووضعية اللمس العشوائي */
+        html, body {
+            overscroll-behavior-y: none; /* منع السحب للتحديث في كروم وأندرويد */
+            touch-action: pan-x pan-y; /* منع التكبير العشوائي والإيماءات المركبة */
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            height: 100%;
+            width: 100%;
+        }
+
         /* --- تأثيرات حركية خفيفة للتنقل بين الأقسام --- */
         #welcome-dashboard, #archive-view, #stats-view, #main-report-app, #welcome-gate, #activation-overlay {
             animation: sectionAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -51,14 +62,6 @@
             -webkit-box-sizing: border-box;
             -moz-box-sizing: border-box;
             box-sizing: border-box;
-        }
-
-        html, body {
-            -webkit-text-size-adjust: 100%; /* منع المتصفح من تغيير حجم الخط تلقائياً */
-            -ms-text-size-adjust: 100%;
-            -webkit-tap-highlight-color: transparent; /* إزالة اللون الأزرق عند النقر في آيفون */
-            height: 100%;
-            width: 100%;
         }
 
         .global-app-bg {
@@ -102,7 +105,7 @@
             width: 210mm; height: 296.8mm; padding: 7mm; margin: 20px auto; background: white;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; box-sizing: border-box;
             display: flex; flex-direction: column; overflow: hidden; border-radius: 35px;
-            page-break-inside: avoid; page-break-after: always;
+            page-break-inside: avoid;
         }
 
         /* تعديل العرض للشاشات الصغيرة لضمان الرؤية دون كسر التنسيق المخصص للطباعة */
@@ -169,10 +172,12 @@
 
         @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+        /* --- تعديلات الطباعة لضمان صفحتين فقط ومنع الصفحات الفارغة --- */
         @media print {
             @page { size: A4; margin: 0; }
             .no-print, #toast, #activation-overlay, nav, button, .magic-goal-btn, .support-goal-btn, .progress-top-bar { display: none !important; }
-            body { background: white !important; padding: 0 !important; margin: 0 !important; animation: none !important; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; animation: none !important; height: auto !important; }
+            
             .page-container { 
                 margin: 0 !important; 
                 box-shadow: none !important; 
@@ -183,7 +188,14 @@
                 border: none !important;
                 display: flex !important;
                 animation: none !important;
+                overflow: hidden !important; /* منع التمدد الزائد */
             }
+
+            /* الالتزام بصفحتين فقط ومنع صفحة ثالثة فارغة */
+            #page1 { page-break-after: always !important; }
+            #page2 { page-break-after: avoid !important; }
+            .page-container:nth-child(n+3) { display: none !important; } /* حظر أي صفحة إضافية برمجياً */
+
             .border-double-frame { border: 2px solid var(--primary) !important; }
             .header-section { border: 1.5px solid var(--archive-border) !important; background-color: var(--archive-bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .evidence-box { border: 1.5px solid #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1045,7 +1057,7 @@
             <h3 class="text-lg font-bold mb-6 text-slate-800">إضافة شاهد</h3>
             <div class="grid grid-cols-2 gap-3">
                 <button onclick="triggerCameraUpload()" class="evidence-option-btn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812-1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>كاميرا</span>
                 </button>
                 <button onclick="triggerImageUpload()" class="evidence-option-btn">
@@ -1287,7 +1299,7 @@
             ],
             "استراتيجيات": [
                 "ملاءمة الاستراتيجية: تطبيق استراتيجيات تدريس (كالتعلم النشط) بما يتناسب مع طبيعة الدرس وااحتياجات الموقف التعليمي.",
-                "تلبية الفروق الفردية: تنفيذ أساليب تدريس تراعي ميول واحتياجات المتعلمين المختلفة لضمان شمولية التعلم لجميع المستويات.",
+                "تلبية الفروق الفردية: تنفيذ أساليب تدريس تراعي ميول وااحتياجات المتعلمين المختلفة لضمان شمولية التعلم لجميع المستويات.",
                 "تحفيز الإبداع: استخدام استراتيجيات تعزز التفكير الناقد والعصف الذهني لتحفيز الابتكار لدى الطلاب.",
                 "تنمية التواصل: تفعيل استراتيجيات الحوار والمناقشة لتمكين المتعلمين من مهارات التعبير عن الرأي."
             ],
@@ -1566,7 +1578,23 @@
         function showWelcomeGate() { document.getElementById('activation-overlay').style.display = 'none'; document.getElementById('welcome-gate').style.display = 'flex'; }
         function enterApp() { document.getElementById('welcome-gate').style.display = 'none'; document.getElementById('welcome-dashboard').style.display = 'block'; }
         function exitApp() { document.getElementById('exit-modal').style.display = 'flex'; }
-        function confirmExit(saved) { if (saved) { location.reload(); } else { saveReportToArchive(); setTimeout(() => location.reload(), 1000); } }
+        
+        /** * وظيفة الخروج الفعلي والمحمي 
+         */
+        function confirmExit(saved) { 
+            if (saved) { 
+                // تحرير قيد المغادرة قبل إعادة التحميل
+                window.onbeforeunload = null;
+                location.reload(); 
+            } else { 
+                saveReportToArchive(); 
+                setTimeout(() => {
+                    window.onbeforeunload = null;
+                    location.reload();
+                }, 1000); 
+            } 
+        }
+
         function startNewReport() { resetFormOnly(); currentEditingId = null; document.getElementById('welcome-dashboard').style.display = 'none'; document.getElementById('main-report-app').classList.remove('hidden'); updateReportProgress(); }
         function goHome() { document.getElementById('main-report-app').classList.add('hidden'); document.getElementById('welcome-dashboard').style.display = 'block'; }
         
@@ -2030,8 +2058,34 @@
             a.href = url; a.download = `archive_${Date.now()}.json`; a.click(); 
         }
 
+        /** * طبقة الحماية القصوى: منع التحديث والإغلاق العشوائي 
+         */
+        function setupSecurityGuardrails() {
+            // 1. منع تحديث الصفحة عبر الاختصارات (F5, Ctrl+R, Cmd+R)
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.metaKey && e.key === 'r')) {
+                    e.preventDefault();
+                    console.log("تم حظر محاولة تحديث الصفحة.");
+                }
+            });
+
+            // 2. منع إغلاق الصفحة أو التحديث العرضي (BeforeUnload)
+            window.onbeforeunload = function() {
+                return "هل أنت متأكد من رغبتك في مغادرة التطبيق؟ قد تفقد البيانات غير المحفوظة.";
+            };
+
+            // 3. تحسين اللمس ومنع الإيماءات المسببة للمشاكل (مثل السحب للتحديث في iOS)
+            document.addEventListener('touchmove', function (e) {
+                if (e.touches.length > 1) {
+                    // منع الزوم بالأصابع إذا كان يسبب أخطاء في العرض
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+
         window.onload = function () { 
             loadSavedTheme();
+            setupSecurityGuardrails(); // تفعيل الحماية فور التحميل
             document.getElementById('device-id-value').innerText = getDeviceId(); 
             if (localStorage.getItem('app_activated') === 'true') showWelcomeGate(); 
             setupDateDropdown(); 
