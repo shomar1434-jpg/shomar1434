@@ -1079,7 +1079,7 @@
                     <span>ملف</span>
                 </button>
                 <button onclick="triggerLinkInput()" class="evidence-option-btn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     <span>رابط</span>
                 </button>
             </div>
@@ -1640,6 +1640,7 @@
             if (bar) bar.style.width = percentage + "%";
         }
 
+        // --- تعديل وظيفة الحفظ السحابي لتشمل التاريخ التفاعلي وتاريخ الإعداد ---
         function saveReportToArchive() { 
             const reports = JSON.parse(localStorage.getItem('reports_archive') || '[]'); 
             const cat = document.getElementById('categorySelect').value; 
@@ -1647,11 +1648,17 @@
             
             const completion = checkReportCompletionStatus();
             
+            // التاريخ المختار داخل التقرير
+            const reportSelectedDate = document.getElementById('dateInputHeader').value;
+            // تاريخ يوم الإعداد الفعلي (ثابت للأرشيف)
+            const preparationDateStr = new Date().toLocaleDateString('ar-SA');
+            
             const data = { 
                 id: currentEditingId || Date.now(), 
                 title: document.getElementById('field_prog_name').innerText || 'تقرير جديد', 
                 category: cat, 
-                date: new Date().toLocaleDateString('ar-SA'), 
+                reportDate: reportSelectedDate, // التاريخ المتغير المكتوب بالتقرير
+                date: preparationDateStr, // تاريخ يوم الإعداد الفعلي ليظهر في الأرشيف
                 content: document.getElementById('report-content-container').innerHTML,
                 isComplete: completion.isComplete,
                 saveTimestamp: Date.now()
@@ -1665,7 +1672,7 @@
                 currentEditingId = data.id; 
             } 
             localStorage.setItem('reports_archive', JSON.stringify(reports)); 
-            showToast("تم الحفظ في الأرشيف ✅"); 
+            showToast("تم الحفظ في الأرشيف السحابي ✅"); 
         }
 
         function checkPendingReminders() {
@@ -1712,6 +1719,7 @@
             container.appendChild(grid); 
         }
 
+        // --- تعديل عرض الأرشيف ليظهر "يوم الإعداد" الفعلي ---
         function openArchiveFolder(catId) { 
             currentArchiveViewCatId = catId; 
             const cat = ALL_CATEGORIES.find(c => c.id === catId); 
@@ -1731,7 +1739,8 @@
             catReports.reverse().forEach(report => { 
                 const item = document.createElement('div'); 
                 item.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-all archive-item-card"; 
-                item.innerHTML = `<div><h4 class="font-bold text-slate-700 text-sm report-title">${report.title}</h4><p class="text-[10px] text-slate-400 font-bold">${report.date} ${report.isComplete ? '✅' : '⏳'}</p></div><div class="flex gap-2"><button onclick="editReport(${report.id})" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">فتح</button><button onclick="requestDeleteReport(${report.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">حذف</button></div>`; 
+                // يظهر هنا "تاريخ الإعداد" الفعلي في قائمة الأرشيف
+                item.innerHTML = `<div><h4 class="font-bold text-slate-700 text-sm report-title">${report.title}</h4><p class="text-[10px] text-teal-600 font-bold">تاريخ الإعداد: ${report.date} ${report.isComplete ? '✅' : '⏳'}</p></div><div class="flex gap-2"><button onclick="editReport(${report.id})" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">فتح</button><button onclick="requestDeleteReport(${report.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">حذف</button></div>`; 
                 list.appendChild(item); 
             }); 
             container.appendChild(list); 
@@ -1755,7 +1764,7 @@
                     const cat = ALL_CATEGORIES.find(c => c.id === report.category);
                     const item = document.createElement('div');
                     item.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-all archive-item-card";
-                    item.innerHTML = `<div><h4 class="font-bold text-slate-700 text-sm report-title">${report.title}</h4><p class="text-[10px] text-slate-400 font-bold">${report.date} | ${cat ? cat.name : ''} ${report.isComplete ? '✅' : '⏳'}</p></div><div class="flex gap-2"><button onclick="editReport(${report.id})" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">فتح</button><button onclick="requestDeleteReport(${report.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">حذف</button></div>`; 
+                    item.innerHTML = `<div><h4 class="font-bold text-slate-700 text-sm report-title">${report.title}</h4><p class="text-[10px] text-teal-600 font-bold">الإعداد: ${report.date} | ${cat ? cat.name : ''} ${report.isComplete ? '✅' : '⏳'}</p></div><div class="flex gap-2"><button onclick="editReport(${report.id})" class="bg-teal-600 text-white px-4 py-2 rounded-xl text-[10px] font-bold">فتح</button><button onclick="requestDeleteReport(${report.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold">حذف</button></div>`; 
                     list.appendChild(item);
                 });
                 container.appendChild(list);
@@ -1769,6 +1778,9 @@
                 document.getElementById('report-content-container').innerHTML = report.content; 
                 currentEditingId = id; 
                 if(report.category) document.getElementById('categorySelect').value = report.category; 
+                // إعادة تعيين القيمة المنسدلة للتاريخ إذا وجدت
+                if(report.reportDate) document.getElementById('dateInputHeader').value = report.reportDate;
+                
                 document.getElementById('archive-view').style.display = 'none'; 
                 document.getElementById('main-report-app').classList.remove('hidden'); 
                 updateReportProgress();
@@ -1837,7 +1849,6 @@
             setTimeout(() => { loader.classList.add('hidden'); showToast("تم تصدير محفظة التميز بنجاح 🎓"); }, 2000);
         }
 
-        // --- تعديل وظيفة التعبئة التلقائية لتشمل الأهداف المهنية ---
         function updateRelatedElements() { 
             const cat = document.getElementById('categorySelect').value; 
             const target = document.getElementById('relatedElement'); 
@@ -1859,7 +1870,6 @@
             if (mapping[cat]) { 
                 target.innerText = mapping[cat].el; 
                 mainGoal.innerText = mapping[cat].main; 
-                // تعبئة الأهداف تلقائياً من مكتبة الأهداف المهنية (الجديدة)
                 const goals = SUPPORT_GOALS_LIBRARY[cat] || []; 
                 for (let i = 0; i < 5; i++) { 
                     const goalEl = document.getElementById(`subGoal-${i}`); 
@@ -1875,20 +1885,16 @@
             }
         }
 
-        // دالة لمزامنة اليوم مع التاريخ المختار
         function syncDayFromDate() {
             const dateSelect = document.getElementById('dateInputHeader');
             const daySelect = document.getElementById('daySelectHeader');
             const selectedOption = dateSelect.options[dateSelect.selectedIndex];
-            // استرجاع معامل اليوم المخزن في خيار التاريخ
             const dayIndex = selectedOption.getAttribute('data-day');
             if (dayIndex !== null) {
-                // تحديث قائمة اليوم بناءً على التاريخ
                 daySelect.selectedIndex = parseInt(dayIndex);
             }
         }
 
-        // دالة فتح الأهداف السحرية الأصلية
         function openMagicGoals(index) { 
             activeGoalIndex = index; 
             const category = document.getElementById('categorySelect').value; 
@@ -1910,7 +1916,6 @@
         }
         function closeMagicGoals() { document.getElementById('magic-goals-modal').style.display = 'none'; }
 
-        // دالة فتح نافذة الأهداف المهنية
         function openSupportGoals(index) {
             activeGoalIndex = index;
             const category = document.getElementById('categorySelect').value;
@@ -1942,24 +1947,31 @@
             document.getElementById('mainGoal').innerText = "";
             document.querySelectorAll('[id^="del-btn-"]').forEach(btn => btn.click());
             clearSignature(null); clearStamp(null);
-            
-            // تطبيق الإعدادات المخصصة بعد التصفير
             applyPersistentSettingsToReport();
-            
             updateReportProgress();
         }
 
+        // --- تعديل إنشاء قائمة التاريخ لتكون ديناميكية ومتفاعلة مع اليوم الحالي ---
         function setupDateDropdown() { 
             const ds = document.getElementById('dateInputHeader'); 
             const fmt = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-uma', { day: 'numeric', month: 'long', year: 'numeric' }); 
-            let d = new Date(2025, 0, 1); 
-            for(let i=0; i<2000; i++) { 
+            
+            // جعل التاريخ يبدأ من سنتين قبل التاريخ الحالي
+            const currentYear = new Date().getFullYear();
+            let d = new Date(currentYear - 2, 0, 1); 
+            
+            ds.innerHTML = ""; // تصفير القائمة
+            
+            // توليد 2500 يوم (حوالي 7 سنوات) لضمان عدم التوقف عند نهاية العام
+            for(let i=0; i<2500; i++) { 
                 const o = document.createElement('option'); 
                 o.text = fmt.format(d); 
-                // تخزين معامل اليوم (0=الأحد، 1=الأثنين... 6=السبت) لغرض المزامنة
+                o.value = fmt.format(d); // حفظ القيمة النصية لضمان الاسترجاع
                 o.setAttribute('data-day', d.getDay());
                 ds.add(o); d.setDate(d.getDate() + 1); 
             } 
+            
+            // التحديد التلقائي لليوم الحالي
             const todayStr = fmt.format(new Date()); 
             for (let i = 0; i < ds.options.length; i++) { 
                 if (ds.options[i].text === todayStr) { 
@@ -1967,7 +1979,6 @@
                     break; 
                 } 
             } 
-            // تشغيل المزامنة لأول مرة عند التحميل لضبط اليوم الحالي
             syncDayFromDate();
         }
 
@@ -2068,26 +2079,17 @@
             a.href = url; a.download = `archive_${Date.now()}.json`; a.click(); 
         }
 
-        /** * طبقة الحماية القصوى: منع التحديث والإغلاق العشوائي 
-         */
         function setupSecurityGuardrails() {
-            // 1. منع تحديث الصفحة عبر الاختصارات (F5, Ctrl+R, Cmd+R)
             window.addEventListener('keydown', function (e) {
                 if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.metaKey && e.key === 'r')) {
                     e.preventDefault();
-                    console.log("تم حظر محاولة تحديث الصفحة.");
                 }
             });
-
-            // 2. منع إغلاق الصفحة أو التحديث العرضي (BeforeUnload)
             window.onbeforeunload = function() {
                 return "هل أنت متأكد من رغبتك في مغادرة التطبيق؟ قد تفقد البيانات غير المحفوظة.";
             };
-
-            // 3. تحسين اللمس ومنع الإيماءات المسببة للمشاكل (مثل السحب للتحديث في iOS)
             document.addEventListener('touchmove', function (e) {
                 if (e.touches.length > 1) {
-                    // منع الزوم بالأصابع إذا كان يسبب أخطاء في العرض
                     e.preventDefault();
                 }
             }, { passive: false });
@@ -2095,7 +2097,7 @@
 
         window.onload = function () { 
             loadSavedTheme();
-            setupSecurityGuardrails(); // تفعيل الحماية فور التحميل
+            setupSecurityGuardrails(); 
             document.getElementById('device-id-value').innerText = getDeviceId(); 
             if (localStorage.getItem('app_activated') === 'true') showWelcomeGate(); 
             setupDateDropdown(); 
