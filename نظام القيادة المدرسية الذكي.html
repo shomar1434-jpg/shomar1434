@@ -278,9 +278,8 @@
 
         @keyframes continuousTicker {
             0% { transform: translateX(0); }
-            100% { transform: translateX(calc(100% / 2)); } /* نكرر المحتوى مرتين لسلاسة الحركة */
+            100% { transform: translateX(calc(100% / 2)); } 
         }
-        /* لتفعيل الحركة في اتجاه الـ RTL */
         [dir="rtl"] @keyframes continuousTicker {
             0% { transform: translateX(0); }
             100% { transform: translateX(calc(100% / 2)); } 
@@ -491,7 +490,10 @@
                             <p>اليوم / <select id="daySelectHeader" class="bg-transparent font-bold" onchange="updateReportProgress()">
                                 <option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option><option>الجمعة</option><option>السبت</option>
                             </select></p>
-                            <p>التاريخ / <select id="dateInputHeader" class="bg-transparent font-bold" onchange="syncDayFromDate(); updateReportProgress();"></select></p>
+                            <!-- التاريخ كقائمة منسدلة حرة -->
+                            <p class="relative">التاريخ / 
+                                <select id="dateInputHeader" class="bg-transparent font-bold" onchange="syncDayFromDate(); updateReportProgress();"></select>
+                            </p>
                         </div>
                     </header>
                     
@@ -590,10 +592,10 @@
                         <div>
                             <h3 class="font-bold text-base mt-8 mb-8 text-[var(--primary)] text-center">رابعاً : شواهد التنفيذ والتوثيق</h3>
                             <div class="evidence-grid">
-                                <div class="evidence-box" id="box-1" onclick="openSelectionModal(1)"><div id="content-1" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print hidden" id="del-btn-1" onclick="clearEvidence(event, 1)">✕</div></div>
-                                <div class="evidence-box" id="box-2" onclick="openSelectionModal(2)"><div id="content-2" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print hidden" id="del-btn-2" onclick="clearEvidence(event, 2)">✕</div></div>
-                                <div class="evidence-box" id="box-3" onclick="openSelectionModal(3)"><div id="content-3" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print hidden" id="del-btn-3" onclick="clearEvidence(event, 3)">✕</div></div>
-                                <div class="evidence-box" id="box-4" onclick="openSelectionModal(4)"><div id="content-4" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print hidden" id="del-btn-4" onclick="clearEvidence(event, 4)">✕</div></div>
+                                <div class="evidence-box" id="box-1" onclick="openSelectionModal(1)"><div id="content-1" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-1" onclick="clearEvidence(event, 1)">✕</div></div>
+                                <div class="evidence-box" id="box-2" onclick="openSelectionModal(2)"><div id="content-2" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-2" onclick="clearEvidence(event, 2)">✕</div></div>
+                                <div class="evidence-box" id="box-3" onclick="openSelectionModal(3)"><div id="content-3" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-3" onclick="clearEvidence(event, 3)">✕</div></div>
+                                <div class="evidence-box" id="box-4" onclick="openSelectionModal(4)"><div id="content-4" class="text-slate-300 no-print">+ إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-4" onclick="clearEvidence(event, 4)">✕</div></div>
                             </div>
                         </div>
                         <footer class="mt-8 pb-4">
@@ -641,7 +643,6 @@
         </div>
     </div>
 
-    <!-- نافذة تفاصيل العنصر الجديدة -->
     <div id="element-detail-modal" class="no-print">
         <div class="modal-content text-center !max-w-[480px]">
             <div class="flex justify-between items-center mb-6">
@@ -749,17 +750,17 @@
             "2": { name: "التفاعل مع المجتمع المهني", profGoal: "بناء علاقات تعاونية مثمرة مع الزملاء والجهات التعليمية.", genGoal: "المشاركة الفاعلة في الاجتماعات وتبادل الخبرات مع القيادات التربوية.", selfEval: "القيادة المدرسية", allGoals: ["حضور جميع اجتماعات مكتب التعليم واللقاءات التربوية.", "تنظيم لقاء شهري لمنسوبي المدرسة لتعزيز الترابط.", "المشاركة في عضوية اللجان التربوية المحلية.", "القيام بزيارات تبادلية مع مدارس متميزة سنوياً.", "المساهمة بأوراق عمل في الملتقيات القيادية.", "بناء شراكات مع مؤسسات الحي لخدمة الأهداف التعليمية.", "تفعيل التواصل المهني الرسمي عبر البريد الإلكتروني.", "المشاركة في المجتمعات المهنية الافتراضية المعتمدة.", "استضافة مديري مدارس آخرين لنقل التجارب الناجحة.", "نشر الممارسات الإدارية المتميزة في النشرات التربوية."] },
             "3": { name: "التفاعل مع أولياء الأمور", profGoal: "تعزيز الشراكة بين المدرسة والأسرة لدعم الطلاب.", genGoal: "تفعيل مجلس أولياء الأمور وتخصيص قنوات تواصل دورية.", selfEval: "القيادة المدرسية", allGoals: ["عقد لقاء فصلي موسع مع أولياء الأمور.", "تفعيل الرسائل نصية لإبلاغ الأهل بالمستجدات.", "تخصيص ساعة أسبوعية لاستقبال ملاحظات الأهل.", "قياس رضا أولياء الأمور عبر استبانات دورية.", "تنظيم برامج توعوية للأهل حول دعم الأبناء دراسياً.", "إشراك الأهل في تقديم ورش عمل مهنية للطلاب.", "إبلاغ ولي الأمر فوراً عند تكرار غياب الطالب.", "تكريم أولياء الأمور المتعاونين في حفل ختامي.", "إنشاء ركن توعوي لأولياء الأمور داخل المدرسة.", "الرد على استفسارات الأهل الرقمية في وقت قياسي."] },
             "4": { name: "مرونة تنفيذ الأعمال في الظروف المختلفة", profGoal: "التكيف مع التحديات الطارئة وضمان استمرارية العمل.", genGoal: "وضع خطط بديلة للأزمات والتعامل بحكمة مع التغييرات.", selfEval: "القيادة المدرسية", allGoals: ["إعداد خطة الطوارئ وتدريب المنسوبين عليها.", "الجاهزية التامة للتحول للتعليم عن بُعد عند الحاجة.", "تفويض المهام القيادية لضمان العمل عند غياب المدير.", "توفير بدائل تقنية عند تعطل الأنظمة الأساسية.", "إدارة الجدول المدرسي بمرونة عند نقص الكوادر.", "تخصيص ميزانية طوارئ للمستلزمات العاجلة.", "التعامل المنظم مع الحوادث المفاجئة داخل المدرسة.", "تعديل الخطط التشغيلية وفق المستجدات الوزارية.", "ابتكار حلول لمواجهة نقص الموارد المادية.", "تقييم أداء المدرسة بعد كل أزمة لتلافي القصور."] },
-            "5": { name: "دعم المبادرات النوعية", profGoal: "تحفيز الابتكار والتميز داخل البيئة المدرسية.", genGoal: "تبني مبادرة نوعية سنوياً وتكريم المبتكرين.", selfEval: "القيادة المدرسية", allGoals: ["تشكيل لجنة التميز والمبادرات بالمدرسة.", "استقبال مقترحات الطلاب والمعلمين عبر صندوق الابتكار.", "تنفيذ مبادرة 'المدرسة الخضراء' أو 'الذكية'.", "إطلاق مسابقة سنوية لأفضل مشروع تربوي.", "دعم المبادرات التطوعية الطلابية لخدمة الحي.", "تقديم حوافز مادية ومعنوية لأصحاب المبادرات.", "المشاركة في جوائز التميز الوطنية (مثل جائزة التعليم).", "توثيق خطوات تنفيذ المبادرات لضمان استمراريتها.", "تسليط الضوء على قصص النجاح في منصات التواصل.", "دراسة أثر المبادرات على سلوك وتحصيل الطلاب."] },
+            "5": { name: "دعم المبادرات النوعية", profGoal: "تحفيار الابتكار والتميز داخل البيئة المدرسية.", genGoal: "تبني مبادرة نوعية سنوياً وتكريم المبتكرين.", selfEval: "القيادة المدرسية", allGoals: ["تشكيل لجنة التميز والمبادرات بالمدرسة.", "استقبال مقترحات الطلاب والمعلمين عبر صندوق الابتكار.", "تنفيذ مبادرة 'المدرسة الخضراء' أو 'الذكية'.", "إطلاق مسابقة سنوية لأفضل مشروع تربوي.", "دعم المبادرات التطوعية الطلابية لخدمة الحي.", "تقديم حوافز مادية ومعنوية لأصحاب المبادرات.", "المشاركة في جوائز التميز الوطنية (مثل جائزة التعليم).", "توثيق خطوات تنفيذ المبادرات لضمان استمراريتها.", "تسليط الضوء على قصص النجاح في منصات التواصل.", "دراسة أثر المبادرات على سلوك وتحصيل الطلاب."] },
             "6": { name: "إجراءات الانضباط المدرسي", profGoal: "إيجاد بيئة مدرسية منضبطة تسودها الأنظمة.", genGoal: "تطبيق قواعد السلوك والمواظبة بعدالة وشفافية.", selfEval: "البيئة المدرسية", allGoals: ["تعريف الطلاب وأولياء الأمور بلائحة السلوك مطلع العام.", "تفعيل لجنة التوجيه الطلابي لمتابعة حالات الانضباط.", "رصد الغياب والتأخر الصباحي بدقة في نظام 'نور'.", "تنفيذ برامج وقائية للحد من السلوكيات السلبية.", "تطبيق الإجراءات العلاجية وفق اللائحة الرسمية دون محاباة.", "تكريم الفصول والطلاب الأكثر انضباطاً شهرياً.", "تفعيل دور المعلم في ضبط الصف وتعزيز القيم.", "مراقبة الممرات والساحات أثناء الفسح لضمان النظام.", "عقد اجتماعات دورية لمناقشة قضايا الانضباط المتكررة.", "تحليل إحصائيات الغياب لوضع خطط تقليل الفاقد التعليمي."] },
             "7": { name: "إدارة الموارد بكفاءة", profGoal: "الاستخدام الأمثل للموارد المادية والبشرية.", genGoal: "صيانة مرافق المدرسة وتوزيع المهام بإنصاف.", selfEval: "البيئة المدرسية", allGoals: ["إجراء جرد سنوي دقيق لعهد المدرسة وممتلكاتها.", "تفعيل الصيانة الدورية للمبنى والمرافق التعليمية.", "ترشيد استهلاك الكهرباء والمياه داخل المدرسة.", "توزيع العبء الدراسي بين المعلمين وفق الأنظمة.", "استثمار مرافق المدرسة بكفاءة عالية.", "تحديث تجهيزات الفصول الدراسية والوسائل التعليمية.", "إدارة الميزانية التشغيلية وصرفها في الأوجه الصحيحة.", "توفير بيئة عمل مريحة للمعلمين والإداريين.", "تدوير المهام الإدارية لاكتساب خبرات متنوعة.", "التخلص من الرجيع والعهدة التالفة بالطرق النظامية."] },
-            "8": { name: "إعداد خطة التطوير المهني", profGoal: "رفع كفاءة الأداء الشخصي لمواكبة المستجدات.", genGoal: "تحديد الاحتياجات التدريبية الشخصية والالتحاق ببرامج متقدمة.", selfEval: "القيادة المدرسية", allGoals: ["إجراء تقييم ذاتي لنقاط القوة والضعف في القيادة.", "التسجيل في 3 دورات قيادية متخصصة سنوياً على الأقل.", "قراءة ملخصات لأحدث الكتب في الإدارة التربوية.", "الحصول على شهادات مهنية معتمدة في القيادة المدرسية.", "تطبيق مهارات جديدة تم اكتسابها في التدريب ميدانياً.", "إعداد حقيبة تدريبية مصغرة لنقل الخبرة للمساعدين.", "حضور ورش العمل والمؤتمرات التعليمية الكبرى.", "ممارسة 'التعلم بالقرناء' مع مديري مدارس متميزين.", "تحديث الخطة التطويرية الشخصية بناءً على نتائج التقييم.", "قياس أثر التدريب على تحسن الأداء الإداري للمدرسة."] },
+            "8": { name: "إعداد خطة التطوير المهني", profGoal: "رفع كفاءة الأداء الشخصي لمواكبة المستجدات.", genGoal: "تحديد الاحتياجات التدريبية الشخصية والالتحاق ببرامج متقدمة.", selfEval: "القيادة المدرسية", allGoals: ["إجراء تقييم ذاتي لنقاط القوة والضعف في القيادة.", "التسجيل في 3 دورات قيادية متخصوية سنوياً على الأقل.", "قراءة ملخصات لأحدث الكتب في الإدارة التربوية.", "الحصول على شهادات مهنية معتمدة في القيادة المدرسية.", "تطبيق مهارات جديدة تم اكتسابها في التدريب ميدانياً.", "إعداد حقيبة تدريبية مصغرة لنقل الخبرة للمساعدين.", "حضور ورش العمل والمؤتمرات التعليمية الكبرى.", "ممارسة 'التعلم بالقرناء' مع مديري مدارس متميزين.", "تحديث الخطة التطويرية الشخصية بناءً على نتائج التقييم.", "قياس أثر التدريب على تحسن الأداء الإداري للمدرسة."] },
             "9": { name: "التغذية الراجعة ومتابعة مؤشرات الأداء", profGoal: "تجويد أداء العاملين عبر المتابعة المستمرة.", genGoal: "عقد جلسات توجيهية وتحليل نتائج أداء الموظفين.", selfEval: "التعليم و التعلم", allGoals: ["القيام بزيارات فنية دورية للمعلمين في الفصول.", "تقديم تغذية راجمة شفهية وكتابية فورية بعد الزيارة.", "مناقشة مؤشرات الأداء الوظيفي مع كل موظف على حدة.", "وضع خطط تحسين فردية للموظفين ذوي الأداء المنخفض.", "متابات سجلات التحضير وأعمال الطلاب بانتظام.", "استخدام نماذج تقييم واضحة ومعلنة للجميع.", "عقد اجتماعات 'نقد بناء' لتطوير العمل المدرسي.", "توثيق تطور أداء المعلم خلال العام الدراسي.", "تحفيز الموظفين الذين أظهروا تحسناً ملموساً في أدائهم.", "التأكد من مواءمة أداء المعلمين مع مستهدفات التعلم."] },
             "10": { name: "دعم تنفيذ برامج التطوير المهني", profGoal: "تمكين المعلمين مهنياً لتحسين جودة التدريس.", genGoal: "تسهيل حضور الدورات وتنظيم ورش عمل داخلية.", selfEval: "التعليم و التعلم", allGoals: ["حصر الاحتياجات التدريبية لجميع المعلمين والإداريين.", "تنظيم 4 ورش عمل داخلية (تدريب أقران) كل فصل.", "تشجيع المعلمين على الانضمام للمنصات التدريبية المعتمدة.", "تفعيل دور 'المعلم المشرف' في تدريب الزملاء الجدد.", "توفير المراجع والوسائل اللازمة لعمليات التطوير.", "تهيئة الوقت الكافي للمعلمين لحضور البرامج الخارجية.", "استضافة خبراء تربويين لتقديم محاضرات تخصصية.", "دعم المبادرات البحثية والإجرائية داخل المدرسة.", "تكريم المعلمين الأكثر حرصاً على تطوير مهاراتهم.", "قياس أثر البرامج التدريبية على مستوى تحصيل الطلاب."] },
             "11": { name: "تقييم أداء منسوبي المدرسة", profGoal: "قياس أداء الموظفين بموضوعية وشفافية.", genGoal: "استخدام أدوات تقييم متنوعة وتوثيق الإنجازات بدقة.", selfEval: "القيادة المدرسية", allGoals: ["إطلاع المنسوبين على عناصر التقييم مطلع العام.", "استخدام سجلات رصد الأداء اليومية لضمان العدالة.", "تقييم المبادرات والأنظمة الإضافية التي يقوم بها الموظف.", "إجراء مقابلات تقييم نهائية لمناقشة الدرجات المرصودة.", "الالتزام بالمواعيد المحددة لرصد الدرجات في الأنظمة.", "توثيق غياب وتأخر الموظفين بدقة وتأثيرها على التقييم.", "مراعاة الفروق الفردية في الأعباء والمهام الموكلة.", "استقبال التظلمات ومناقشتها بروح تربوية.", "ربط التقييم الوظيفي بنتائج تحصيل الطلاب الدراسي.", "إعداد ملف إنجاز لكل موظف يحتوي على شواهد أدائه."] },
             "12": { name: "إجراءات علمية لتحسين نتائج التعلم", profGoal: "رفع المستوى التحصيلي للطلاب بناءً على معطيات دقيقة.", genGoal: "تحليل نتائج الاختبارات وتطبيق خطط علاجية وإثرائية.", selfEval: "نواتج التعلم", allGoals: ["إجراء اختبارات تشخيصية بداية العام لتحديد الفجوات.", "تحليل نتائج الاختبارات الفترية والنهائية بدقة.", "مقارنة نتائج المدرسة بمتوسط نتائج المنطقة أو المكتب.", "تنفيذ خطط علاجية مكثفة للطلاب 'المتأخرين دراسياً'.", "تقديم برامج إثرائية متقدمة للطلاب 'المتفوقين'.", "عقد اجتماعات دورية مع معلمين المواد لمناقشة النتائج.", "إشراك المرشد الطلابي في حل مشكلات التحصيل.", "استخدام استراتيجيات تدريس حديثة تضمن نواتج أفضل.", "متابعة واجبات الطلاب وأعمالهم كتابية بانتظام.", "إجراء اختبارات تجريبية للطلاب قبل الاختبارات الوطنية."] },
             "13": { name: "تحسين مستوى أداء المدرسة", profGoal: "الارتقاء بالمدرسة كمنظومة تعليمية متكاملة.", genGoal: "الحصول على مراكز متقدمة وتحقيق رضا المستفيدين.", selfEval: "القيادة المدرسية", allGoals: ["إعداد دراسة للتقويم الذاتي للمدرسة وتحديد الفجوات.", "العمل على تحقيق معايير 'التميز' في التقويم المدرسي.", "تحسين ترتيب المدرسة في الاختبارات الوطنية (نافس).", "زيادة نسبة مشاركة الطلاب في المسابقات المحلية الدولية.", "تطوير البنية التحتية للمدرسة.", "رفع كفاءة التواصل مع المجتمع المحلي.", "تقليل معدلات التسرب أو المشكلات السلوكية.", "الحصول على شهادات جودة أو تميز.", "تعزيز الروح المعنوية والانتماء لدى المنسوبين.", "تنفيذ خطة تحسين شاملة بناءً على تقارير المشرفين."] },
             "14": { name: "إعداد الخطط المدرسية اللازمة", profGoal: "التنظيم المسبق للعمل لضمان وضوح الرؤية.", genGoal: "صياغة الخطة التشغيلية وتحديد مستهدفات زمنية.", selfEval: "القيادة المدرسية", allGoals: ["تشكيل فريق التخطيط المدرسي من مختلف التخصصات.", "صياغة رؤية ورسالة المدرسة بشكل واضح وجاذب.", "تحديد الأهداف الذكية (SMART) للعام الدراسي الجديد.", "وضع جدول زمني لتنفيذ الفعاليات والبرامج المدرسية.", "إعداد خطط النشاط الطلابي والتوجيه الطلابي.", "تحديد مؤشرات قياس أداء لكل هدف في الخطة.", "توزيع الميزانية التقديرية على بنود الخطة.", "مواءمة الخطة المدرسية مع خطة مكتب التعليم والوزارة.", "عرض الخطة على منسوبي المدرسة لأخذ مرئياتهم.", "طباعة ونشر الخطة في أماكن بارزة بالمدرسة."] },
-            "15": { name: "متابعة تنفيذ الخطط المدرسية", profGoal: "ضمان تحول الخطط الورقية إلى واقع ملموس.", genGoal: "متابعة سجلات الإنجاز ومعالجة معوقات التنفيذ.", selfEval: "القيادة المدرسية", allGoals: ["عقد اجتماع شهري لمراجعة ما تم إنجازه من الخطة.", "استخدام 'لوحة متابعة' رقمية لرصد التقدم.", "جمع الشواهد والأدلة على تنفيذ كل نشاط.", "تحليل أسباب تأخر تنفيذ بعض بنود الخطة.", "تعديل الأنشطة لتتناسب مع الواقع الميداني.", "كتابة تقارير دورية عن مستوى الإنجاز لرفعها للمكتب.", "التأكد من جودة التنفيذ وليس فقط مجرد الأداء.", "تحفيف الفرق التي تنهي مهامها في المواعيد المحددة.", "ربط الحوافز والمكافآت بمدى الإسهام في نجاح الخطة.", "إعداد التقرير الختامي لمستوى تنفيذ الخطة بنهاية العام."] },
+            "15": { name: "متابعة تنفيذ الخطط المدرسية", profGoal: "ضمان تحول الخطط الورقية إلى واقع ملموس.", genGoal: "متابعة سجلات الإنجاز ومعالجة معوقات التنفيذ.", selfEval: "القيادة المدرسية", allGoals: ["عقد اجتماع شهري لمراجعة ما تم إنجازه من الخطة.", "استخدام 'لوحة متابعة' رقمية لرصد التقدم.", "جمع الشواهد والأدلة على تنفيذ كل نشاط.", "تحليل أسباب تأخر تنفيذ بعض بنود الخطة.", "تعديل الأنشطة لتتناسب مع الواقع الميداني.", "كتابة تقارير دورية عن مستوى الإنجاز لرفعها للمكتب.", "التأكد من جودة التنفيذ وليس فقط مجرد الأداء.", "تحفيف الفرق التي تنهي مهامها في المواعيد المحددة.", "ربط الحوافز والمكافآت بمدى الإسهام في نجاح الخطة.", "إعداد التتقرير الختامي لمستوى تنفيذ الخطة بنهاية العام."] },
             "16": { name: "دعم مشاركة الطلاب في الأنشطة", profGoal: "صقل شخصيات الطلاب وتنمية مهاراتهم.", genGoal: "تفعيل حصص النشاط وتجهيز المرافق الداعمة.", selfEval: "البيئة المدرسية", allGoals: ["تخصيص ميزانية كافية للنشاط الطلابي.", "تجهيز غرف النشاط والملاعب بكافة الأدوات اللازمة.", "تشجيع المعلمين على ريادة الأندية الطلابية المتنوعة.", "إقامة 'يوم النشاط' بشكل دوري لإبراز مواهب الطلاب.", "تسهيل مشاركة الطلاب في المسابقات الخارجية والرحلات.", "توثيق إنجازات الطلاب الموهوبين في 'لوحة الشرف'.", "إشراك الطلاب في تنظيم الإذاعة المدرسية والمناسبات.", "توفير بيئة آمنة للطلاب أثناء ممارسة الأنشطة الحركية.", "ربط الأنشطة الصفية بالدروس العلمية لتعميق الفهم.", "قياس أثر النشاط على تحسن سلوك وانضباط الطلاب."] },
             "17": { name: "توظيف المنصات الرقمية المعتمدة", profGoal: "التحول الرقمي في الإدارة والتعليم.", genGoal: "تفعيل 'منصة مدرستي' والبريد الرسمي بفعالية.", selfEval: "التعليم و التعلم", allGoals: ["ضمان دخول جميع المعلمين والطلاب يومياً للمنصة.", "متابعة إسناد الواجبات والاختبارات الرقمية للمعلمين.", "تفعيل 'الصفوف الافتراضية' في حالات التعليق أو الدعم.", "استخدام البريد الرسمي في المراسلات الداخلية.", "أرشفة ملفات المدرسة إلكترونياً.", "تدريب المعلمين على أدوات 'مايكروسوفت 365'.", "تفعيل حسابات المدرسة في وسائل التواصل.", "استخدام برامج تنظيم المواعيد والاجتماعات الرقمية.", "التأكد من أمن وخصوصية بيانات المنسوبين الرقمية.", "تقليل الاعتماد على المعاملات الورقية بنسبة 70%."] },
             "18": { name: "تعزيز السلوك الإيجابي للطلاب", profGoal: "غرس القيم والمواطنة الصالحة في نفوس الطلاب.", genGoal: "تنفيذ برامج تعزيز السلوك وتكريم الطلاب المثاليين.", selfEval: "نواتج التعلم", allGoals: ["إطلاق جائزة 'نجم الأسبوع' للسلوك المتميز.", "تنفيذ برنامج 'رفق' لخفض العنف المدرسي.", "غرس قيم (الاحترام، الصدق، الأمانة) عبر الإذاعة.", "تفعيل دور رائد الفصل في رصد السلوكيات الإيجابية.", "إشراك الطلاب في أعمال تطوعية لخدمة المدرسة.", "عقد ورش عمل للطلاب حول مهارات التواصل والقيادة.", "توثيق السلوكيات المتميزة في سجلات الطالب الرسمية.", "التواصل مع أولياء الأمور لتبشيرهم بتميزهم.", "وضع جدارية 'القيم' يوقع عليها الطلاب تعهداً بالالتزام.", "إجراء دراسات حالة للطلاب الذين أظهروا تحسناً سلوكياً."] },
@@ -901,7 +902,6 @@
             return insightsHtml;
         }
 
-        // تحويل نظام العرض إلى نظام شاشة الأسهم (Ticker) المتحرك باستمرار
         function renderDashboardStats() {
             const container = document.getElementById('stats-content');
             const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
@@ -911,7 +911,6 @@
 
             const aiInsights = generateAssistantInsights(reports, counts, goals);
 
-            // إنشاء مصفوفة العناصر مكررة مرتين لضمان استمرارية الحركة بدون قفزات
             const elementsHtml = Object.entries(CATEGORY_DATA).map(([id, data]) => {
                 const count = counts[id] || 0;
                 const goal = goals[id] || 10;
@@ -955,7 +954,7 @@
                 <div class="ticker-viewport">
                     <div class="ticker-track">
                         ${elementsHtml}
-                        ${elementsHtml} <!-- التكرار للمرة الثانية لضمان استمرارية الحركة -->
+                        ${elementsHtml} 
                     </div>
                 </div>
                 
@@ -965,7 +964,6 @@
             `;
         }
 
-        // دالة عرض تفاصيل العنصر في نافذة منبثقة
         function showElementDetails(id) {
             const data = CATEGORY_DATA[id];
             const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
@@ -1009,49 +1007,49 @@
             document.getElementById('element-detail-modal').style.display = 'none';
         }
 
-        function scrollStats(direction) {
-            const wrapper = document.querySelector('.ticker-track');
-            const scrollAmount = 300;
-            if (direction === 'left') {
-                wrapper.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            } else {
-                wrapper.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            }
-        }
-
         function renderPortfolio() {
             const container = document.getElementById('portfolio-content');
             const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
             
             const SELF_EVAL_DOMAINS = ["القيادة المدرسية", "التعليم و التعلم", "نواتج التعلم", "البيئة المدرسية"];
-            const evalCounts = { "القيادة المدرسية": 0, "التعليم و التعلم": 0, "نواتج التعلم": 0, "البيئة المدرسية": 0 };
-            const detailsByCat = { "القيادة المدرسية": {}, "التعليم و التعلم": {}, "نواتج التعلم": {}, "البيئة المدرسية": {} };
+            
+            const domainStats = {
+                "القيادة المدرسية": { achieved: 0, target: 0, details: {} },
+                "التعليم و التعلم": { achieved: 0, target: 0, details: {} },
+                "نواتج التعلم": { achieved: 0, target: 0, details: {} },
+                "البيئة المدرسية": { achieved: 0, target: 0, details: {} }
+            };
 
-            reports.forEach(r => {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = r.content;
-                const selfEvalVal = tempDiv.querySelector('#selfEvalSelect')?.value || "غير محدد";
-                
-                if (SELF_EVAL_DOMAINS.includes(selfEvalVal)) {
-                    evalCounts[selfEvalVal]++;
-                    const catName = CATEGORY_DATA[r.category]?.name || "أخرى";
-                    detailsByCat[selfEvalVal][catName] = (detailsByCat[selfEvalVal][catName] || 0) + 1;
+            Object.entries(CATEGORY_DATA).forEach(([catId, data]) => {
+                const domain = data.selfEval;
+                if (domainStats[domain]) {
+                    const achievedCount = reports.filter(r => r.category == catId).length;
+                    const targetGoal = goals[catId] || 10;
+                    
+                    domainStats[domain].achieved += achievedCount;
+                    domainStats[domain].target += targetGoal;
+                    
+                    if (achievedCount > 0) {
+                        domainStats[domain].details[data.name] = achievedCount;
+                    }
                 }
             });
 
-            const maxCount = Math.max(...Object.values(evalCounts), 1);
+            const maxTarget = Math.max(...Object.values(domainStats).map(s => s.target), 1);
 
             let chartHtml = `
                 <div class="bg-white/80 p-8 rounded-[40px] shadow-sm border border-white">
-                    <h4 class="text-center font-bold text-teal-800 mb-8 text-sm">مستوى الإنجاز لكل معيار من معايير التقويم الذاتي</h4>
+                    <h4 class="text-center font-bold text-teal-800 mb-8 text-sm">مستوى الإنجاز مقارنة بالمستهدف الإجمالي لعناصر التقويم</h4>
                     <div class="chart-container">
                         ${SELF_EVAL_DOMAINS.map(domain => {
-                            const count = evalCounts[domain];
-                            const heightPercent = (count / maxCount) * 100;
+                            const stats = domainStats[domain];
+                            const heightPercent = (stats.achieved / stats.target) * 100;
+                            const clampedHeight = Math.min(heightPercent, 100);
                             return `
                                 <div class="chart-column-wrapper">
-                                    <div class="chart-bar shadow-lg" style="height: ${heightPercent || 5}%">
-                                        <span class="chart-value">${count}</span>
+                                    <div class="chart-bar shadow-lg" style="height: ${clampedHeight || 5}%">
+                                        <span class="chart-value">${stats.achieved} / ${stats.target}</span>
                                     </div>
                                     <div class="chart-label">${domain}</div>
                                 </div>
@@ -1062,17 +1060,21 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     ${SELF_EVAL_DOMAINS.map(domain => {
-                        const categories = Object.entries(detailsByCat[domain]);
+                        const stats = domainStats[domain];
+                        const categories = Object.entries(stats.details);
                         return `
                             <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                                <h5 class="font-bold text-xs text-teal-700 mb-3 border-b border-teal-50 pb-2">${domain}</h5>
+                                <div class="flex justify-between items-center mb-3 border-b border-teal-50 pb-2">
+                                    <h5 class="font-bold text-xs text-teal-700">${domain}</h5>
+                                    <span class="text-[9px] font-bold text-slate-400">الإجمالي: ${stats.achieved} من ${stats.target}</span>
+                                </div>
                                 <div class="space-y-2">
                                     ${categories.length > 0 ? categories.map(([cat, val]) => `
                                         <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl text-[10px] font-bold">
                                             <span class="text-slate-600 line-clamp-1">${cat}</span>
                                             <span class="bg-white px-3 py-0.5 rounded-lg border border-teal-100 text-teal-600">${val} تقرير</span>
                                         </div>
-                                    `).join('') : '<p class="text-[9px] text-slate-400 text-center">لا توجد بيانات مرتبطة حالياً</p>'}
+                                    `).join('') : '<p class="text-[9px] text-slate-400 text-center">لا توجد تقارير منجزة ضمن هذا العنصر</p>'}
                                 </div>
                             </div>
                         `;
@@ -1173,6 +1175,34 @@
                 box.innerHTML = `<div class="text-slate-300 no-print">+ إضافة شاهد</div>`;
                 box.classList.remove('has-content');
             });
+
+            // إصلاح: إعادة ضبط التاريخ لليوم الحالي بشكل دقيق
+            const dateSel = document.getElementById('dateInputHeader');
+            const todayDate = new Date();
+            const todayStr = todayDate.toLocaleDateString('ar-SA-u-ca-islamic-uma');
+            
+            let found = false;
+            for(let i=0; i<dateSel.options.length; i++) {
+                // البحث عن التاريخ بالاسم لضمان التطابق
+                if(dateSel.options[i].text === todayStr) {
+                    dateSel.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            
+            // في حال عدم التطابق، استخدم التاريخ الفعلي اليوم
+            if (!found) {
+                for (let i = 0; i < dateSel.options.length; i++) {
+                    const optDate = new Date(todayDate); // محاكاة بسيطة
+                    if (dateSel.options[i].text.includes(todayStr.split(' ')[0])) { // تطابق اليوم
+                         dateSel.selectedIndex = i;
+                         break;
+                    }
+                }
+            }
+            
+            syncDayFromDate();
             currentEditingId = null;
             updateReportProgress();
         }
@@ -1203,8 +1233,34 @@
         }
 
         function handleArchiveSearch() {
-            if (currentArchiveFolder) openArchiveFolder(currentArchiveFolder);
-            else renderArchiveFolders();
+            const searchTerm = document.getElementById('archiveSearchInput').value.trim().toLowerCase();
+            const container = document.getElementById('archive-content');
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            
+            if (!searchTerm) {
+                if (currentArchiveFolder) openArchiveFolder(currentArchiveFolder);
+                else renderArchiveFolders();
+                return;
+            }
+
+            const filtered = reports.filter(r => r.title.toLowerCase().includes(searchTerm));
+            
+            document.getElementById('back-to-folders').classList.remove('hidden');
+            container.innerHTML = filtered.length ? filtered.map(r => `
+                <div class="bg-white p-5 mb-4 rounded-3xl border border-slate-100 flex justify-between items-center shadow-sm">
+                    <div class="flex-grow">
+                        <div class="text-xs font-bold text-slate-800">${r.title}</div>
+                        <div class="flex gap-2 items-center mt-1">
+                            <div class="text-[9px] text-slate-400 font-bold">المجال: ${CATEGORY_DATA[r.category]?.name || 'غير مصنف'}</div>
+                            <div class="text-[9px] text-teal-600 font-bold border-r pr-2 border-slate-200">تاريخ الإعداد: ${r.createdAt || '---'}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick="loadReport(${r.id})" class="bg-teal-50 text-teal-600 px-4 py-2 rounded-xl font-bold text-[10px]">تعديل</button>
+                        <button onclick="deleteReport(${r.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl font-bold text-[10px]">حذف</button>
+                    </div>
+                </div>
+            `).join('') : `<div class="text-center py-20 bg-white/50 rounded-[40px] border-2 border-dashed border-slate-200"><p class="text-slate-400 font-bold text-sm">لم يتم العثور على نتائج بحث</p></div>`;
         }
 
         function openArchiveFolder(catId) {
@@ -1212,6 +1268,7 @@
             const searchTerm = document.getElementById('archiveSearchInput').value.trim().toLowerCase();
             const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
             let filtered = reports.filter(r => r.category == catId);
+            
             if (searchTerm) filtered = filtered.filter(r => r.title.toLowerCase().includes(searchTerm));
 
             const container = document.getElementById('archive-content');
@@ -1230,7 +1287,7 @@
                         <button onclick="deleteReport(${r.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl font-bold text-[10px]">حذف</button>
                     </div>
                 </div>
-            `).join('') : `<div class="text-center py-20 bg-white/50 rounded-[40px] border-2 border-dashed border-slate-200"><p class="text-slate-400 font-bold text-sm">لم يتم العثور على تقارير</p></div>`;
+            `).join('') : `<div class="text-center py-20 bg-white/50 rounded-[40px] border-2 border-dashed border-slate-200"><p class="text-slate-400 font-bold text-sm">المجلد فارغ</p></div>`;
         }
 
         function deleteReport(id) {
@@ -1240,6 +1297,7 @@
                 localStorage.setItem('school_reports', JSON.stringify(filtered));
                 showToast("تم الحذف بنجاح 🗑️");
                 if (currentArchiveFolder) openArchiveFolder(currentArchiveFolder);
+                else handleArchiveSearch();
             }
         }
 
@@ -1282,22 +1340,25 @@
 
         function saveReportToArchive() {
             const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
-            // تاريخ يوم الإعداد الحالي
-            const todayStr = new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma');
+            const systemDateStr = new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma');
             
-            // البحث عن التقرير الحالي إذا كان موجوداً للحفاظ على تاريخ إنشائه الأصلي
-            let existingReport = reports.find(r => r.id == currentEditingId);
-            const createdAtDate = (existingReport && existingReport.createdAt) ? existingReport.createdAt : todayStr;
+            // إصلاح هام: تثبيت القيم المختارة للقوائم المنسدلة في الـ HTML المحفوظ
+            // لأن innerHTML لا يحفظ حالة الـ SelectedIndex بشكل تلقائي
+            const selects = document.querySelectorAll('#report-content-container select');
+            selects.forEach(sel => {
+                for(let opt of sel.options) opt.removeAttribute('selected');
+                if(sel.selectedIndex >= 0) sel.options[sel.selectedIndex].setAttribute('selected', 'selected');
+            });
 
             const data = {
                 id: currentEditingId || Date.now(),
                 title: document.getElementById('field_prog_name').innerText || "تقرير بدون عنوان",
                 category: document.getElementById('categorySelect').value,
                 content: document.getElementById('report-content-container').innerHTML,
-                createdAt: createdAtDate // هذا هو التاريخ الذي سيظهر في الأرشيف
+                createdAt: systemDateStr 
             };
 
-            if(!data.category) { showToast("يرجى اختيار مجال البرنامج"); return; }
+            if(!data.category) { showToast("يرجى اختيار مجال البرنامج"); return false; }
             
             if(currentEditingId) { 
                 const idx = reports.findIndex(r => r.id == currentEditingId); 
@@ -1309,6 +1370,16 @@
             
             localStorage.setItem('school_reports', JSON.stringify(reports));
             showToast("تم الحفظ في الأرشيف بنجاح ✅");
+            return true;
+        }
+
+        function syncDayFromDate() {
+            const dateSel = document.getElementById('dateInputHeader');
+            const daySel = document.getElementById('daySelectHeader');
+            const selectedOption = dateSel.options[dateSel.selectedIndex];
+            if (selectedOption && selectedOption.dataset.dayIndex !== undefined) {
+                daySel.selectedIndex = selectedOption.dataset.dayIndex;
+            }
         }
 
         function openSelectionModal(id) { boxId = id; document.getElementById('selection-modal').style.display='flex'; }
@@ -1391,12 +1462,6 @@
         }
 
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
-        function syncDayFromDate() {
-            const dateSelect = document.getElementById('dateInputHeader');
-            const daySelect = document.getElementById('daySelectHeader');
-            const selectedOption = dateSelect.options[dateSelect.selectedIndex];
-            if (selectedOption && selectedOption.dataset.dayIndex) daySelect.selectedIndex = parseInt(selectedOption.dataset.dayIndex);
-        }
 
         function preparePrint() { 
             const programName = document.getElementById('field_prog_name').innerText.trim() || "تقرير";
@@ -1415,17 +1480,29 @@
 
         function openExitModal() { document.getElementById('exit-modal').style.display = 'flex'; }
         function closeExitModal() { document.getElementById('exit-modal').style.display = 'none'; }
+        
         function exitAppConfirm(isSaved) {
-            if (isSaved) { window.close(); } 
-            else {
+            if (isSaved) {
+                showToast("جاري إغلاق النظام...");
+                setTimeout(() => {
+                    window.location.href = "about:blank";
+                    window.close();
+                }, 800);
+            } else {
                 const category = document.getElementById('categorySelect').value;
-                if (category) {
-                    saveReportToArchive();
-                    showToast("جاري الحفظ والإغلاق...");
-                    setTimeout(() => window.close(), 1000);
-                } else {
-                    showToast("يرجى تحديد مجال للتقرير ليتم الحفظ التلقائي");
+                if (!category) {
+                    showToast("يرجى اختيار مجال للتقرير أولاً ليتم حفظه قبل الإغلاق");
                     closeExitModal();
+                    return;
+                }
+                
+                const success = saveReportToArchive();
+                if (success) {
+                    showToast("تم الحفظ بنجاح. جاري الإغلاق...");
+                    setTimeout(() => {
+                        window.location.href = "about:blank";
+                        window.close();
+                    }, 1200);
                 }
             }
         }
@@ -1441,13 +1518,17 @@
             const savedColor = localStorage.getItem('app_theme_color'); if(savedColor) document.documentElement.style.setProperty('--primary', savedColor);
             if(localStorage.getItem('school_active') === 'true') { document.getElementById('activation-overlay').style.display='none'; document.getElementById('welcome-gate').style.display='flex'; }
             document.getElementById('device-id-value').innerText = "SCH-" + Math.floor(1000 + Math.random() * 9000);
+            
             const sel = document.getElementById('categorySelect');
             sel.innerHTML = '<option value="">اختر المجال</option>' + Object.entries(CATEGORY_DATA).map(([id, data]) => `<option value="${id}">${data.name}</option>`).join('');
+            
+            // توليد التاريخ وتعبئة القائمة
             const dateSel = document.getElementById('dateInputHeader');
             dateSel.innerHTML = "";
-            const startDate = new Date(2025, 0, 1);
+            const startDate = new Date(2024, 0, 1); 
             const today = new Date();
             let counter = 0; let defaultIndex = 0;
+            // توليد تواريخ حرة واسعة المدى (من 2024 إلى 2030) لضمان عدم التقيد
             for (let d = new Date(startDate); d <= new Date(2030, 11, 31); d.setDate(d.getDate() + 1)) {
                 let opt = document.createElement('option');
                 opt.text = d.toLocaleDateString('ar-SA-u-ca-islamic-uma');
@@ -1456,9 +1537,12 @@
                 if (d.toDateString() === today.toDateString()) defaultIndex = counter;
                 counter++;
             }
-            dateSel.selectedIndex = defaultIndex; syncDayFromDate();
+            dateSel.selectedIndex = defaultIndex; 
+            syncDayFromDate();
+
             const ben = document.getElementById('beneficiariesSelect');
             for(let i=1; i<=200; i++){ let o = document.createElement('option'); o.text = i; o.value = i; ben.add(o); }
+            
             updateReportProgress();
         };
     </script>
