@@ -59,7 +59,6 @@
             transition: background-image 1s ease-in-out;
         }
 
-        /* تحسين خلفية الوزارة للأقسام الداخلية */
         .internal-watermark {
             position: relative;
         }
@@ -89,6 +88,9 @@
             print-color-adjust: exact;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
+            /* منع تداخل الأحرف وتحسين المقروئية */
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
         }
 
         #welcome-dashboard, #archive-view, #stats-view, #portfolio-view {
@@ -138,6 +140,8 @@
         .editable-cell { min-height: 24px; outline: none; cursor: text; border-bottom: none !important; text-align: center; }
         .editable-cell:focus { background-color: #fffbeb; }
 
+        [contenteditable="true"]:empty:before { content: attr(placeholder); color: #cbd5e1; }
+
         select { text-align: center; text-align-last: center; outline: none; }
 
         .header-section {
@@ -173,8 +177,21 @@
 
         @media print {
             @page { size: A4; margin: 0; }
-            .no-print, #toast, #activation-overlay, nav, button, .magic-goal-btn, .support-goal-btn, .progress-top-bar, .theme-icon-btn { display: none !important; }
-            body { background: white !important; padding: 0 !important; margin: 0 !important; animation: none !important; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print, #toast, #activation-overlay, nav, button, .magic-goal-btn, .support-goal-btn, .progress-top-bar, .theme-icon-btn, #welcome-dashboard, #welcome-gate, #activation-overlay, .delete-btn-box, #selection-modal, #exit-modal, #theme-modal, #app-settings-modal { display: none !important; }
+            
+            body { 
+                background: white !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                animation: none !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+                width: 210mm !important;
+            }
+            
+            #main-report-app { display: block !important; visibility: visible !important; }
             #report-content-container { display: block !important; }
             
             .page-container { 
@@ -192,16 +209,25 @@
                 break-after: page !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
                 position: relative !important;
+                /* تحسين منع تداخل الحروف عند الطباعة */
+                letter-spacing: 0px !important;
+                word-spacing: 0px !important;
             }
+            
             #page2 { page-break-after: avoid !important; break-after: avoid !important; }
-            .border-double-frame { border: 2px solid var(--primary) !important; flex-grow: 1 !important; height: 100% !important; }
+            
+            .border-double-frame { 
+                border: 2px solid var(--primary) !important; 
+                flex-grow: 1 !important; 
+                height: 100% !important; 
+                overflow: hidden !important;
+            }
+            
             .header-section { border: 1.5px solid var(--archive-border) !important; background-color: var(--archive-bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            select { appearance: none; -webkit-appearance: none; border: none !important; background: transparent !important; }
-            .bg-header { background-color: var(--primary) !important; }
-            td, th { border: 1.5px solid var(--primary) !important; }
+            select { appearance: none; -webkit-appearance: none; border: none !important; background: transparent !important; color: inherit !important; }
+            .bg-header { background-color: var(--primary) !important; color: white !important; }
+            td, th { border: 1.5px solid var(--primary) !important; color: inherit !important; }
             .internal-watermark::before { display: none !important; }
         }
 
@@ -336,7 +362,6 @@
             border-right: 4px solid var(--primary);
         }
 
-        /* حاوية التحميل للخلفية */
         #bg-loader {
             position: fixed; inset: 0; background: #0f172a; z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -726,7 +751,6 @@
             <p class="text-xs text-slate-600 mb-8 font-bold">هل ترغب في الخروج من النظام؟</p>
             <div class="grid grid-cols-2 gap-3">
                 <button onclick="exitAppConfirm(true)" class="bg-teal-600 text-white font-bold py-3 rounded-2xl shadow-lg">🚪 إغلاق الآن</button>
-                <!-- تعديل لون زر حفظ وإغلاق ليصبح أحمر -->
                 <button onclick="exitAppConfirm(false)" class="bg-red-600 text-white font-bold py-3 rounded-2xl shadow-lg">💾 حفظ وإغلاق</button>
             </div>
             <button onclick="closeExitModal()" class="mt-4 w-full bg-slate-100 text-slate-500 py-3 rounded-2xl font-bold text-xs">إلغاء</button>
@@ -766,7 +790,7 @@
                     </div>
                     <div class="border-2 border-dashed border-slate-100 p-3 rounded-2xl flex flex-col items-center">
                         <label class="text-[10px] font-bold text-slate-500 mb-2">🏛️ الختم الرقمي</label>
-                        <button onclick="document.getElementById('stampSettingInput').click()" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-amber-100">رفع صورة</button>
+                        <button onclick="document.getElementById('stampSettingInput').click()" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-teal-100">رفع صورة</button>
                         <img id="stampSettingPreview" class="preview-mini hidden">
                         <input type="file" id="stampSettingInput" class="hidden" accept="image/*" onchange="previewSettingImage(event, 'stampSettingPreview')">
                     </div>
@@ -790,7 +814,7 @@
     <script>
         const CATEGORY_DATA = {
             "1": { name: "أداء الواجبات الوظيفية", profGoal: "الالتزام بالأنظمة واللوائح والتعليمات المنظمة للعمل التربوي.", genGoal: "التواجد في مقر العمل وفق المواعيد الرسمية وإنجاز المعاملات بدقة وسرعة.", selfEval: "القيادة المدرسية", allGoals: ["الالتزام بالحضور والانصراف الرسمي بنسبة 100%.", "أرشفة كافة الخطابات الصادرة والواردة لمكتب الوكالة إلكترونياً.", "معالجة طلبات المعلمين الإدارية خلال يوم عمل واحد.", "تنظيم سجلات الحضور والانصراف اليومي للهيئة التعليمية.", "تحديث البيانات الوظيفية للمنسوبين في الأنظمة المعتمدة بشكل دوري.", "الإشراف المباشر على تنظيم الدخول والخروج في بداية ونهاية اليوم الدراسي.", "متابعة تنفيذ الجدول المدرسي وسد العجز الطارئ في الحصص.", "تنفيذ التكليفات المسندة من مدير المدرسة بدقة وموضوعية.", "الحفاظ على سرية السجلات والبيانات المحفوظة في الوكالة.", "إعداد التقارير الدورية عن سير العمل الإداري في المدرسة."] },
-            "2": { name: "التفاعل مع المجتمع المهني", profGoal: "بناء علاقات تعاونية مثمرة مع الزملاء والجهات التعليمية.", genGoal: "المشاركة الفاعلة في الاجتماعات وتبادل الخبرات مع وكلاء المدارس الأخرى.", selfEval: "القيادة المدرسية", allGoals: ["حضور كافة اللقاءات التربوية المخصصة لوكلاء المدارس بمكتب التعليم.", "تنظيم جلسات تشاورية دورية مع المعلمين لمناقحة تحديات البيئة المدرسية.", "المشاركة في لجان التميز والعمل الجماعي داخل المدرسة.", "زيارة وكلاء مدارس متميزة لتبادل الممارسات الإدارية الناجحة.", "المساهمة في المبادرات المهنية المشتركة بين مدارس الحي.", "تقديم عرض مرئي للزملاء حول تقنيات الإدارة المدرسية الحديثة.", "تفعيل قنوات التواصل الرسمية لتبادل المعلومات مع مكتب التعليم.", "المشاركة في المجتمعات المهنية الرقمية المعتمدة.", "استضافة ورش عمل تخصصية للارتقاء بالأداء الإداري للمعلمين.", "توثيق ونشر النماذج الإدارية المبتكرة في المجتمع المهني."] },
+            "2": { name: "التفاعل مع المجتمع المهني", profGoal: "بناء علاقات تعاونية مثمرة مع الزملاء والجهات التعليمية.", genGoal: "المشاركة الفاعلة في الاجتماعات وتبادل الخبرات مع وكلاء المدارس الأخرى.", selfEval: "القيادة المدرسية", allGoals: ["حضور كافة اللقاءات التربوية المخصصة لوكلاء المدارس بمكتب التعليم.", "تنظيم جلسات تشاولرية دورية مع المعلمين لمناقحة تحديات البيئة المدرسية.", "المشاركة في لجان التميز والعمل الجماعي داخل المدرسة.", "زيارة وكلاء مدارس متميزة لتبادل الممارسات الإدارية الناجحة.", "المساهمة في المبادرات المهنية مشتركة بين مدارس الحي.", "تقديم عرض مرئي للزملاء حول تقنيات الإدارة المدرسية الحديثة.", "تفعيل قنوات التواصل الرسمية لتبادل المعلومات مع مكتب التعليم.", "المشاركة في المجتمعات المهنية الرقمية المعتمدة.", "استضافة ورش عمل تخصصية للارتقاء بالأداء الإداري للمعلمين.", "توثيق ونشر النماذج الإدارية المبتكرة في المجتمع المهني."] },
             "3": { name: "التفاعل مع أولياء الأمور", profGoal: "تعزيز الشراكة بين المدرسة والأسرة لدعم المسيرة التعليمية.", genGoal: "تفعيل قنوات التواصل مع أولياء الأمور لمتابعة مستوى الطلاب دراسياً وسلوكياً.", selfEval: "القيادة المدرسية", allGoals: ["تنسيق لقاءات دورية بين أولياء الأمور والمعلمين لمناقشة مستوى الطلاب.", "تفعيل نظام الرسائل الفوري لإبلاغ الأهل بمواعيد الاختبارات والفعاليات.", "استقبال أولياء الأمور وحل المشكلات المتعلقة بالطلاب بروح تربوية.", "إجراء استبانات دورية لقياس مدى رضا الأسرة عن خدمات الوكالة.", "توعية أولياء الأمور بلائحة السلوك والمواظبة عبر الوسائط المختلفة.", "إشراك أولياء الأمور في البرامج التطوعية المدرسية.", "تزويد الأهل بتقارير أسبوعية للحالات التي تحتاج لمتابعة خاصة.", "تكريم أولياء الأمور المتميزين في التواصل مع المدرسة.", "تنظيم \"اليوم المفتوح\" لاستقبال الأسر واطلاعهم على إنجازات الطلاب.", "الرد على استفسارات أولياء الأمور عبر القنوات الرسمية خلال ساعات العمل."] },
             "4": { name: "مرن وقادر على تنفيذ أعماله", profGoal: "التكيف مع التحديات الطارئة وضمان استقرار البيئة المدرسية.", genGoal: "وضع خطط بديلة للأزمات والتعامل بحكمة مع التغييرات المفاجئة.", selfEval: "القيادة المدرسية", allGoals: ["تحديث خطة الطوارئ المدرسية بشكل فصلي.", "إدارة الجدول المدرسي بمرونة عالية عند غياب عدد كبير من المعلمين.", "الجاهزية للتحول للتعليم الرقمي في حالات الظروف المناخية أو الطارئة.", "القدرة على اتخاذ قرارات إدارية فورية وسليمة أثناء غياب مدير المدرسة.", "تنظيم العمل المدرسي بكفاءة أثناء فترات الاختبارات الوطنية.", "التعامل الهادئ مع الحالات الطبية الطارئة داخل المدرسة.", "توزيع الموارد البشرية المتاحة لتغطية كافة المهام عند النقص.", "ابتكار أساليب إشرافية تتناسب مع التغييرات في المبنى المدرسي.", "تقديم الدعم النفسي والإداري للمنسوبين أثناء ضغط العمل.", "تقييم كفاءة الاستجابة للأزمات بعد حدوثها لتطوير الأداء."] },
             "5": { name: "يدعم ويشارك في المبادرات النوعية", profGoal: "تحفيز الابتكار والتميز وتطوير العمل المدرسي.", genGoal: "تبني ودعم مبادرات تعليمية وإدارية مبتكرة سنوياً.", selfEval: "القيادة المدرسية", allGoals: ["الإشراف على تنفيذ مبادرة \"البيئة المدرسية الجاذبة\".", "دعم المعلمين في تحويل أفكارهم الإبداعية إلى مشاريع منفذة.", "إطلاق مسابقة دورية لأفضل فصل منضبط ومتميز.", "المشاركة في لجان التحكيم للمبادرات الطلابية.", "توفير الموارد اللازمة لتنفيذ المبادرات النوعية المعتمدة.", "تنفيذ مبادرة \"الوكالة الرقمية\" لتقليل المعاملات الورقية.", "توثيق خطوات المبادرات الناجحة لرفعها لجائزة التميبز.", "تحفيز الطلاب على المشاركة في المبادرات المجتمعية.", "قياس أثر المبادرات على أداء المنسوبين ونواتج التعلم.", "نشر ثقافة الابتكار عبر اللوحات والوسائل التحفيزية في المدرسة."] },
@@ -1206,25 +1230,21 @@
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 
         /**
-         * دالة الطباعة والحفظ
-         * الالتزام بصفحتين فقط عبر خيار JS و CSS
+         * دالة الطباعة والحفظ الفوري
+         * تم تعديلها لتفتح نافذة الطباعة بدلاً من التحميل المباشر
+         * تلتزم بصفحتين A4 صارمة وبدون تداخل في الأحرف
          */
         function preparePrint() { 
-            showToast("جاري التجهيز للطباعة والحفظ..."); 
-            const element = document.getElementById('report-content-container');
-            const opt = { 
-                margin: 0, 
-                filename: 'تقرير_تنفيذ_برنامج.pdf', 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '#page2' }
-            };
+            showToast("جاري فتح نافذة الطباعة..."); 
             
-            // البدء في عملية التوليد والحفظ
-            html2pdf().set(opt).from(element).save().then(() => {
-                showToast("تم حفظ التقرير بنجاح ✅");
-            });
+            // التأكد من أن التقرير يبدأ من الأعلى
+            window.scrollTo(0, 0);
+            
+            // فتح نافذة الطباعة الافتراضية للمتصفح
+            // التنسيقات في @media print ستتكفل بجعلها صفحتين A4 فقط
+            setTimeout(() => {
+                window.print();
+            }, 500);
         }
 
         function syncDayFromDate() { const d = document.getElementById('dateInputHeader'); const day = document.getElementById('daySelectHeader'); if(!d || !day) return; const opt = d.options[d.selectedIndex]; if(opt) day.selectedIndex = opt.dataset.dayIndex; }
@@ -1261,9 +1281,6 @@
             const loader = document.getElementById('bg-loader');
             loader.classList.add('active');
 
-            /** * تعديل البرومبت لإنتاج خلفية مسطحة (Flat) وبسيطة جداً 
-             * لضمان صغر حجم الصورة وسرعة التحميل والتشغيل.
-             */
             const promptText = "Extremely simple minimalist flat background, soft teal and navy colors, very low detail for ultra-fast loading, minimalist vector style, high performance design.";
 
             try {
