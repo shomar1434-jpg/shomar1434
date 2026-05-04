@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="format-detection" content="telephone=no">
+    
+    <title id="app-title">التقارير الرقمية لوكالة المدرسة الذكية</title>
+    
+    <meta name="theme-color" content="#1e7b78">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="التقارير الرقمية">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #1e7b78;
+            --secondary: #0f172a;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --archive-bg: #f0fdfa;
+            --archive-border: #ccfbf1;
+        }
+
+        html, body {
+            overscroll-behavior-y: none;
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+            height: 100%;
+            width: 100%;
+        }
+
+        #welcome-dashboard, #archive-view, #stats-view, #portfolio-view, #main-report-app, #welcome-gate, #activation-overlay {
+            animation: sectionAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes sectionAppear {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        * { box-sizing: border-box; }
+
+        .global-app-bg {
+            background-color: #0f172a;
+            background-size: cover;
+            background-position: center; 
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            transition: background-image 1s ease-in-out;
+        }
+
+        /* تحسين خلفية الوزارة للأقسام الداخلية */
+        .internal-watermark {
+            position: relative;
+        }
+        .internal-watermark::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: url('https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png') no-repeat center;
+            background-size: contain;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0f172a;
+            margin: 0; padding: 0;
+            user-select: none;
+            color: #1e293b;
+            overflow-x: hidden;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        #welcome-dashboard, #archive-view, #stats-view, #portfolio-view {
+            position: fixed; inset: 0; z-index: 1000; display: none; 
+            overflow-y: auto; padding-bottom: 60px;
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        #activation-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        #welcome-gate { position: fixed; inset: 0; z-index: 9998; display: none; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+
+        .content-overlay { background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(8px); min-height: 100vh; }
+
+        .page-container {
+            width: 210mm; height: 296.8mm; padding: 7mm; margin: 20px auto; background: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); position: relative; box-sizing: border-box;
+            display: flex; flex-direction: column; overflow: hidden; border-radius: 35px;
+            page-break-inside: avoid;
+        }
+
+        @media screen and (max-width: 210mm) {
+            .page-container { width: 95vw; height: auto; aspect-ratio: 210/297; margin: 10px auto; border-radius: 20px; padding: 10px; }
+        }
+
+        .border-double-frame {
+            border: 2px solid var(--primary); border-radius: 25px; padding: 15px;
+            height: 100%; display: flex; flex-direction: column; box-sizing: border-box; flex-grow: 1;
+        }
+
+        .rounded-table-container { border: 1.5px solid var(--primary); border-radius: 1.25rem; overflow: hidden; background: white; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1.5px solid var(--primary); padding: 8px; text-align: center; font-size: 13px; word-wrap: break-word; }
+        .bg-header { background-color: var(--primary) !important; color: white !important; font-weight: bold; }
+        .bg-light-accent { background-color: var(--archive-bg) !important; }
+
+        .editable-cell { min-height: 24px; outline: none; cursor: text; border-bottom: none !important; text-align: center; }
+        .editable-cell:focus { background-color: #fffbeb; }
+
+        select { text-align: center; text-align-last: center; outline: none; }
+
+        .header-section {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center;
+            margin-top: 15px; margin-bottom: 12px; width: 100%;
+            background-color: var(--archive-bg); border: 1.5px solid var(--archive-border);
+            border-radius: 20px; padding: 10px 5px;
+        }
+        
+        .header-block { text-align: center; font-size: 11px; color: var(--primary); line-height: 1.4; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; flex-grow: 1; }
+        .evidence-box {
+            width: 100%; aspect-ratio: 16 / 10; border: 2px dashed #cbd5e1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; background-color: #f8fafc; border-radius: 20px;
+            cursor: pointer; page-break-inside: avoid;
+        }
+        
+        .evidence-box img { max-width: 100%; max-height: 100%; object-fit: contain; display: block !important; margin: auto; }
+        .evidence-box.has-content { border-style: solid; border-color: var(--primary); background: white; cursor: default; }
+
+        .delete-btn-box { position: absolute; top: 8px; left: 8px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 50; cursor: pointer; }
+
+        #selection-modal, #exit-modal, #theme-modal, #app-settings-modal, #goal-library-modal, #goal-setting-modal, #element-detail-modal { 
+            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); 
+            backdrop-filter: blur(4px); z-index: 10005; align-items: center; justify-content: center; padding: 20px; 
+        }
+        .modal-content { background: white; border-radius: 40px; width: 100%; max-width: 420px; padding: 30px; animation: modalSlide 0.3s ease-out; }
+        .modal-content.settings-wide { max-width: 500px; }
+
+        @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media print {
+            @page { size: A4; margin: 0; }
+            .no-print, #toast, #activation-overlay, nav, button, .magic-goal-btn, .support-goal-btn, .progress-top-bar, .theme-icon-btn { display: none !important; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; animation: none !important; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #report-content-container { display: block !important; }
+            
+            .page-container { 
+                margin: 0 !important; 
+                box-shadow: none !important; 
+                width: 210mm !important; 
+                height: 297mm !important; 
+                max-height: 297mm !important;
+                border-radius: 0 !important; 
+                padding: 10mm !important; 
+                border: none !important; 
+                display: flex !important; 
+                overflow: hidden !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                position: relative !important;
+            }
+            #page2 { page-break-after: avoid !important; break-after: avoid !important; }
+            .border-double-frame { border: 2px solid var(--primary) !important; flex-grow: 1 !important; height: 100% !important; }
+            .header-section { border: 1.5px solid var(--archive-border) !important; background-color: var(--archive-bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            select { appearance: none; -webkit-appearance: none; border: none !important; background: transparent !important; }
+            .bg-header { background-color: var(--primary) !important; }
+            td, th { border: 1.5px solid var(--primary) !important; }
+            .internal-watermark::before { display: none !important; }
+        }
+
+        #toast { visibility: hidden; min-width: 200px; background: #1e293b; color: white; text-align: center; border-radius: 12px; padding: 12px; position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 11000; opacity: 0; transition: opacity 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; }
+        
+        .folder-item { background: white; border-radius: 20px; padding: 20px; border: 1.5px solid #f1f5f9; cursor: pointer; transition: all 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 1; }
+        .folder-item:hover { border-color: var(--primary); transform: scale(1.02); }
+        .folder-icon { font-size: 40px; margin-bottom: 8px; }
+        .folder-badge { position: absolute; top: 12px; right: 12px; background: var(--primary); color: white; font-size: 10px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 2px solid white; }
+
+        .magic-goal-btn {
+            cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s; flex-shrink: 0;
+            background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7;
+        }
+        .magic-goal-btn:hover { transform: scale(1.1); background: #dcfce7; }
+        .goal-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid rgba(30, 123, 120, 0.1); transition: background 0.2s; }
+        .goal-row:hover { background: #f0fdfa; }
+
+        .progress-top-bar { position: sticky; top: 0; left: 0; width: 100%; height: 4px; background: #e2e8f0; z-index: 10002; }
+        .progress-top-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s; }
+
+        .activation-action-btn { display: flex; align-items: center; justify-content: center; padding: 0.75rem; background: #f1f5f9; color: var(--primary); border-radius: 1rem; transition: all 0.2s; cursor: pointer; border: 1px solid #e2e8f0; text-align: center; font-size: 11px; font-weight: bold; }
+        .activation-action-btn:hover { background: #e2e8f0; transform: scale(1.05); }
+
+        .sig-stamp-container { width: 100%; height: 100%; max-height: 110px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .sig-stamp-container img { max-width: 100%; max-height: 100%; object-fit: contain; width: auto; height: auto; pointer-events: none; }
+
+        .color-dot { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; transition: transform 0.2s; border: 2px solid transparent; }
+        .color-dot:hover { transform: scale(1.2); }
+
+        .theme-icon-btn { 
+            background: #fff; color: var(--primary); width: 36px; height: 36px; 
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; 
+            border: 1px solid #e2e8f0; transition: all 0.2s; cursor: pointer; 
+        }
+        .theme-icon-btn:hover { transform: scale(1.1); background: #f8fafc; }
+        
+        .preview-mini { max-height: 60px; object-fit: contain; margin: 10px auto; display: block; border: 1px dashed #ccc; border-radius: 10px; }
+
+        .stat-card { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 15px; 
+            border: 1.5px solid #f1f5f9; 
+            text-align: right; 
+            position: relative; 
+            flex-shrink: 0; 
+            width: 100%; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+        .stat-card:hover {
+            transform: scale(1.03);
+            z-index: 50;
+            border-color: var(--primary);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-bar-container { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .stat-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.6s ease-out; }
+
+        .stat-numeric-indicator { font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 12px; }
+
+        .counter-btn { width: 40px; height: 40px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: var(--primary); border: 1px solid #e2e8f0; transition: all 0.2s; cursor: pointer; }
+        .counter-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .smart-assistant-box { background: white; border-radius: 35px; border: 2px solid var(--primary); padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 25px rgba(30, 123, 120, 0.1); position: relative; z-index: 1; }
+        .ai-message { position: relative; padding-right: 45px; margin-bottom: 15px; min-height: 30px; display: flex; align-items: center; }
+        .ai-message::before { content: '🤖'; position: absolute; right: 0; top: 0; font-size: 24px; }
+        .ai-alert { background: #fef2f2; border-right: 4px solid var(--danger); padding: 10px 15px; border-radius: 10px; color: var(--danger); font-weight: bold; font-size: 11px; margin-bottom: 10px; }
+        .ai-guide { background: #f0fdfa; border-right: 4px solid var(--primary); padding: 10px 15px; border-radius: 10px; color: var(--primary); font-weight: bold; font-size: 11px; margin-bottom: 10px; }
+        .ai-congrats { background: #fffbeb; border-right: 4px solid #f59e0b; padding: 10px 15px; border-radius: 10px; color: #b45309; font-weight: bold; font-size: 11px; margin-bottom: 10px; }
+
+        .chart-container { display: flex; align-items: flex-end; justify-content: space-around; height: 250px; padding: 20px; background: white; border-radius: 30px; border: 1.5px solid #f1f5f9; gap: 10px; position: relative; z-index: 1; }
+        .chart-column-wrapper { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+        .chart-bar { width: 80%; background: var(--primary); border-radius: 12px 12px 4px 4px; transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; cursor: pointer; }
+        .chart-bar:hover { filter: brightness(1.1); }
+        .chart-label { font-size: 9px; font-weight: bold; text-align: center; margin-top: 10px; color: #475569; min-height: 30px; display: flex; align-items: center; }
+        .chart-value { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-weight: bold; color: var(--primary); font-size: 12px; }
+
+        .ticker-viewport {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            padding: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        .ticker-track {
+            display: flex;
+            gap: 25px;
+            width: max-content;
+            animation: continuousTicker 45s linear infinite;
+        }
+        .ticker-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes continuousTicker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(-100% / 2)); } 
+        }
+
+        .arrow-nav-btn {
+            background: white;
+            color: var(--primary);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            z-index: 10;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .arrow-nav-btn:hover { transform: scale(1.1); background: var(--primary); color: white; }
+
+        .detail-info-row {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
+            text-align: right;
+            border-right: 4px solid var(--primary);
+        }
+
+        /* حاوية التحميل للخلفية */
+        #bg-loader {
+            position: fixed; inset: 0; background: #0f172a; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease-out; pointer-events: none; opacity: 0;
+        }
+        #bg-loader.active { opacity: 1; pointer-events: all; }
+    </style>
+</head>
+<body class="global-app-bg">
+
+    <div id="bg-loader">
+        <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-white font-bold text-xs">جاري تجهيز الخلفية المبتكرة...</p>
+    </div>
+
+    <!-- واجهة التنشيط -->
+    <div id="activation-overlay" class="global-app-bg no-print">
+        <div class="bg-white/95 backdrop-blur p-10 rounded-[45px] shadow-2xl w-full max-w-md text-center border border-white/20">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">تنشيط التقارير الرقمية لوكالة المدرسة الذكية</h2>
+            <div class="mb-6 text-right">
+                <p class="text-[10px] text-slate-400 font-bold mb-2 px-2">كود تعريف الجهاز</p>
+                <div class="flex items-center gap-2">
+                    <div id="device-id-display" class="bg-slate-50 p-4 rounded-2xl border font-mono text-sm text-teal-700 font-bold tracking-tighter flex-grow border-dashed border-teal-200 flex items-center justify-center">
+                        <span id="device-id-value">---</span>
+                    </div>
+                    <div onclick="copyDeviceId()" class="activation-action-btn" title="نسخ الكود"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" /></svg></div>
+                </div>
+            </div>
+            <div class="mb-6 text-right">
+                <p class="text-[10px] text-slate-400 font-bold mb-2 px-2">مفتاح التنشيط</p>
+                <input type="text" id="activation-key-input" class="w-full px-5 py-4 rounded-2xl border-2 text-center font-mono outline-none focus:border-teal-500" placeholder="أدخل المفتاح">
+            </div>
+            <button onclick="checkActivation()" class="w-full bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-teal-700 transition-all">تفعيل النظام</button>
+        </div>
+    </div>
+
+    <!-- الواجهة الترحيبية -->
+    <div id="welcome-gate" class="global-app-bg no-print">
+        <div class="w-44 h-44 bg-white/90 backdrop-blur rounded-[50px] flex items-center justify-center shadow-2xl mb-8">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 h-32 object-contain">
+        </div>
+        <div class="text-center px-6 max-w-lg bg-white/80 p-8 rounded-[40px] shadow-xl">
+            <h1 class="text-2xl font-bold text-slate-800 mb-4">التقارير الرقمية لوكالة المدرسة الذكية</h1>
+            <p class="text-slate-600 text-sm font-bold mb-6">منصتك المتكاملة لتوثيق الإنجازات التعليمية والقيادية الرقمية.</p>
+            <button onclick="enterApp()" class="w-full bg-teal-600 text-white px-16 py-5 rounded-[25px] font-bold text-lg shadow-2xl hover:bg-teal-700">دخول للنظام</button>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="welcome-dashboard" class="global-app-bg no-print internal-watermark">
+        <div class="content-overlay">
+            <header class="bg-white/80 backdrop-blur-md border-b p-5 flex justify-between items-center px-8 shadow-sm sticky top-0 z-[1001]">
+                <div class="flex items-center gap-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="h-10">
+                    <h1 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        التقارير الرقمية لوكالة المدرسة الذكية
+                    </h1>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openAppSettings()" class="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-xs font-bold border border-teal-100 flex items-center gap-2">⚙️ إعدادات مخصصة</button>
+                    <button onclick="openExitModal()" class="bg-white text-slate-600 px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-2">🚪 إغلاق التطبيق</button>
+                </div>
+            </header>
+            <main class="max-w-4xl mx-auto p-8 flex flex-col items-center relative z-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-8 mt-10">
+                    <div onclick="startNewReport()" class="bg-white/90 p-8 rounded-[45px] shadow-lg border border-white hover:border-teal-400 cursor-pointer transition-all flex flex-col items-center gap-4 group">
+                        <div class="w-14 h-14 bg-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg"><svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></div>
+                        <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">➕ تقرير جديد</h3>
+                    </div>
+                    <div onclick="openArchiveView()" class="bg-white/90 p-8 rounded-[45px] shadow-lg border border-white hover:border-amber-400 cursor-pointer transition-all flex flex-col items-center gap-4 group">
+                        <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center shadow-lg">📁</div>
+                        <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">🗄️ الأرشيف الرقمي</h3>
+                    </div>
+                    <div onclick="openStatsView()" class="bg-white/90 p-8 rounded-[45px] shadow-lg border border-white hover:border-blue-400 cursor-pointer transition-all flex flex-col items-center gap-4 group">
+                        <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg">📊</div>
+                        <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">📉 داشبورد المتابعة</h3>
+                    </div>
+                    <div onclick="openPortfolioView()" class="bg-white/90 p-8 rounded-[45px] shadow-lg border border-white hover:border-purple-400 cursor-pointer transition-all flex flex-col items-center gap-4 group">
+                        <div class="w-14 h-14 bg-purple-600 text-white rounded-2xl flex items-center justify-center shadow-lg">📈</div>
+                        <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">🏅 متابعة التقويم الذاتي</h3>
+                    </div>
+                </div>
+
+                <div class="w-full mt-12 bg-white/60 backdrop-blur rounded-[40px] p-8 border border-white shadow-xl">
+                    <h4 class="text-center font-bold text-slate-800 mb-6 border-b border-white pb-4 flex items-center justify-center gap-2">🛠️ الإدارة الفنية والتواصل</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div onclick="window.open('https://wa.me/966551760114')" class="bg-teal-600/10 text-teal-700 p-4 rounded-3xl border border-teal-200 flex items-center justify-center gap-3 cursor-pointer hover:bg-teal-600/20 transition-all">
+                            <span class="font-bold">تواصل مع الدعم الفني</span>
+                            <span class="text-xl">💬</span>
+                        </div>
+                        <div onclick="deactivateSystem()" class="bg-red-50 text-red-600 p-4 rounded-3xl border border-red-100 flex items-center justify-center gap-3 cursor-pointer hover:bg-red-100 transition-all">
+                            <span class="font-bold">إلغاء تنشيط النظام</span>
+                            <span class="text-xl">⚠️</span>
+                        </div>
+                    </div>
+                    <p class="text-center text-[10px] text-slate-400 mt-6 font-bold">التقارير الرقمية لوكالة المدرسة الذكية © 2025 - جميع الحقوق محفوظة</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- واجهة المتابعة الإحصائية -->
+    <div id="stats-view" class="global-app-bg no-print internal-watermark">
+        <div class="content-overlay">
+            <header class="p-4 border-b flex justify-between items-center px-8 bg-white/80 backdrop-blur-md sticky top-0 z-[1001]">
+                <div class="flex items-center gap-4">
+                    <button onclick="closeStatsView()" class="p-2 text-slate-400 hover:bg-slate-100 rounded-full"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+                    <h2 class="font-bold text-lg text-slate-700 flex items-center gap-2">📊 داشبورد المتابعة والإحصائيات</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="renderDashboardStats()" class="bg-teal-50 text-teal-700 px-3 py-1 rounded-xl text-[10px] font-bold border border-teal-100 flex items-center gap-2">🔄 تحديث البيانات</button>
+                </div>
+            </header>
+            <div id="stats-content" class="max-w-6xl mx-auto p-4 md:p-8 relative z-10"></div>
+        </div>
+    </div>
+
+    <!-- واجهة متابعة التقويم الذاتي -->
+    <div id="portfolio-view" class="global-app-bg no-print internal-watermark">
+        <div class="content-overlay">
+            <header class="p-4 border-b flex justify-between items-center px-8 bg-white/80 backdrop-blur-md sticky top-0 z-[1001]">
+                <div class="flex items-center gap-4">
+                    <button onclick="closePortfolioView()" class="p-2 text-slate-400 hover:bg-slate-100 rounded-full"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+                    <h2 class="font-bold text-lg text-slate-700 flex items-center gap-2">📈 لوحة متابعة التقويم الذاتي</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="renderPortfolio()" class="bg-teal-50 text-teal-700 px-3 py-1 rounded-xl text-[10px] font-bold border border-teal-100 flex items-center gap-2">🔄 تحديث الإحصائيات</button>
+                </div>
+            </header>
+            <div class="max-w-4xl mx-auto p-8 relative z-10">
+                <div id="portfolio-content" class="space-y-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- واجهة الأرشيف -->
+    <div id="archive-view" class="global-app-bg no-print internal-watermark">
+        <div class="content-overlay">
+            <header class="p-4 border-b flex flex-col gap-4 bg-white/80 backdrop-blur-md sticky top-0 z-[1001] shadow-sm">
+                <div class="flex justify-between items-center px-4">
+                    <div class="flex items-center gap-4">
+                        <button onclick="closeArchiveView()" class="p-2 text-slate-400 hover:bg-slate-100 rounded-full"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+                        <h2 class="font-bold text-lg text-slate-700 flex items-center gap-2">📂 الأرشيف الرقمي</h2>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="exportArchive()" class="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl text-[10px] font-bold border border-amber-100 flex items-center gap-1">💾 تنزيل الأرشيف</button>
+                        <button onclick="document.getElementById('archiveImportInput').click()" class="bg-teal-50 text-teal-700 px-3 py-1.5 rounded-xl text-[10px] font-bold border border-teal-100 flex items-center gap-1">📤 رفع الأرشيف</button>
+                        <input type="file" id="archiveImportInput" class="hidden" accept=".json" onchange="importArchive(event)">
+                        <button id="back-to-folders" onclick="renderArchiveFolders()" class="hidden bg-slate-100 text-slate-600 px-4 py-1.5 rounded-xl text-[10px] font-bold border border-slate-200 flex items-center gap-1">🔙 عودة للمجالات</button>
+                    </div>
+                </div>
+                <div class="px-4 pb-2">
+                    <div class="relative">
+                        <input type="text" id="archiveSearchInput" oninput="handleArchiveSearch()" placeholder="بحث عن تقرير بالاسم..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl border-2 border-slate-100 outline-none focus:border-teal-400 text-xs font-bold transition-all shadow-inner bg-slate-50/50">
+                        <div class="absolute left-3 top-2.5 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div id="archive-content" class="max-w-5xl mx-auto p-8 relative z-10"></div>
+        </div>
+    </div>
+
+    <!-- التطبيق الرئيسي (التقرير) -->
+    <div id="main-report-app" class="hidden">
+        <div class="progress-top-bar no-print"><div id="report-completion-bar" class="progress-top-fill"></div></div>
+        <nav class="no-print bg-white/90 backdrop-blur-md border-b p-3 sticky top-1 z-[100] flex justify-between items-center px-8 shadow-sm">
+            <button onclick="goHome()" class="p-2 text-slate-400 hover:bg-slate-50 rounded-full"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+            <div class="flex gap-3 items-center">
+                <div onclick="openThemeModal()" class="theme-icon-btn" title="تغيير اللون">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+                </div>
+                <button onclick="preparePrint()" class="bg-teal-600 text-white px-6 py-2 rounded-xl text-xs font-bold flex items-center gap-2">🖨️ للطباعة والحفظ</button>
+                <button onclick="saveReportToArchive()" class="bg-teal-50 text-teal-700 px-4 py-2 rounded-xl text-xs font-bold border border-teal-200 flex items-center gap-2">💾 حفظ في الأرشيف</button>
+            </div>
+        </nav>
+
+        <div id="report-content-container">
+            <div class="page-container" id="page1">
+                <div class="border-double-frame">
+                    <header class="header-section">
+                        <div class="header-block font-bold">
+                            <p>المملكة العربية السعودية</p><p>وزارة التعليم</p>
+                            <p>إدارة التعليم بمنطقة / <span id="field_region" class="inline-block min-w-[70px] editable-cell" contenteditable="true" oninput="updateReportProgress()"></span></p>
+                        </div>
+                        <div class="header-block"><img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="h-14"></div>
+                        <div class="header-block font-bold">
+                            <p>مدرسة / <span id="field_school" class="inline-block min-w-[90px] editable-cell" contenteditable="true" oninput="updateReportProgress()"></span></p>
+                            <p>اليوم / <select id="daySelectHeader" class="bg-transparent font-bold" onchange="updateReportProgress()">
+                                <option>الأحد</option><option>الاثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option><option>الجمعة</option><option>السبت</option>
+                            </select></p>
+                            <p class="relative">التاريخ / 
+                                <select id="dateInputHeader" class="bg-transparent font-bold" onchange="syncDayFromDate(); updateReportProgress();"></select>
+                            </p>
+                        </div>
+                    </header>
+                    
+                    <div class="text-center my-4">
+                        <h2 class="text-xl font-bold text-[var(--primary)] inline-block px-10">تقرير تنفيذ</h2>
+                    </div>
+                    
+                    <section class="mb-2">
+                        <h3 class="font-bold text-sm mb-2 text-[var(--primary)] flex items-center gap-2">ℹ️ أولاً : معلومات عامة عن البرنامج</h3>
+                        <div class="rounded-table-container mb-2">
+                            <table>
+                                <tr class="h-12">
+                                    <td class="bg-header w-[18%] text-xs px-2">اسم البرنامج</td>
+                                    <td id="field_prog_name" class="editable-cell font-bold text-teal-800 text-sm w-[32%]" contenteditable="true" oninput="updateReportProgress()"></td>
+                                    <td class="bg-header w-[18%] text-xs px-2">المجال</td>
+                                    <td class="p-0 w-[32%]">
+                                        <select id="categorySelect" class="w-full h-full text-center text-[11px] font-bold" onchange="updateRelatedElements(); updateReportProgress();"></select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="rounded-table-container mb-2">
+                            <table>
+                                <tr class="h-12">
+                                    <td class="bg-header w-[18%] text-xs px-2">الفئة المستهدفة</td>
+                                    <td class="p-0 w-[32%]">
+                                        <select id="targetSelect" class="w-full h-full text-center text-[11px] font-bold">
+                                            <option>الطلاب</option>
+                                            <option>الطالبات</option>
+                                            <option>المعلمون</option>
+                                            <option>المعلمات</option>
+                                            <option>أولياء الأمور</option>
+                                            <option>المجتمع المدرسي</option>
+                                            <option>يخص القائد</option>
+                                            <option>يخص القائدة</option>
+                                        </select>
+                                    </td>
+                                    <td class="bg-header w-[18%] text-xs px-2">عدد المستفيدين</td>
+                                    <td class="p-0 w-[32%]"><select id="beneficiariesSelect" class="w-full h-full text-center text-[11px] font-bold"></select></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="rounded-table-container mb-2">
+                            <table>
+                                <tr class="h-12">
+                                    <td class="bg-header w-[18%] text-xs px-2">العنصر المرتبط</td>
+                                    <td id="relatedElement" class="editable-cell font-bold text-teal-900 text-center px-2 text-[10px] leading-tight w-[32%]" contenteditable="true">اختر المجال...</td>
+                                    <td class="bg-header w-[18%] text-xs px-1">التقويم الذاتي</td>
+                                    <td class="p-0 w-[32%]">
+                                        <select id="selfEvalSelect" class="w-full h-full text-center text-[10px] font-bold">
+                                            <option value="">اختر العنصر</option>
+                                            <option>القيادة المدرسية</option>
+                                            <option>التعليم و التعلم</option>
+                                            <option>نواتج التعلم</option>
+                                            <option>البيئة المدرسية</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="mt-2">
+                        <h3 class="font-bold text-sm mb-2 text-[var(--primary)] flex items-center gap-2">🎯 ثانياً : أهداف البرنامج</h3>
+                        <div class="border-[1.5px] border-[var(--primary)] rounded-[1.5rem] overflow-hidden">
+                            <div class="flex border-b-[1.5px] border-[var(--primary)]">
+                                <div class="w-1/4 bg-header p-2 text-xs flex items-center justify-center">الهدف العام</div>
+                                <div class="w-3/4 p-2 editable-cell font-bold text-teal-900 text-[11px] min-h-[40px] flex items-center justify-center" id="mainGoal" contenteditable="true"></div>
+                            </div>
+                            <div class="flex min-h-[160px]">
+                                <div class="w-1/4 bg-light-accent p-2 text-xs font-bold text-[var(--primary)] flex items-center justify-center border-l-[1.5px] border-[var(--primary)]">الأهداف التفصيلية</div>
+                                <div class="w-3/4 flex flex-col divide-y-[1.5px] divide-[var(--primary)]/30" id="subGoalsContainer">
+                                    <div class="goal-row"><div class="editable-cell text-[10px] font-bold flex-grow text-right pr-2" contenteditable="true" id="subGoal-0" oninput="updateReportProgress()"></div><button class="magic-goal-btn no-print" onclick="openGoalLibrary(0)">🌟</button></div>
+                                    <div class="goal-row"><div class="editable-cell text-[10px] font-bold flex-grow text-right pr-2" contenteditable="true" id="subGoal-1" oninput="updateReportProgress()"></div><button class="magic-goal-btn no-print" onclick="openGoalLibrary(1)">🌟</button></div>
+                                    <div class="goal-row"><div class="editable-cell text-[10px] font-bold flex-grow text-right pr-2" contenteditable="true" id="subGoal-2" oninput="updateReportProgress()"></div><button class="magic-goal-btn no-print" onclick="openGoalLibrary(2)">🌟</button></div>
+                                    <div class="goal-row"><div class="editable-cell text-[10px] font-bold flex-grow text-right pr-2" contenteditable="true" id="subGoal-3" oninput="updateReportProgress()"></div><button class="magic-goal-btn no-print" onclick="openGoalLibrary(3)">🌟</button></div>
+                                    <div class="goal-row"><div class="editable-cell text-[10px] font-bold flex-grow text-right pr-2" contenteditable="true" id="subGoal-4" oninput="updateReportProgress()"></div><button class="magic-goal-btn no-print" onclick="openGoalLibrary(4)">🌟</button></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mt-4">
+                        <h3 class="font-bold text-sm mb-2 text-[var(--primary)] flex items-center gap-2">📝 ثالثاً : وصف التنفيذ الرقمي</h3>
+                        <div class="rounded-table-container">
+                            <table>
+                                <tr class="h-10"><td class="bg-header text-xs w-2/4">وصف البرنامج وآلية التنفيذ</td><td class="bg-header text-xs w-1/4">وقت التنفيذ</td><td class="bg-header text-xs w-1/4">المنفذ/ة</td></tr>
+                                <tr><td id="field_desc" class="editable-cell p-3 h-28 text-xs" contenteditable="true" oninput="updateReportProgress()"></td><td id="field_time" class="editable-cell text-xs" contenteditable="true" oninput="updateReportProgress()"></td><td id="executorName" class="editable-cell text-xs" contenteditable="true" oninput="updateReportProgress()"></td></tr>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div class="page-container" id="page2">
+                <div class="border-double-frame">
+                    <section class="h-full flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-base mt-8 mb-8 text-[var(--primary)] text-center flex items-center justify-center gap-2">🎞️ رابعاً : شواهد التنفيذ والتوثيق الرقمي</h3>
+                            <div class="evidence-grid">
+                                <div class="evidence-box" id="box-1" onclick="openSelectionModal(1)"><div id="content-1" class="text-slate-300 no-print">🖼️ + إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-1" onclick="clearEvidence(event, 1)">✕</div></div>
+                                <div class="evidence-box" id="box-2" onclick="openSelectionModal(2)"><div id="content-2" class="text-slate-300 no-print">🖼️ + إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-2" onclick="clearEvidence(event, 2)">✕</div></div>
+                                <div class="evidence-box" id="box-3" onclick="openSelectionModal(3)"><div id="content-3" class="text-slate-300 no-print">🖼️ + إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-3" onclick="clearEvidence(event, 3)">✕</div></div>
+                                <div class="evidence-box" id="box-4" onclick="openSelectionModal(4)"><div id="content-4" class="text-slate-300 no-print">🖼️ + إضافة شاهد</div><div class="delete-btn-box no-print" id="del-btn-4" onclick="clearEvidence(event, 4)">✕</div></div>
+                            </div>
+                        </div>
+                        <footer class="mt-8 pb-4">
+                            <div class="rounded-table-container overflow-hidden">
+                                <table>
+                                    <tr><td class="bg-header p-2 text-xs">وكيل/ة المدرسة</td><td class="bg-header p-2 text-xs">قائد/ة المدرسة</td></tr>
+                                    <tr><td class="h-12"><span id="name_m" class="editable-cell font-bold text-sm block" contenteditable="true"></span></td><td class="h-12"><span id="name_p" class="editable-cell font-bold text-sm block" contenteditable="true"></span></td></tr>
+                                    <tr><td class="bg-light-accent py-1 text-[10px] font-bold">🖊️ التوقيع الرقمي</td><td class="bg-light-accent py-1 text-[10px] font-bold">🏛️ الختم الرقمي</td></tr>
+                                    <tr>
+                                        <td class="h-24 relative cursor-pointer p-1" onclick="triggerSignatureUpload()">
+                                            <div id="sig-display" class="sig-stamp-container"></div>
+                                        </td>
+                                        <td class="h-24 relative cursor-pointer p-1" onclick="triggerStampUpload()">
+                                            <div id="stamp-display" class="sig-stamp-container"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </footer>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نوافذ منبثقة -->
+    <div id="theme-modal" class="no-print">
+        <div class="modal-content text-center">
+            <h3 class="text-lg font-bold mb-6 text-teal-800 flex items-center justify-center gap-2">🎨 اختر لون النظام</h3>
+            <div id="color-palette" class="grid grid-cols-5 gap-4 justify-items-center mb-8"></div>
+            <button onclick="closeThemeModal()" class="w-full bg-slate-100 py-3 rounded-2xl font-bold">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="no-print">
+        <div class="modal-content text-center">
+            <h3 class="text-lg font-bold mb-6 text-teal-800 flex items-center justify-center gap-2">📎 إضافة شاهد</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="triggerImageUpload()" class="activation-action-btn">🖼️ صورة</button>
+                <button onclick="triggerLinkInput()" class="activation-action-btn">🔗 رابط تفاعلي</button>
+                <button onclick="triggerFileUpload()" class="activation-action-btn">📄 ملف تفاعلي</button>
+                <button onclick="triggerCamera()" class="activation-action-btn">📸 الكاميرا</button>
+            </div>
+            <button onclick="closeSelectionModal()" class="mt-8 w-full bg-slate-100 py-3 rounded-2xl">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="element-detail-modal" class="no-print">
+        <div class="modal-content text-center !max-w-[480px]">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="closeElementDetailModal()" class="text-slate-400 hover:text-red-500 transition-colors"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                <h3 id="detail-modal-title" class="text-lg font-bold text-teal-800">🔍 تفاصيل العنصر</h3>
+            </div>
+            <div id="detail-modal-body" class="space-y-4"></div>
+            <button onclick="closeElementDetailModal()" class="mt-8 w-full bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-xl">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="goal-library-modal" class="no-print">
+        <div class="modal-content text-center">
+            <h3 class="text-lg font-bold mb-4 text-teal-700 flex items-center justify-center gap-2">📚 مكتبة الأهداف المقترحة</h3>
+            <div id="library-goals-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2"></div>
+            <button onclick="closeGoalLibrary()" class="mt-6 w-full bg-slate-100 py-3 rounded-2xl text-sm font-bold">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="goal-setting-modal" class="no-print">
+        <div class="modal-content text-center">
+            <h3 id="goal-cat-title" class="text-sm font-bold mb-6 text-teal-800 line-clamp-2">⚙️ ضبط المستهدف</h3>
+            <div class="flex items-center justify-center gap-8 mb-8">
+                <button onclick="adjustTargetGoal(-1)" class="counter-btn">-</button>
+                <div class="text-3xl font-bold text-slate-800 w-16" id="target-goal-display">0</div>
+                <button onclick="adjustTargetGoal(1)" class="counter-btn">+</button>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveCategoryGoalModal()" class="flex-grow bg-teal-600 text-white font-bold py-3 rounded-2xl shadow-lg">حفظ</button>
+                <button onclick="document.getElementById('goal-setting-modal').style.display='none'" class="bg-slate-100 text-slate-500 font-bold px-6 py-3 rounded-2xl">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exit-modal" class="no-print">
+        <div class="modal-content text-center">
+            <h3 class="text-lg font-bold mb-4 text-slate-800">⚠️ إغلاق التطبيق</h3>
+            <p class="text-xs text-slate-600 mb-8 font-bold">هل ترغب في الخروج من النظام؟</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exitAppConfirm(true)" class="bg-teal-600 text-white font-bold py-3 rounded-2xl shadow-lg">🚪 إغلاق الآن</button>
+                <button onclick="exitAppConfirm(false)" class="bg-amber-50 text-white font-bold py-3 rounded-2xl shadow-lg">💾 حفظ وإغلاق</button>
+            </div>
+            <button onclick="closeExitModal()" class="mt-4 w-full bg-slate-100 text-slate-500 py-3 rounded-2xl font-bold text-xs">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="app-settings-modal" class="no-print">
+        <div class="modal-content settings-wide text-center">
+            <h3 class="text-lg font-bold mb-6 text-teal-700 flex items-center justify-center gap-2">⚙️ الإعدادات الافتراضية</h3>
+            <div class="space-y-4 text-right">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="text-[10px] font-bold text-slate-400 block px-2 mb-1">المنطقة التعليمية</label>
+                        <input type="text" id="setting_region" class="w-full border p-3 rounded-xl text-xs font-bold outline-none focus:border-teal-400" placeholder="مثال: الرياض">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="text-[10px] font-bold text-slate-400 block px-2 mb-1">المدرسة</label>
+                        <input type="text" id="setting_school" class="w-full border p-3 rounded-xl text-xs font-bold outline-none focus:border-teal-400" placeholder="اسم المدرسة">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="text-[10px] font-bold text-slate-400 block px-2 mb-1">الوكيل/ة</label>
+                        <input type="text" id="setting_name_m" class="w-full border p-3 rounded-xl text-xs font-bold outline-none focus:border-teal-400" placeholder="الاسم">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="text-[10px] font-bold text-slate-400 block px-2 mb-1">قائد/ة المدرسة</label>
+                        <input type="text" id="setting_name_p" class="w-full border p-3 rounded-xl text-xs font-bold outline-none focus:border-teal-400" placeholder="الاسم">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="border-2 border-dashed border-slate-100 p-3 rounded-2xl flex flex-col items-center">
+                        <label class="text-[10px] font-bold text-slate-500 mb-2">🖊️ التوقيع الرقمي</label>
+                        <button onclick="document.getElementById('sigSettingInput').click()" class="bg-teal-50 text-teal-600 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-teal-100">رفع صورة</button>
+                        <img id="sigSettingPreview" class="preview-mini hidden">
+                        <input type="file" id="sigSettingInput" class="hidden" accept="image/*" onchange="previewSettingImage(event, 'sigSettingPreview')">
+                    </div>
+                    <div class="border-2 border-dashed border-slate-100 p-3 rounded-2xl flex flex-col items-center">
+                        <label class="text-[10px] font-bold text-slate-500 mb-2">🏛️ الختم الرقمي</label>
+                        <button onclick="document.getElementById('stampSettingInput').click()" class="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[9px] font-bold border border-amber-100">رفع صورة</button>
+                        <img id="stampSettingPreview" class="preview-mini hidden">
+                        <input type="file" id="stampSettingInput" class="hidden" accept="image/*" onchange="previewSettingImage(event, 'stampSettingPreview')">
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="savePersistentSettings()" class="flex-grow bg-teal-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-teal-700 transition-all">✅ حفظ</button>
+                <button onclick="document.getElementById('app-settings-modal').style.display='none'" class="bg-slate-100 text-slate-500 font-bold px-6 py-4 rounded-2xl">إلغاء</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="no-print">تمت العملية</div>
+
+    <input type="file" id="imageInput" class="hidden" accept="image/*" onchange="handleImageSelection(event)">
+    <input type="file" id="fileInput" class="hidden" onchange="handleFileSelection(event)">
+    <input type="file" id="cameraInput" class="hidden" accept="image/*" capture="environment" onchange="handleImageSelection(event)">
+    <input type="file" id="signatureInput" class="hidden" accept="image/*" onchange="handleSignatureSelection(event)">
+    <input type="file" id="stampInput" class="hidden" accept="image/*" onchange="handleStampSelection(event)">
+
+    <script>
+        const CATEGORY_DATA = {
+            "1": { name: "أداء الواجبات الوظيفية", profGoal: "الالتزام بالأنظمة واللوائح والتعليمات المنظمة للعمل التربوي.", genGoal: "التواجد في مقر العمل وفق المواعيد الرسمية وإنجاز المعاملات بدقة وسرعة.", selfEval: "القيادة المدرسية", allGoals: ["الالتزام بالحضور والانصراف الرسمي بنسبة 100%.", "أرشفة كافة الخطابات الصادرة والواردة لمكتب الوكالة إلكترونياً.", "معالجة طلبات المعلمين الإدارية خلال يوم عمل واحد.", "تنظيم سجلات الحضور والانصراف اليومي للهيئة التعليمية.", "تحديث البيانات الوظيفية للمنسوبين في الأنظمة المعتمدة بشكل دوري.", "الإشراف المباشر على تنظيم الدخول والخروج في بداية ونهاية اليوم الدراسي.", "متابعة تنفيذ الجدول المدرسي وسد العجز الطارئ في الحصص.", "تنفيذ التكليفات المسندة من مدير المدرسة بدقة وموضوعية.", "الحفاظ على سرية السجلات والبيانات المحفوظة في الوكالة.", "إعداد التقارير الدورية عن سير العمل الإداري في المدرسة."] },
+            "2": { name: "التفاعل مع المجتمع المهني", profGoal: "بناء علاقات تعاونية مثمرة مع الزملاء والجهات التعليمية.", genGoal: "المشاركة الفاعلة في الاجتماعات وتبادل الخبرات مع وكلاء المدارس الأخرى.", selfEval: "القيادة المدرسية", allGoals: ["حضور كافة اللقاءات التربوية المخصصة لوكلاء المدارس بمكتب التعليم.", "تنظيم جلسات تشاورية دورية مع المعلمين لمناقحة تحديات البيئة المدرسية.", "المشاركة في لجان التميز والعمل الجماعي داخل المدرسة.", "زيارة وكلاء مدارس متميزة لتبادل الممارسات الإدارية الناجحة.", "المساهمة في المبادرات المهنية المشتركة بين مدارس الحي.", "تقديم عرض مرئي للزملاء حول تقنيات الإدارة المدرسية الحديثة.", "تفعيل قنوات التواصل الرسمية لتبادل المعلومات مع مكتب التعليم.", "المشاركة في المجتمعات المهنية الرقمية المعتمدة.", "استضافة ورش عمل تخصصية للارتقاء بالأداء الإداري للمعلمين.", "توثيق ونشر النماذج الإدارية المبتكرة في المجتمع المهني."] },
+            "3": { name: "التفاعل مع أولياء الأمور", profGoal: "تعزيز الشراكة بين المدرسة والأسرة لدعم المسيرة التعليمية.", genGoal: "تفعيل قنوات التواصل مع أولياء الأمور لمتابعة مستوى الطلاب دراسياً وسلوكياً.", selfEval: "القيادة المدرسية", allGoals: ["تنسيق لقاءات دورية بين أولياء الأمور والمعلمين لمناقشة مستوى الطلاب.", "تفعيل نظام الرسائل الفوري لإبلاغ الأهل بمواعيد الاختبارات والفعاليات.", "استقبال أولياء الأمور وحل المشكلات المتعلقة بالطلاب بروح تربوية.", "إجراء استبانات دورية لقياس مدى رضا الأسرة عن خدمات الوكالة.", "توعية أولياء الأمور بلائحة السلوك والمواظبة عبر الوسائط المختلفة.", "إشراك أولياء الأمور في البرامج التطوعية المدرسية.", "تزويد الأهل بتقارير أسبوعية للحالات التي تحتاج لمتابعة خاصة.", "تكريم أولياء الأمور المتميزين في التواصل مع المدرسة.", "تنظيم \"اليوم المفتوح\" لاستقبال الأسر واطلاعهم على إنجازات الطلاب.", "الرد على استفسارات أولياء الأمور عبر القنوات الرسمية خلال ساعات العمل."] },
+            "4": { name: "مرن وقادر على تنفيذ أعماله", profGoal: "التكيف مع التحديات الطارئة وضمان استقرار البيئة المدرسية.", genGoal: "وضع خطط بديلة للأزمات والتعامل بحكمة مع التغييرات المفاجئة.", selfEval: "القيادة المدرسية", allGoals: ["تحديث خطة الطوارئ المدرسية بشكل فصلي.", "إدارة الجدول المدرسي بمرونة عالية عند غياب عدد كبير من المعلمين.", "الجاهزية للتحول للتعليم الرقمي في حالات الظروف المناخية أو الطارئة.", "القدرة على اتخاذ قرارات إدارية فورية وسليمة أثناء غياب مدير المدرسة.", "تنظيم العمل المدرسي بكفاءة أثناء فترات الاختبارات الوطنية.", "التعامل الهادئ مع الحالات الطبية الطارئة داخل المدرسة.", "توزيع الموارد البشرية المتاحة لتغطية كافة المهام عند النقص.", "ابتكار أساليب إشرافية تتناسب مع التغييرات في المبنى المدرسي.", "تقديم الدعم النفسي والإداري للمنسوبين أثناء ضغط العمل.", "تقييم كفاءة الاستجابة للأزمات بعد حدوثها لتطوير الأداء."] },
+            "5": { name: "يدعم ويشارك في المبادرات النوعية", profGoal: "تحفيز الابتكار والتميز وتطوير العمل المدرسي.", genGoal: "تبني ودعم مبادرات تعليمية وإدارية مبتكرة سنوياً.", selfEval: "القيادة المدرسية", allGoals: ["الإشراف على تنفيذ مبادرة \"البيئة المدرسية الجاذبة\".", "دعم المعلمين في تحويل أفكارهم الإبداعية إلى مشاريع منفذة.", "إطلاق مسابقة دورية لأفضل فصل منضبط ومتميز.", "المشاركة في لجان التحكيم للمبادرات الطلابية.", "توفير الموارد اللازمة لتنفيذ المبادرات النوعية المعتمدة.", "تنفيذ مبادرة \"الوكالة الرقمية\" لتقليل المعاملات الورقية.", "توثيق خطوات المبادرات الناجحة لرفعها لجائزة التميبز.", "تحفيز الطلاب على المشاركة في المبادرات المجتمعية.", "قياس أثر المبادرات على أداء المنسوبين ونواتج التعلم.", "نشر ثقافة الابتكار عبر اللوحات والوسائل التحفيزية في المدرسة."] },
+            "6": { name: "يتخذ إجراءات تربوية تحقق الانضباط المدرسي", profGoal: "إيجاد بيئة منضبطة تدعم العملية التعليمية.", genGoal: "تطبيق لائحة السلوك والمواظبة بعدالة وشفافية لضمان النظام.", selfEval: "البيئة المدرسية", allGoals: ["رصد غياب وتأخر الطلاب يومياً بدقة في الأنظمة الرسمية.", "تفعيل دور لجنة التوجيه الطلابي لمتابعة الطلاب المتأخرين دراسياً.", "تنفيذ لقاءات تعريفية للطلاب حول حقوقهم وواجباتهم السلوكية.", "تطبيق الإجراءات العلاجية الواردة في اللائحة دون محاباة.", "الإشراف على مناوبة المعلمين في الممرات والساحات بانتظام.", "تكريم الطلاب والفصول الأكثر التزاماً بالانضباط شهرياً.", "وضع خطط وقائية للحد من ظاهرة التنمر أو السلوكيات السلبية.", "عقد اجتماعات مع أولياء أمور الطلاب المتكررين في المخالفات.", "تحليل بيانات الغياب الأسبوعية لوضع حلول لتقليصها.", "تعزيز السمت تربوي والقدوة الحسنة بين الطلاب."] },
+            "7": { name: "يدير الموارد في المدرسة بكفاءة", profGoal: "الاستثمار الأمثل للمكان والوسائل التعليمية والموارد البشرية.", genGoal: "الحفاظ على عهدة المدرسة وتوزيع المهام والمرافق بإنصاف.", selfEval: "البيئة المدرسية", allGoals: ["تنظيم سجل العهدة المدرسية ومتابعته بشكل فصلي.", "توزيع الفصول الدراسية والمكاتب الإدارية بما يحقق الكفاءة التشغيلية.", "الإشراف على صيانة الوسائل التقنية في الفصول الدراسية.", "تنظيم استخدام المعامل والمختبرات وفق جدول زمني محكم.", "ترشيد استهلاك المواد المكتبية والمستهلكات في الوكالة.", "متابعة نظافة وسلامة مرافق المدرسة بشكل يومي.", "توزيع حصص الانتظار والمهام الإضافية بين المعلمين بالعدل.", "توفير الاحتياجات الأساسية للمعلمين لممارسة مهامهم بفعالية.", "التنسيق مع الجهات المعنية لصيانة الأعطال الإنشائية فور ظهورها.", "إعداد خطة دورية لتحديث الأثاث والتجهيزات المدرسية."] },
+            "8": { name: "يشارك في إعداد خطة للتطوير المهني", profGoal: "رفع كفاءة الأداء الوظيفي لمواكبة المستجدات التربوية.", genGoal: "تحديد الاحتياجات التدريبية والالتحاق ببرامج تطوير القيادة المدرسية.", selfEval: "القيادة المدرسية", allGoals: ["إعداد قائمة بالمهارات القيادية التي يحتاجها وكيل المدرسة للتطور.", "التسجيل في برامج تدريبية متخصصة في الإدارة التربوية والقيادة.", "حضور ورش عمل حول التقنيات الحديثة في التعليم والتعلم.", "قراءة 3 كتب أو أبحاث علمية في مجال القيادة سنوياً.", "الحصول على رخصة مهنية محدثة في القيادة المدرسية.", "تبادل الخبرات القيادية مع وكلاء مدارس دولية أو متميزة.", "تطبيق مهارة إدارية جديدة كل فصل دراسي وقياس أثرها.", "المشاركة في الملتقيات السنوية لمديري ووكلاء المدارس.", "إعداد خطة زمنية شخصية للتطوير المهني السنوي.", "تقديم مرئيات تطويرية لخطة التدريب السنوية بالمدرسة."] },
+            "9": { name: "يقدم التغذية الراجعة ويتابع تحقق مؤشرات الأداء", profGoal: "تجويد أداء المنسوبين وضمان فاعلية العمل.", genGoal: "متابعة أداء الموظفين وتقديم توجيهات بناءة لتحسين مخرجاتهم.", selfEval: "القيادة المدرسية", allGoals: ["عقد جلسات حوارية مع المعلمين لمناقشة نتائج أدائهم الوظيفي.", "تقديم تغذية راجعة مكتوبة حول جودة الأعمال الإدارية المسندة.", "متابعة سجلات إنجاز المعلمين والإداريين بصفة دورية.", "تحليل نقاط القوة والضعف لدى المنسوبين بناءً على الملاحظة الميدانية.", "مساعدة الموظفين في وضع خطط تحسين فردية لأدائهم.", "التأكد من مواءمة مهام الموظفين مع مؤشرات الأداء الوزارية.", "توفير نماذج تقييم واضحة يطلع عليها الموظف قبل التقييم.", "تحفيز الموظفين المتميزين معنوياً عبر خطابات الشكر.", "مناقشة أثر الأداء الوظيفي للمعلم على تحصيل الطلاب.", "توثيق كافة مراحل المتابعة لضمان الشفافية والموضوعية."] },
+            "10": { name: "يدعم تنفيذ برامج التطوير المهني", profGoal: "تمكين الهيئة التعليمية من أدوات التعليم الحديثة.", genGoal: "تسهيل حضور المعلمين للدورات التدريبية وتنظيم ورش عمل داخلية.", selfEval: "التعليم و التعلم", allGoals: ["حصر الاحتياجات التدريبية الفنية للمعلمين مطلع العام الدراسي.", "تنظيم جدول حصص الانتظار بما يسمح للمعلمين بحضور التدريب الخارجي.", "استضافة خبراء لتقديم دورات تدريبية قصيرة داخل المدرسة.", "تفعيل برنامج \"تبادل الزيارات بين المعلمين\" داخل المدرسة.", "تشجيع المعلمين على المشاركة في المسابقات المهنية والجوائز.", "توفير الوسائط والتقنيات اللازمة لعقد الورش التدريبية.", "متابعة أثر التدريب في الفصول الدراسية بعد حضور المعلم للدورة.", "دعم تكوين \"مجتمعات التعلم المهنية\" بين معلمين التخصص الواحد.", "تكريم المعلمين الذين ينقلون أثر تدريبهم لزملائهم في المدرسة.", "توثيق كافة البرامج التدريبية المنفذة داخل المدرسة في سجل خاص."] },
+            "11": { name: "يقيم أداء منسوبي المدرسة", profGoal: "قياس إنتاجية الموظفين بموضوعية وفق المعايير المعتمدة.", genGoal: "رصد مستويات الأداء وتقديم تقييم عادل يعكس الواقع الوظيفي.", selfEval: "القيادة المدرسية", allGoals: ["استخدام أدوات تقييم متنوعة تشمل الملاحظة وسجلات الإنجاز.", "الالتزام بالجدول الزمني لرصد الدرجات في الأنظمة الإلكترونية.", "مناقشة معايير التقييم مع المنسوبين في بداية العام الدراسي.", "توثيق الشواهد والأدلة التي استند عليها التقييم لكل موظف.", "مراعاة الفروق الفردية في الأعباء التدريسية والإدارية.", "رصد مدى التزام الموظف بساعات الدوام الرسمي بدقة.", "تقييم مدى تعاون الموظف في الأنشطة والفعاليات المدرسية.", "إجراء مقابلات تقويمية دورية لإطلاع الموظف على مستوى تقدمه.", "التأكد من دقة المعلومات المدخلة في بطاقة التقييم النهائي.", "التعامل بسرية تامة مع نتائج التقييم الوظيفي للمنسوبين."] },
+            "12": { name: "ينفذ إجراءات علمية لتحسين نتائج التعلم", profGoal: "رفع المستوى التحصيلي للطلاب بناءً على أسس منهجية.", genGoal: "تحليل نتائج الاختبارات وتطبيق استراتيجيات لرفع جودة التعليم.", selfEval: "نواتج التعلم", allGoals: ["تحليل نتائج الطلاب في الاختبارات الفترية والنهائية بدقة.", "مقارنة نتائج المدرسة بالمتوسطات الوطنية والمحلية.", "إشراف على تنفيذ الخطط العلاجية للطلاب ضعيفي التحصيل.", "دعم برامج رعاية الموهوبين والمتفوقين دراسياً.", "متابعة انتظام المعلمين في استخدام استراتيجيات التدريس الحديثة.", "عقد اجتماعات مع رؤساء الأقسام لمناقشة فجوات التعلم.", "تفعيل دور المكتبة والمعامل في دعم المقررات الدراية.", "إشراك الطلاب في تقييم جودة التعليم المقدم لهم عبر استبانات.", "متابعة سجلات الواجبات والتقويم المستمر للطلاب.", "تنظيم برامج تهيئة للطلاب قبل الاختبارات المركزية والوطنية."] },
+            "13": { name: "يسهم في تحسين مستوى أداء المدرسة", profGoal: "الارتقاء بجودة المخرجات المدرسية والسمعة المؤسسية.", genGoal: "العمل على تحقيق التميز المدرسي في كافة الجوانب الإدارية والتربوية.", selfEval: "القيادة المدرسية", allGoals: ["المشاركة في إعداد دراسة التقويم الذاتي للمدرسة.", "متابعة تنفيذ توصيات لجان الإشراف التربوي والزائرين.", "العمل على رفع نسبة رضا المستفيدين (طلاب، معلمين، أولياء أمور).", "تحسين البيئة الجمالية والمادية لممرات وفصول المدرسة.", "تعزيز ثقافة العمل بروح الفريق الواحد بين المنسوبين.", "إشراف على برامج التميز والجوائز المدرسية.", "تقليل الفاقد التعليمي وزيادة فاعلية الحصص الدراية.", "تطوير أساليب التواصل الإلكتروني الخارجي للمدرسة.", "المساهمة في رفع تصنيف المدرسة في الاختبارات الوطنية.", "إعداد خطة سنوية لتحسين مؤشرات الأداء المدرسية العامة."] },
+            "14": { name: "يشارك في إعداد الخطط المدرسية اللازمة", profGoal: "بناء خارطة طريق واضحة للعمل المدرسي السنوي.", genGoal: "المساهمة في صياغة الأهداف والبرامج والفعاليات في الخطة التشغيلية.", selfEval: "القيادة المدرسية", allGoals: ["المشاركة في تشكيل لجان إعداد الخطة التشغيلية.", "صياغة الأهداف الإجرائية لوكالة المدرسة ضمن الخطة العامة.", "اقتراح برامج وأنشطة تتناسب مع احتياجات الطلاب الفعلية.", "تحديد المؤشرات الزمنية والمستهدفات لكل برنامج مقترح.", "توزيع ميزانية الأنشطة والبرامج بما يضمن الاستدامة.", "مواءمة أهداف الخطة المدرسية مع تطلعات مكتب التعليم.", "إعداد جداول زمنية دقيقة لتنفيذ الفعاليات المدرسية.", "تحديد المسؤوليات والمهام لكل عضو في فرق العمل بالخطة.", "مراجعة الخطة مع مدير المدرسة للتأكد من شموليتها.", "إخراج الخطة بصورة منظمة وقابلة للقياس والتنفيذ."] },
+            "15": { name: "يتابع تنفيذ الخطط المدرسية بمختلف أنواعها", profGoal: "ضمان تحويل الخطط إلى نتائج ملموسة في الميدان.", genGoal: "مراقبة سير تنفيذ البرامج ومعالجة معوقات الإنجاز دورياً.", selfEval: "القيادة المدرسية", allGoals: ["إعداد سجل متابعة أسبوعي لإنجازات اللجان المدرسية.", "عقد اجتماعات دورية مع مسؤولي البرامج لمناقشة التقدم.", "رصد الانحرافات عن الخطة الزمنية ووضع حلول لمعالجتها.", "توثيق الشواهد والأدلة على تنفيذ كل نشاط في الخطة.", "تقييم مدى تحقيق الأهداف الإجرائية بنهاية كل فصل دراسي.", "تقديم تقارير دورية لمدير المدرسة عن مستوى الإنجاز.", "التأكد من جودة المخرجات لكل برنامج منفذ في المدرسة.", "تحديث الخطة بناءً على التغذية الراجعة والمستجدات الميدانية.", "تحفيز الفرق الملتزمة بالجدول الزمنية للتنفيذ.", "أرشفة تقارير الإنجاز النهائية لكل نشاط تعليمي أو إداري."] },
+            "16": { name: "يهيئ الفرص والإمكانات لمشاركة الطلاب في الأنشطة", profGoal: "تعزيز نمو شخصية الطالب من خلال الأنشطة غير الصفية.", genGoal: "توفير المكان والأدوات والتحفيز لمشاركة الطلاب في الأنشطة المدرسية.", selfEval: "التعليم و التعلم", allGoals: ["تخصيص ميزانية كافية لشراء مستلزمات الأنشطة الرياضية والثقافية.", "تجهيز غرف النشاط والمسرح المدرسي بالاحتياجات اللازمة.", "تشجيع المعلمين على ريادة الأندية الطلابية المتنوعة.", "تنظيم جدول زمني يضمن مشاركة كافة الطلاب في الأنشطة.", "تسهيل إجراءات مشارجة الطلاب في المسابقات الخارجية.", "توثيق إبداعات الطلاب الموهوبين في المعارض المدرسية.", "إشراك الطلاب في تخطيط وتنفيذ بعض الفعاليات المدرسية.", "توفير بيئة آمنة وصحية لممارسة الأنشطة البدنية.", "ربط النشاط المدرسي بالمناهج الدراية لتعزيز الفهم التطبيقي.", "تكريم الطلاب المتميزين في الأنشطة اللاصفية بانتظام."] },
+            "17": { name: "يوظف المنصات الرقمية وتطبيقاتها المعتمدة", profGoal: "أتمتة العمل التعليمي والإداري لرفع الكفاءة.", genGoal: "تفعيل منصة مدرستي ونظام نور والبريد الرسمي بكامل إمكاناتهم.", selfEval: "التعليم و التعلم", allGoals: ["متابعة دخول المعلمين اليومي لمنصة مدرستي وإسناد المهام.", "استخدام نظام \"نور\" في رصد الغياب والدرجات والنتائج بدقة.", "تفعيل البريد الإلكتروني الرسمي في كافة المكاتبات الإدارية.", "تدريب المنسوبين على استخدام تطبيقات مايكروسوفت التعليمية.", "أرشفة كافة سجلات الوكالة سحابياً لضمان سهولة الوصول والسرية.", "استخدام برامج تنظيم المهام والاجتماعات الرقمية مع الفريق.", "متابعة تفعيل الفصول الافتراضية والدعم التعليمي الرقمي.", "توظيف منصات التواصل لنشر منجزات المدرسة وفعالياتها.", "التأكد من أمان البيانات الشخصية للطلاب في المنصات.", "تقليل استخدام الورق عبر التحول للنماذج الرقمية في التقييم."] },
+            "18": { name: "يتابع تعزيز السلوك الإيجابي للطلاب", profGoal: "غرس القيم الأخلاقية والوطنية وبناء القدوة.", genGoal: "تنفيذ برامج تحفيزية لتعزيز السلوك الحسن بين الطلاب.", selfEval: "البيئة المدرسية", allGoals: ["إطلاق جائزة \"القدوة الحسنة\" للطالب المثالي شهرياً.", "تفعيل برامج \"رفق\" لتعزيز التسامح والتعامل الراقي بين الطلاب.", "توظيف الإذاعة المدرسية لنشر قيم الاحترام والصدق والأمانة.", "تشجيع الطلاب على المشاركة في الأعمال التطوعية داخل المدرسة.", "رصد وتكريم السلوكيات الإيجابية العفوية في الميدان المدرسي.", "عقد ورش عمل للطلاب حول المهارات الحياتية والذكاء العاطفي.", "التواصل مع أسر الطلاب المتميزين سلوكياً لشكرهم.", "وضع لوحات تحفيزية في الممرات تدعو للالتزام بالقيم.", "إشراك الطلاب في وضع ميثاق للسلوك داخل الفصل الدراسي.", "قياس أثر برامج تعزيز السلوك على انخفاض المشكلات الطلابية."] },
+            "19": { name: "يهيئ بيئة مدرسية آمنة ومحفزة على التعلم", profGoal: "توفير مناخ دراسي صحي وجاذب وسلامة عالية.", genGoal: "التأكد من جودة مرافق المدرسة ونظافتها وتطبيق معايير الأمن والسلامة.", selfEval: "البيئة المدرسية", allGoals: ["الإشراف على تنفيذ فرضيات الإخلاء الوهمية بانتظام.", "التأكد من سلامة طفايات الحريق وخراطيم المياه ومخارج الطوارئ.", "متابعة نظافة الفصول ودورات المياه والمقصف يومياً.", "تحسين الإضاءة والتهوية في كافة القاعات الدراية.", "زراعة وتجميل فناء المدرسة لخلق بيئة جاذبة للطلاب.", "التأكد من جودة الوجبات الغذائية المقدمة في المقصف المدرسي.", "صيانة الأثاث المدرسي بشكل دوري لضمان راحة وسلامة الطلاب.", "مراقبة ساحات المدرسة لضمان أمن الطلاب أثناء الفسح.", "توفير ركن هادئ ومحفز في المكتبة المدرسية للقراءة.", "إجراء مسح ميداني يومي للمبنى لرصد أي مخاطر محتملة."] }
+        };
+
+        const THEME_COLORS = ["#1e7b78", "#1e3a8a", "#2563eb", "#4f46e5", "#7c3aed", "#9333ea", "#c026d3", "#db2777", "#e11d48", "#dc2626", "#ea580c", "#d97706", "#b45309", "#65a30d", "#16a34a", "#059669", "#0891b2", "#0284c7", "#475569", "#78350f"];
+
+        let currentEditingId = null;
+        let boxId = null;
+        let targetGoalIndex = -1;
+        let currentArchiveFolder = null;
+        let currentSettingCatId = null;
+
+        function updateReportProgress() {
+            const trackFields = ['field_region', 'field_school', 'field_prog_name', 'categorySelect', 'field_desc', 'field_time', 'executorName', 'mainGoal'];
+            let filled = 0;
+            trackFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const val = el.tagName === 'SELECT' ? el.value : el.innerText.trim();
+                    if (val && val !== "" && val !== "اختر المجال..." && val !== "اختر العنصر") filled++;
+                }
+            });
+            const percent = (filled / trackFields.length) * 100;
+            const bar = document.getElementById('report-completion-bar');
+            if (bar) bar.style.width = percent + '%';
+        }
+
+        function copyDeviceId() { 
+            const text = document.getElementById('device-id-value').innerText;
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy); dummy.value = text; dummy.select();
+            document.execCommand("copy"); document.body.removeChild(dummy);
+            showToast("تم النسخ ✅");
+        }
+
+        function checkActivation() { 
+            if(document.getElementById('activation-key-input').value.trim()) {
+                localStorage.setItem('school_active', 'true');
+                document.getElementById('activation-overlay').style.display='none';
+                document.getElementById('welcome-gate').style.display='flex';
+            }
+        }
+
+        function deactivateSystem() { if(confirm("تحذير: سيتم إلغاء تنشيط النظام ومسح كافة البيانات؟")) { localStorage.clear(); window.location.reload(); } }
+        function enterApp() { document.getElementById('welcome-gate').style.display='none'; document.getElementById('welcome-dashboard').style.display='block'; }
+        function goHome() { document.getElementById('main-report-app').classList.add('hidden'); document.getElementById('stats-view').style.display='none'; document.getElementById('portfolio-view').style.display='none'; document.getElementById('welcome-dashboard').style.display='block'; }
+
+        function openStatsView() { document.getElementById('welcome-dashboard').style.display='none'; document.getElementById('stats-view').style.display='block'; renderDashboardStats(); }
+        function closeStatsView() { document.getElementById('stats-view').style.display='none'; document.getElementById('welcome-dashboard').style.display='block'; }
+        function openPortfolioView() { document.getElementById('welcome-dashboard').style.display='none'; document.getElementById('portfolio-view').style.display='block'; renderPortfolio(); }
+        function closePortfolioView() { document.getElementById('portfolio-view').style.display='none'; document.getElementById('welcome-dashboard').style.display='block'; }
+
+        function closeArchiveView() {
+            document.getElementById('archive-view').style.display = 'none';
+            document.getElementById('welcome-dashboard').style.display = 'block';
+        }
+
+        function openGoalSettingModal(catId) {
+            currentSettingCatId = catId;
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
+            const currentGoal = goals[catId] || 10;
+            document.getElementById('goal-cat-title').innerText = "📍 مستهدف: " + CATEGORY_DATA[catId].name;
+            document.getElementById('target-goal-display').innerText = currentGoal;
+            document.getElementById('goal-setting-modal').style.display = 'flex';
+        }
+
+        function adjustTargetGoal(amount) { let display = document.getElementById('target-goal-display'); let newVal = Math.max(1, parseInt(display.innerText) + amount); display.innerText = newVal; }
+
+        function saveCategoryGoalModal() {
+            if(!currentSettingCatId) return;
+            const newVal = parseInt(document.getElementById('target-goal-display').innerText);
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
+            goals[currentSettingCatId] = newVal;
+            localStorage.setItem('category_goals', JSON.stringify(goals));
+            document.getElementById('goal-setting-modal').style.display = 'none';
+            renderDashboardStats();
+            showToast("تم التحديث ✅");
+        }
+
+        function renderDashboardStats() {
+            const container = document.getElementById('stats-content');
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
+            const counts = reports.reduce((acc, r) => { acc[r.category] = (acc[r.category] || 0) + 1; return acc; }, {});
+            const total = reports.length;
+
+            let totalGoal = 0;
+            Object.keys(CATEGORY_DATA).forEach(id => totalGoal += (goals[id] || 10));
+            const overallProgress = totalGoal > 0 ? (total / totalGoal * 100) : 0;
+
+            const elementsGridHtml = Object.entries(CATEGORY_DATA).map(([id, data]) => {
+                const count = counts[id] || 0;
+                const goal = goals[id] || 10;
+                const percent = Math.min((count / goal) * 100, 100).toFixed(0);
+                return `
+                    <div class="stat-card" onclick="showElementDetails('${id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-grow">
+                                <h4 class="text-[11px] font-bold text-slate-800 line-clamp-2 mb-1">📑 ${data.name}</h4>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[12px] font-bold text-teal-600">✅ تم: ${count}</span>
+                                    <span class="text-[12px] text-slate-300">/</span>
+                                    <div onclick="event.stopPropagation(); openGoalSettingModal('${id}')" class="bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100 hover:bg-teal-100 flex items-center gap-1 transition-all">
+                                        <span class="text-[10px] text-slate-500 font-bold">📍 هدف:</span>
+                                        <span class="text-[11px] font-bold text-teal-700">${goal}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-numeric-indicator text-teal-700 bg-teal-50 px-2 py-1 rounded-lg text-xs">${percent}%</div>
+                        </div>
+                        <div class="stat-bar-container"><div class="stat-bar-fill" style="width: ${percent}%"></div></div>
+                    </div>
+                `;
+            }).join('');
+
+            const dayStartPhrases = [
+                "صباح التجديد؛ لنبدأ أسبوعنا بقلوب تملؤها العزيمة، وعقول تخطط لرفع اسم مدرستنا عالياً.",
+                "كل يوم أحد هو بداية لقصة نجاح جديدة، فلنكتب سطورها بالإنجاز والعمل المتقن.",
+                "الريادة تبدأ من هنا، ومن هذه اللحظة؛ أتمنى لكم أسبوعاً حافلاً بالعطاء الذي لا ينضب.",
+                "بكم ومعكم، نطلق شرارة الإبداع لهذا الأسبوع، مؤمنين بأن كل جهد تبذلونه هو استثمار في مستقبل الوطن.",
+                "ليكن شعارنا لهذا الأسبوع: (التميز غايتنا، والإخلاص وسيلتنا)؛ انطلاقة مباركة للجميع.",
+                "النجاح لا يأتي بالمصادفة، بل بالتخطيط السليم والبدايات القوية.. لنبدأ على بركة الله.",
+                "إشراقة الأحد تذكرنا بأن الفرص متاحة لمن يسعى، وأنتم خير من يسعى للقمة.",
+                "دعونا نجعل من هذا الأسبوع نموذجاً يحتذى به في الانضباط والإنجاز التربوي.",
+                "بكل تفاؤل، نستقبل مهامنا الجديدة، واثقين أن كفاءتكم هي الضمان الحقيقي لنجاحنا.",
+                "صباح الخير لفرسان الميدان التربوي؛ لنرسم معاً ملامح التميز في كل حصة وكل مهمة."
+            ];
+
+            const midWeekPhrases = [
+                "الاستمرارية هي سر العظمة؛ شكراً لكل من حافظ على عطائه بنفس الحماس والوتيرة.",
+                "نحن في منتصف الطريق، والنتائج المبشرة بدأت تلوح في الأفق بفضل تكاتفكم.",
+                "تذكروا أن الصعاب تذوب أمام الإرادة الصلبة؛ لنواصل المسير نحو أهدافنا التعليمية.",
+                "العمل الجماعي هو الوقود الذي يسمح للناس العاديين بتحقيق نتائج غير عادية.",
+                "كل مهمة صغيرة تنجزونها اليوم، تقربنا خطوة كبيرة نحو رؤية مدرستنا المستقبلية.",
+                "الجودة ليست خياراً بل هي أسلوب عمل نتبعه في كل تفاصيل يومنا الدراسي.",
+                "الفخر الحقيقي هو أن نرى أثر عملنا في عيون طلابنا.. واصلوا إبداعكم.",
+                "لا تنظروا إلى كم المهام، بل انظروا إلى عظمة الأثر الذي تتركونه في نفوس الأجيال.",
+                "الإبداع هو أن تؤدي عملك المعتاد بطريقة غير معتادة؛ أبهرونا بتميزكم اليوم.",
+                "قوتنا في وحدتنا وفي حرصنا المشترك على بقاء مدرستنا في الصدارة دائماً."
+            ];
+
+            const endWeekPhrases = [
+                "وصلنا لختام الأسبوع بحصيلة تفخر بها النفس؛ شكراً لكل يدٍ قدمت وعقلٍ فكر.",
+                "الإنجاز هو اللغة التي يتقنها المبدعون، وأنتم اليوم تتحدثونها بطلاقة.",
+                "مع نهاية مهام الأسبوع، نجدد العهد بأن يظل الاجتهاد هو هويتنا الثابتة.",
+                "لقد أثبتم خلال الأيام الماضية أنكم أهل للمسؤولية.. دمتم فخراً لهذا الصرح التربوي.",
+                "ننهي أسبوعنا لنستريح قليلاً، ونعود بشوق أكبر لمواصلة رحلة البناء والعطاء.",
+                "كل شكر وتقدير لا يفيكم حقكم؛ لقد جعلتم من هذا الأسبوع فصلاً من فصول الإبداع.",
+                "النجاح رحلة مستمرة، وما حققناه هذا الأسبوع هو مجرد محطة للانطلاق نحو الأفضل.",
+                "لنراجع إنجازاتنا بابتسامة، ولنستعد للأسبوع القادم بطموح يعانق السماء.",
+                "الاستمرارية في التميز هي التحدي الأكبر، وأنتم اليوم أثبتم أنكم قدر التحدي.",
+                "إجازة سعيدة ومستحقة لكل من أخلص واجتهد؛ نلتقي لنرتقي دوماً."
+            ];
+
+            const today = new Date().getDay();
+            let selectedList = midWeekPhrases;
+            if (today === 0) selectedList = dayStartPhrases;
+            else if (today >= 4 || today === 6) selectedList = endWeekPhrases;
+
+            const aiMessage = selectedList[Math.floor(Math.random() * selectedList.length)];
+            let aiClass = "ai-guide";
+            if (overallProgress > 70) aiClass = "ai-congrats";
+
+            const missingCats = Object.keys(CATEGORY_DATA).filter(id => !counts[id]).length;
+            let aiAlert = "";
+            if (total > 0 && missingCats > 0) aiAlert = `<div class="ai-alert">🚨 تنبيه: يوجد ${missingCats} مجال لم يتم توثيق أي تقرير فيها بعد.</div>`;
+
+            container.innerHTML = `
+                <div class="smart-assistant-box no-print">
+                    <div class="ai-message text-sm font-bold text-slate-700">${aiMessage}</div>
+                    ${aiAlert}
+                    <div class="${aiClass}">💡 نصيحة: تأكد من تنويع الشواهد بين صور وروابط تفاعلية لزيادة جودة التقرير الرسمي.</div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-[40px] shadow-lg mb-10 text-center border-2 border-teal-50">
+                    <p class="text-slate-400 font-bold text-xs mb-1">📅 إجمالي التقارير المنفذة</p>
+                    <h2 class="text-5xl font-bold text-teal-600">${total}</h2>
+                </div>
+
+                <div class="mb-6 flex items-center justify-between px-2">
+                    <h3 class="font-bold text-slate-800 border-r-4 border-teal-600 pr-3 flex items-center gap-2">📑 متابعة مجالات الوكالة (19 مجال)</h3>
+                    <span class="text-[10px] text-slate-400 font-bold">يمكنك الضبط المباشر للمستهدف من أيقونة "هدف"</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-10">
+                    ${elementsGridHtml}
+                </div>
+            `;
+        }
+
+        function showElementDetails(id) {
+            const data = CATEGORY_DATA[id];
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const count = reports.filter(r => r.category == id).length;
+            const modalBody = document.getElementById('detail-modal-body');
+            modalBody.innerHTML = `
+                <div class="detail-info-row"><p class="text-[10px] text-slate-400 mb-1">🏷️ المجال</p><p class="font-bold text-teal-800">${data.name}</p></div>
+                <div class="detail-info-row"><p class="text-[10px] text-slate-400 mb-1">🎯 الهدف العام</p><p class="text-xs font-bold text-slate-700">${data.genGoal}</p></div>
+                <div class="bg-teal-50 p-4 rounded-2xl flex justify-between items-center border border-teal-100">
+                    <div class="text-right"><p class="text-[10px] text-teal-600 font-bold mb-1">📊 إحصائية الإنجاز</p><p class="text-sm font-bold text-teal-800">المجموع: ${count} تقرير</p></div>
+                </div>
+            `;
+            document.getElementById('detail-modal-title').innerText = "🔎 " + data.name;
+            document.getElementById('element-detail-modal').style.display = 'flex';
+        }
+
+        function closeElementDetailModal() { document.getElementById('element-detail-modal').style.display = 'none'; }
+
+        function renderPortfolio() {
+            const container = document.getElementById('portfolio-content');
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const goals = JSON.parse(localStorage.getItem('category_goals') || '{}');
+            const domains = ["القيادة المدرسية", "التعليم و التعلم", "نواتج التعلم", "البيئة المدرسية"];
+            const domainStats = domains.reduce((acc, d) => { acc[d] = { achieved: 0, target: 0 }; return acc; }, {});
+
+            Object.entries(CATEGORY_DATA).forEach(([catId, data]) => {
+                const domain = data.selfEval;
+                if (domainStats[domain]) {
+                    domainStats[domain].achieved += reports.filter(r => r.category == catId).length;
+                    domainStats[domain].target += (goals[catId] || 10);
+                }
+            });
+
+            container.innerHTML = `
+                <div class="bg-white/80 p-8 rounded-[40px] shadow-sm border border-white relative z-10">
+                    <div class="chart-container">
+                        ${domains.map(domain => {
+                            const stats = domainStats[domain];
+                            const height = stats.target > 0 ? Math.min((stats.achieved / stats.target) * 100, 100) : 5;
+                            return `
+                                <div class="chart-column-wrapper">
+                                    <div class="chart-bar shadow-lg" style="height: ${Math.max(height, 5)}%">
+                                        <span class="chart-value">${stats.achieved}</span>
+                                    </div>
+                                    <div class="chart-label">${domain}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateRelatedElements() {
+            const catId = document.getElementById('categorySelect').value;
+            const data = CATEGORY_DATA[catId];
+            if(data) {
+                document.getElementById('relatedElement').innerText = data.profGoal;
+                document.getElementById('selfEvalSelect').value = data.selfEval;
+                document.getElementById('mainGoal').innerText = data.genGoal;
+                for(let i=0; i<5; i++) document.getElementById('subGoal-' + i).innerText = data.allGoals[i] || "";
+            }
+            updateReportProgress();
+        }
+
+        function openGoalLibrary(index) {
+            targetGoalIndex = index;
+            const catId = document.getElementById('categorySelect').value;
+            if(!catId) { showToast("يرجى اختيار المجال أولاً"); return; }
+            const data = CATEGORY_DATA[catId];
+            const listContainer = document.getElementById('library-goals-list');
+            listContainer.innerHTML = data.allGoals.map(goal => `
+                <div class="p-3 bg-slate-50 border rounded-xl text-right text-[10px] font-bold cursor-pointer hover:bg-teal-50 flex items-center gap-2" onclick="selectGoalFromLibrary('${goal}')">📌 ${goal}</div>
+            `).join('');
+            document.getElementById('goal-library-modal').style.display = 'flex';
+        }
+
+        function selectGoalFromLibrary(goal) {
+            if(targetGoalIndex !== -1) { document.getElementById('subGoal-' + targetGoalIndex).innerText = goal; document.getElementById('goal-library-modal').style.display = 'none'; updateReportProgress(); }
+        }
+
+        function closeGoalLibrary() { document.getElementById('goal-library-modal').style.display = 'none'; }
+        function openThemeModal() {
+            const palette = document.getElementById('color-palette');
+            palette.innerHTML = THEME_COLORS.map(color => `<div class="color-dot" style="background-color: ${color}" onclick="setTheme('${color}')"></div>`).join('');
+            document.getElementById('theme-modal').style.display = 'flex';
+        }
+        function setTheme(color) { document.documentElement.style.setProperty('--primary', color); localStorage.setItem('app_theme_color', color); document.getElementById('theme-modal').style.display = 'none'; }
+        function closeThemeModal() { document.getElementById('theme-modal').style.display = 'none'; }
+        
+        function setDropdownDate(dateStr) {
+            const dateSelect = document.getElementById('dateInputHeader');
+            if(!dateSelect) return;
+            let found = false;
+            for (let i = 0; i < dateSelect.options.length; i++) {
+                if (dateSelect.options[i].text === dateStr) {
+                    dateSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if(!found) {
+                const todayStr = new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma');
+                for (let i = 0; i < dateSelect.options.length; i++) {
+                    if (dateSelect.options[i].text === todayStr) {
+                        dateSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            syncDayFromDate();
+        }
+
+        function startNewReport() { 
+            document.getElementById('welcome-dashboard').style.display='none'; 
+            document.getElementById('main-report-app').classList.remove('hidden'); 
+            resetForm(); 
+            const todayStr = new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma');
+            setDropdownDate(todayStr);
+            updateReportProgress(); 
+        }
+
+        function resetForm() {
+            document.querySelectorAll('.editable-cell').forEach(el => el.innerText = "");
+            document.getElementById('field_region').innerText = localStorage.getItem('setting_region') || "";
+            document.getElementById('field_school').innerText = localStorage.getItem('setting_school') || "";
+            document.getElementById('name_m').innerText = localStorage.getItem('def_m') || "";
+            document.getElementById('name_p').innerText = localStorage.getItem('def_p') || "";
+            const sig = localStorage.getItem('setting_sig'); document.getElementById('sig-display').innerHTML = sig ? `<img src="${sig}">` : "";
+            const stamp = localStorage.getItem('setting_stamp'); document.getElementById('stamp-display').innerHTML = stamp ? `<img src="${stamp}">` : "";
+            document.querySelectorAll('.evidence-box').forEach(box => { box.innerHTML = `<div class="text-slate-300 no-print">🖼️ + إضافة شاهد</div>`; box.classList.remove('has-content'); });
+            currentEditingId = null; 
+            updateReportProgress();
+        }
+
+        function openArchiveView() { document.getElementById('welcome-dashboard').style.display='none'; document.getElementById('archive-view').style.display='block'; renderArchiveFolders(); }
+
+        function renderArchiveFolders() {
+            const container = document.getElementById('archive-content');
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const counts = reports.reduce((acc, r) => { acc[r.category] = (acc[r.category] || 0) + 1; return acc; }, {});
+            document.getElementById('back-to-folders').classList.add('hidden');
+            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">` + 
+                Object.entries(CATEGORY_DATA).map(([id, data]) => `
+                    <div class="folder-item" onclick="openArchiveFolder('${id}')">
+                        <div class="folder-badge">${counts[id] || 0}</div>
+                        <div class="folder-icon">📂</div>
+                        <div class="font-bold text-slate-700 text-[11px]">${data.name}</div>
+                    </div>
+                `).join('') + `</div>`;
+        }
+
+        function openArchiveFolder(catId) {
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]').filter(r => r.category == catId);
+            const container = document.getElementById('archive-content');
+            document.getElementById('back-to-folders').classList.remove('hidden');
+            container.innerHTML = `<div class="relative z-10">` + (reports.map(r => `
+                <div class="bg-white p-5 mb-4 rounded-3xl border flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📄</span>
+                        <div><div class="text-xs font-bold">${r.title}</div><div class="text-[9px] text-slate-400 mt-1">🕒 ${r.executionDate || r.createdAt}</div></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="loadReport(${r.id})" class="bg-teal-50 text-teal-600 px-3 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">👁️ عرض أو تعديل</button>
+                        <button onclick="deleteReport(${r.id}, '${catId}')" class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">🗑️ حذف</button>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-slate-400">📭 المجلد فارغ</p>') + `</div>`;
+        }
+
+        function handleArchiveSearch() {
+            const query = document.getElementById('archiveSearchInput').value.toLowerCase();
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const filtered = reports.filter(r => r.title.toLowerCase().includes(query));
+            const container = document.getElementById('archive-content');
+            document.getElementById('back-to-folders').classList.remove('hidden');
+            container.innerHTML = `<div class="relative z-10">` + (filtered.map(r => `
+                <div class="bg-white p-5 mb-4 rounded-3xl border flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📄</span>
+                        <div><div class="text-xs font-bold">${r.title}</div><div class="text-[9px] text-slate-400 mt-1">🕒 ${r.executionDate || r.createdAt}</div></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="loadReport(${r.id})" class="bg-teal-50 text-teal-600 px-3 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">👁️ عرض أو تعديل</button>
+                        <button onclick="deleteReport(${r.id}, '${r.category}')" class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">🗑️ حذف</button>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center text-slate-400">🔍 لا توجد نتائج</p>') + `</div>`;
+        }
+
+        function exportArchive() {
+            const data = localStorage.getItem('school_reports') || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `archive_${new Date().getTime()}.json`; a.click();
+            showToast("تم التحميل بنجاح ✅");
+        }
+
+        function importArchive(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try { const data = JSON.parse(e.target.result); localStorage.setItem('school_reports', JSON.stringify(data)); showToast("تم الاستيراد بنجاح ✅"); renderArchiveFolders(); } 
+                catch (err) { showToast("خطأ في ملف الأرشيف ❌"); }
+            }; reader.readAsText(file);
+        }
+
+        function openExitModal() { document.getElementById('exit-modal').style.display = 'flex'; }
+        function closeExitModal() { document.getElementById('exit-modal').style.display = 'none'; }
+        function exitAppConfirm(now) { if (!now) saveReportToArchive(); window.location.reload(); }
+
+        function deleteReport(id, catId) { if(confirm("حذف التقرير؟")) { let reports = JSON.parse(localStorage.getItem('school_reports') || '[]'); reports = reports.filter(r => r.id != id); localStorage.setItem('school_reports', JSON.stringify(reports)); openArchiveFolder(catId); } }
+
+        function loadReport(id) {
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const r = reports.find(i => i.id == id);
+            if(r) {
+                document.getElementById('report-content-container').innerHTML = r.content;
+                currentEditingId = id;
+                document.getElementById('archive-view').style.display='none';
+                document.getElementById('main-report-app').classList.remove('hidden');
+                
+                populateDateDropdown();
+                if (r.executionDate) {
+                    setDropdownDate(r.executionDate);
+                }
+                updateReportProgress();
+            }
+        }
+
+        function saveReportToArchive() {
+            const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
+            const cat = document.getElementById('categorySelect').value;
+            if(!cat) { showToast("يرجى اختيار المجال"); return; }
+            const dateSelect = document.getElementById('dateInputHeader');
+            const data = {
+                id: currentEditingId || Date.now(),
+                title: document.getElementById('field_prog_name').innerText || "بدون عنوان",
+                category: cat,
+                content: document.getElementById('report-content-container').innerHTML,
+                createdAt: new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma'),
+                executionDate: dateSelect.options[dateSelect.selectedIndex] ? dateSelect.options[dateSelect.selectedIndex].text : ""
+            };
+            if(currentEditingId) { const idx = reports.findIndex(r => r.id == currentEditingId); if (idx !== -1) reports[idx] = data; } 
+            else { reports.push(data); currentEditingId = data.id; }
+            localStorage.setItem('school_reports', JSON.stringify(reports)); showToast("تم الحفظ بنجاح ✅");
+        }
+
+        function openSelectionModal(id) { boxId = id; document.getElementById('selection-modal').style.display='flex'; }
+        function closeSelectionModal() { document.getElementById('selection-modal').style.display='none'; }
+        function triggerImageUpload() { document.getElementById('imageInput').click(); closeSelectionModal(); }
+        function triggerFileUpload() { document.getElementById('fileInput').click(); closeSelectionModal(); }
+        function triggerCamera() { document.getElementById('cameraInput').click(); closeSelectionModal(); }
+        function triggerLinkInput() { 
+            const l = prompt("🔗 أدخل الرابط المباشر:"); 
+            if(l) {
+                const b = document.getElementById('box-' + boxId);
+                b.innerHTML = `<div class="p-2 text-[8px] break-all flex flex-col items-center gap-2"><span class="text-2xl">🔗</span><span class="font-bold text-teal-600">${l}</span></div><div class="delete-btn-box no-print" onclick="clearEvidence(event, ${boxId})">✕</div>`;
+                b.classList.add('has-content');
+            } closeSelectionModal(); 
+        }
+
+        function handleImageSelection(e) {
+            if (!e.target.files[0]) return; const reader = new FileReader();
+            reader.onload = (ev) => { const b = document.getElementById('box-' + boxId); b.innerHTML = `<img src="${ev.target.result}"><div class="delete-btn-box no-print" onclick="clearEvidence(event, ${boxId})">✕</div>`; b.classList.add('has-content'); };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function handleFileSelection(e) {
+            if (!e.target.files[0]) return; const b = document.getElementById('box-' + boxId);
+            b.innerHTML = `<div class="p-2 text-[10px] font-bold text-teal-700 flex flex-col items-center gap-2"><span class="text-2xl">📄</span><span>${e.target.files[0].name}</span></div><div class="delete-btn-box no-print" onclick="clearEvidence(event, ${boxId})">✕</div>`;
+            b.classList.add('has-content');
+        }
+
+        function clearEvidence(e, id) { e.stopPropagation(); const b = document.getElementById('box-' + id); b.innerHTML = `<div class="text-slate-300 no-print">🖼️ + إضافة شاهد</div>`; b.classList.remove('has-content'); }
+        function openAppSettings() {
+            document.getElementById('setting_region').value = localStorage.getItem('setting_region') || "";
+            document.getElementById('setting_school').value = localStorage.getItem('setting_school') || "";
+            document.getElementById('setting_name_m').value = localStorage.getItem('def_m') || "";
+            document.getElementById('setting_name_p').value = localStorage.getItem('def_p') || "";
+            document.getElementById('app-settings-modal').style.display='flex';
+        }
+
+        function savePersistentSettings() {
+            localStorage.setItem('setting_region', document.getElementById('setting_region').value);
+            localStorage.setItem('setting_school', document.getElementById('setting_school').value);
+            localStorage.setItem('def_m', document.getElementById('setting_name_m').value);
+            localStorage.setItem('def_p', document.getElementById('setting_name_p').value);
+            const sig = document.getElementById('sigSettingPreview').src; if(sig.startsWith('data:')) localStorage.setItem('setting_sig', sig);
+            const stp = document.getElementById('stampSettingPreview').src; if(stp.startsWith('data:')) localStorage.setItem('setting_stamp', stp);
+            document.getElementById('app-settings-modal').style.display='none'; showToast("تم الحفظ ✅");
+        }
+
+        function previewSettingImage(e, id) { if (!e.target.files[0]) return; const reader = new FileReader(); reader.onload = (ev) => { const p = document.getElementById(id); p.src = ev.target.result; p.classList.remove('hidden'); }; reader.readAsDataURL(e.target.files[0]); }
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+
+        function preparePrint() { 
+            showToast("جاري التجهيز..."); 
+            const element = document.getElementById('report-content-container');
+            const opt = { 
+                margin: 0, 
+                filename: 'تقرير_تنفيذ.pdf', 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function syncDayFromDate() { const d = document.getElementById('dateInputHeader'); const day = document.getElementById('daySelectHeader'); if(!d || !day) return; const opt = d.options[d.selectedIndex]; if(opt) day.selectedIndex = opt.dataset.dayIndex; }
+        function triggerSignatureUpload() { document.getElementById('signatureInput').click(); }
+        function handleSignatureSelection(e) { if (!e.target.files[0]) return; const r = new FileReader(); r.onload = (ev) => document.getElementById('sig-display').innerHTML = `<img src="${ev.target.result}">`; r.readAsDataURL(e.target.files[0]); }
+        function triggerStampUpload() { document.getElementById('stampInput').click(); }
+        function handleStampSelection(e) { if (!e.target.files[0]) return; const r = new FileReader(); r.onload = (ev) => document.getElementById('stamp-display').innerHTML = `<img src="${ev.target.result}">`; r.readAsDataURL(e.target.files[0]); }
+
+        function populateDateDropdown() {
+            const dateSelect = document.getElementById('dateInputHeader');
+            if(!dateSelect) return;
+            const currentSelectedText = dateSelect.options[dateSelect.selectedIndex] ? dateSelect.options[dateSelect.selectedIndex].text : null;
+            dateSelect.innerHTML = '';
+            const startLimit = new Date('2023-01-01');
+            const endLimit = new Date('2035-12-31');
+            let tempDate = new Date(startLimit);
+            while(tempDate <= endLimit) {
+                let o = document.createElement('option');
+                o.text = tempDate.toLocaleDateString('ar-SA-u-ca-islamic-uma');
+                o.dataset.dayIndex = tempDate.getDay();
+                dateSelect.add(o);
+                tempDate.setDate(tempDate.getDate() + 1);
+            }
+            if(currentSelectedText) {
+                for (let i = 0; i < dateSelect.options.length; i++) {
+                    if (dateSelect.options[i].text === currentSelectedText) {
+                        dateSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * وظيفة توليد الخلفية المبتكرة
+         */
+        async function generateModernBackground() {
+            const apiKey = ""; // المفتاح يتم توفيره من بيئة التنفيذ
+            const savedBg = localStorage.getItem('app_dynamic_bg_v2');
+            
+            if (savedBg) {
+                document.body.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url(${savedBg})`;
+                return;
+            }
+
+            const loader = document.getElementById('bg-loader');
+            loader.classList.add('active');
+
+            const promptText = "A professional, minimalist, and ultra-modern office background for a school vice principal in Saudi Arabia. The scene includes a sleek desk with a modern digital tablet showing education data, a small elegant Saudi desk flag, and a large window looking out to a contemporary Saudi school campus with geometric Islamic architectural patterns and palm trees under a soft, golden morning sun. The color theme is professional teal, deep navy, and white. High quality digital art, clean UI background style, soft focus background.";
+
+            try {
+                let response;
+                let retryCount = 0;
+                const maxRetries = 5;
+
+                while (retryCount < maxRetries) {
+                    try {
+                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                instances: { prompt: promptText },
+                                parameters: { sampleCount: 1 }
+                            })
+                        });
+                        if (response.ok) break;
+                    } catch (e) {}
+                    
+                    retryCount++;
+                    await new Promise(r => setTimeout(r, Math.pow(2, retryCount) * 1000));
+                }
+
+                if (response && response.ok) {
+                    const result = await response.json();
+                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                    localStorage.setItem('app_dynamic_bg_v2', imageUrl);
+                    document.body.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url(${imageUrl})`;
+                } else {
+                    // Fallback to previous image if generation fails
+                    document.body.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('image_aaf76c.png')`;
+                }
+            } catch (err) {
+                document.body.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('image_aaf76c.png')`;
+            } finally {
+                loader.classList.remove('active');
+            }
+        }
+
+        window.onload = () => {
+            if(localStorage.getItem('school_active')) {
+                document.getElementById('activation-overlay').style.display='none';
+                document.getElementById('welcome-gate').style.display='flex';
+            }
+            document.getElementById('device-id-value').innerText = "SA-D-" + Math.floor(1000 + Math.random() * 8999);
+            const color = localStorage.getItem('app_theme_color'); 
+            if(color) document.documentElement.style.setProperty('--primary', color);
+            
+            const cat = document.getElementById('categorySelect'); 
+            cat.innerHTML = '<option value="">المجال</option>' + Object.entries(CATEGORY_DATA).map(([id, d]) => `<option value="${id}">${d.name}</option>`).join('');
+            
+            populateDateDropdown();
+            const todayStr = new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma');
+            setDropdownDate(todayStr);
+            
+            const ben = document.getElementById('beneficiariesSelect'); 
+            for(let i=1; i<201; i++) ben.add(new Option(i, i));
+            
+            updateReportProgress();
+            
+            // توليد الخلفية العصرية
+            generateModernBackground();
+        };
+    </script>
+</body>
+</html>
