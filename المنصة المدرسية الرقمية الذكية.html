@@ -271,20 +271,23 @@
         let systemConfig = { isActivated: false };
         let allUsers = [];
 
+        // بيانات المدير الافتراضية الصارمة
+        const DEFAULT_ADMIN_NAME = "admin";
+        const DEFAULT_ADMIN_EMAIL = "a123456@jzb.moe.gov.sa";
+
         const handleRoleSelection = async (role) => {
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
             
-            // القيم الافتراضية للمدير
-            let name = nameInput || (role === 'leadership' ? "admin" : "");
-            let email = emailInput || (role === 'leadership' ? "a123456@jzb.moe.gov.sa" : "");
+            let name = nameInput || (role === 'leadership' ? DEFAULT_ADMIN_NAME : "");
+            let email = emailInput || (role === 'leadership' ? DEFAULT_ADMIN_EMAIL : "");
 
             if (!name || !email) { alert("يرجى إدخال البيانات"); return; }
 
             const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
             
-            // المطلب: أي شخص يسجل بالاسم admin وبريد المدير يتم تفعيله سحابياً فوراً
-            const isAdminIdentity = (name === "admin" && email === "a123456@jzb.moe.gov.sa");
+            // التحقق من هوية المدير
+            const isAdminIdentity = (name.toLowerCase() === DEFAULT_ADMIN_NAME && email.toLowerCase() === DEFAULT_ADMIN_EMAIL);
             const isLeadership = (role === 'leadership');
 
             const userData = {
@@ -308,10 +311,19 @@
             const userDoc = await window.fs.getDoc(userRef);
 
             if (userDoc.exists()) {
-                const u = userDoc.data();
+                let u = userDoc.data();
+                
+                // --- ميزة الإصلاح الذاتي للمدير ---
+                // إذا تطابقت بيانات السجل مع بيانات المدير الافتراضية ولكن الحالة غير نشطة، يتم التفعيل فوراً
+                const isAdminIdentity = (u.name.toLowerCase() === DEFAULT_ADMIN_NAME && u.email.toLowerCase() === DEFAULT_ADMIN_EMAIL);
+                if (isAdminIdentity && !u.isActive) {
+                    await window.fs.updateDoc(userRef, { isActive: true, role: 'leadership' });
+                    u.isActive = true;
+                    u.role = 'leadership';
+                }
+                
                 currentUser = u;
                 
-                // المطلب: التحقق السحابي من التفعيل
                 if (!u.isActive) {
                     document.getElementById('role-selector-screen').classList.add('hidden');
                     document.getElementById('waiting-screen').classList.remove('hidden');
@@ -321,7 +333,7 @@
                     showMainUI(u);
                 }
                 
-                // الاستماع للتغييرات السحابية اللحظية
+                // الاستماع للتغييرات اللحظية
                 window.fs.onSnapshot(userRef, (doc) => {
                     if (doc.exists()) {
                         const newData = doc.data();
@@ -331,7 +343,6 @@
                     }
                 });
             } else {
-                // إذا لم يوجد حساب سحابي، أظهر شاشة الاختيار
                 document.getElementById('role-selector-screen').classList.remove('hidden');
                 document.getElementById('main-ui').classList.add('opacity-0', 'pointer-events-none');
                 document.getElementById('waiting-screen').classList.add('hidden');
