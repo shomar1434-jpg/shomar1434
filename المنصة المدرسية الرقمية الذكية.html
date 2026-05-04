@@ -13,19 +13,35 @@
         import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
-        const firebaseConfig = JSON.parse(__firebase_config);
+        /**
+         * تهيئة الإعدادات للعمل على GitHub:
+         * يتم التحقق أولاً من وجود متغيرات البيئة المحقونة (Canvas).
+         * في حال عدم وجودها (GitHub Pages)، سيستخدم التطبيق القيم اليدوية التي يضعها المستخدم.
+         */
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "YOUR_API_KEY", // استبدل بـ API Key الخاص بك من Firebase
+                authDomain: "YOUR_PROJECT.firebaseapp.com",
+                projectId: "YOUR_PROJECT_ID",
+                storageBucket: "YOUR_PROJECT.appspot.com",
+                messagingSenderId: "YOUR_SENDER_ID",
+                appId: "YOUR_APP_ID"
+            };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // معرف التطبيق لضمان عزل البيانات في بيئة GitHub
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-cloud-v1-github';
 
         window.db = db;
         window.auth = auth;
         window.appId = appId;
         window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
 
-        // Auth Logic with Exponential Backoff
+        // منطق تسجيل الدخول مع دعم GitHub (تسجيل مجهول)
         const initAuth = async (retries = 0) => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -183,8 +199,8 @@
     <div id="role-selector-screen" class="hidden">
         <div class="max-w-xl w-full text-center">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-24 mx-auto mb-6">
-            <h2 class="text-2xl font-bold mb-2 text-white">بوابة الدخول السحابية</h2>
-            <p class="text-slate-400 mb-6 text-sm">يرجى استكمال بياناتك للعمل على النظام</p>
+            <h2 class="text-2xl font-bold mb-2 text-white">بوابة الدخول المركزية - السحابية</h2>
+            <p class="text-slate-400 mb-6 text-sm">التطبيق معد للعمل عبر GitHub واستضافة السحابة</p>
             
             <div class="mb-6 space-y-3 max-w-sm mx-auto">
                 <input type="text" id="user-display-name" placeholder="الاسم الثلاثي" 
@@ -226,13 +242,13 @@
         <header class="text-center mb-6 flex flex-col items-center relative">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="moe-logo mx-auto">
             <h1 class="header-title">منصة المدرسة الرقمية الذكية</h1>
-            <div id="header-msg" class="header-subtitle"><p>التفاعل السحابي نشط ✅</p></div>
+            <div id="header-msg" class="header-subtitle"><p>بيئة العمل: GitHub سحابي ✅</p></div>
         </header>
 
         <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
 
         <div id="admin-deactivate-container" class="hidden flex justify-center">
-            <button class="deactivate-btn" onclick="deactivateSystem()">إلغاء تنشيط النظام والعودة للإعدادات</button>
+            <button class="deactivate-btn" onclick="deactivateSystem()">إعادة ضبط السحابة</button>
         </div>
 
         <footer class="mt-8 text-center text-slate-400 text-[10px] border-t border-slate-800 pt-4 pb-2">
@@ -241,28 +257,13 @@
     </div>
 
     <!-- حاويات التطبيقات -->
-    <div id="viewport-leadership" class="app-iframe-container"><div id="admin-control-bar"><div class="flex items-center gap-3"><span class="text-[#1e7b78] font-bold">⚡ الإدارة السحابية</span><button onclick="showUserManagement()" class="bg-teal-700 px-2.5 py-1 rounded-lg text-[10px]">👥 المنسوبين</button><button onclick="showActivationModal()" class="bg-indigo-700 px-2.5 py-1 rounded-lg text-[10px]">🗝️ التنشيط</button></div></div><iframe id="frame-leadership"></iframe></div>
+    <div id="viewport-leadership" class="app-iframe-container"><div id="admin-control-bar"><div class="flex items-center gap-3"><span class="text-[#1e7b78] font-bold">⚡ الإدارة السحابية</span><button onclick="showUserManagement()" class="bg-teal-700 px-2.5 py-1 rounded-lg text-[10px]">👥 إدارة المنسوبين</button><button onclick="showActivationModal()" class="bg-indigo-700 px-2.5 py-1 rounded-lg text-[10px]">🗝️ تنشيط</button></div></div><iframe id="frame-leadership"></iframe></div>
     <div id="viewport-agency" class="app-iframe-container"><iframe id="frame-agency"></iframe></div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
 
-    <!-- إدارة الحسابات -->
-    <div id="user-management-modal">
-        <div class="modal-content shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-xl font-bold text-teal-800">إدارة المنسوبين السحابي</h3><button onclick="closeModal('user-management-modal')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button></div>
-            <div class="overflow-x-auto"><table class="w-full text-right border-collapse text-xs"><thead><tr class="bg-slate-100"><th class="p-2 border">الاسم</th><th class="p-2 border text-center">الرتبة</th><th class="p-2 border text-center">الحالة</th><th class="p-2 border text-center">الإجراءات</th></tr></thead><tbody id="users-table-body"></tbody></table></div>
-        </div>
-    </div>
-
-    <!-- التنشيط -->
-    <div id="activation-modal">
-        <div class="modal-content max-w-md shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-lg font-bold text-teal-800">تنشيط النظام السحابي</h3><button onclick="closeModal('activation-modal')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button></div>
-            <div class="space-y-4 text-center">
-                <input type="text" id="activation-code-input" placeholder="كود التنشيط" class="w-full p-3 border rounded-xl text-center font-bold">
-                <button onclick="activateSystemByCode()" class="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl">تأكيد التنشيط السحابي</button>
-            </div>
-        </div>
-    </div>
+    <!-- المودالات -->
+    <div id="user-management-modal"><div class="modal-content shadow-2xl"><div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-xl font-bold text-teal-800">إدارة منسوبي السحابة</h3><button onclick="closeModal('user-management-modal')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button></div><div class="overflow-x-auto"><table class="w-full text-right border-collapse text-xs"><thead><tr class="bg-slate-100"><th class="p-2 border">الاسم</th><th class="p-2 border text-center">الرتبة</th><th class="p-2 border text-center">الحالة</th><th class="p-2 border text-center">الإجراءات</th></tr></thead><tbody id="users-table-body"></tbody></table></div></div></div>
+    <div id="activation-modal"><div class="modal-content max-w-md shadow-2xl"><div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-lg font-bold text-teal-800">تنشيط النظام السحابي</h3><button onclick="closeModal('activation-modal')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button></div><div class="space-y-4"><input type="text" id="activation-code-input" placeholder="كود التنشيط" class="w-full p-3 border rounded-xl text-center font-bold tracking-widest outline-none"><button onclick="activateSystemByCode()" class="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl shadow">تأكيد التنشيط السحابي</button></div></div></div>
 
     <button id="backBtn" class="back-button" onclick="closeApp()">🏠 العودة للقائمة</button>
 
@@ -271,22 +272,25 @@
         let systemConfig = { isActivated: false };
         let allUsers = [];
 
-        // بيانات المدير الافتراضية الصارمة
+        // المطلب 1: ثوابت المدير الافتراضية للعمل السحابي الصارم
         const DEFAULT_ADMIN_NAME = "admin";
         const DEFAULT_ADMIN_EMAIL = "a123456@jzb.moe.gov.sa";
 
+        /**
+         * معالجة اختيار الدور وتسجيل البيانات سحابياً
+         */
         const handleRoleSelection = async (role) => {
-            const nameInput = document.getElementById('user-display-name').value.trim();
-            const emailInput = document.getElementById('user-madrasati-email').value.trim();
+            const nameIn = document.getElementById('user-display-name').value.trim();
+            const emailIn = document.getElementById('user-madrasati-email').value.trim();
             
-            let name = nameInput || (role === 'leadership' ? DEFAULT_ADMIN_NAME : "");
-            let email = emailInput || (role === 'leadership' ? DEFAULT_ADMIN_EMAIL : "");
+            let name = nameIn || (role === 'leadership' ? DEFAULT_ADMIN_NAME : "");
+            let email = emailIn || (role === 'leadership' ? DEFAULT_ADMIN_EMAIL : "");
 
             if (!name || !email) { alert("يرجى إدخال البيانات"); return; }
 
             const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
             
-            // التحقق من هوية المدير
+            // التحقق من هوية المدير الافتراضية
             const isAdminIdentity = (name.toLowerCase() === DEFAULT_ADMIN_NAME && email.toLowerCase() === DEFAULT_ADMIN_EMAIL);
             const isLeadership = (role === 'leadership');
 
@@ -304,6 +308,9 @@
             checkUserStatus();
         };
 
+        /**
+         * التحقق السحابي من حالة المستخدم مع ميزة "الإصلاح الذاتي" للمدير
+         */
         const checkUserStatus = async () => {
             if (!window.currentUserUid) return;
 
@@ -313,8 +320,7 @@
             if (userDoc.exists()) {
                 let u = userDoc.data();
                 
-                // --- ميزة الإصلاح الذاتي للمدير ---
-                // إذا تطابقت بيانات السجل مع بيانات المدير الافتراضية ولكن الحالة غير نشطة، يتم التفعيل فوراً
+                // --- ميزة الإصلاح السحابي للمدير (GitHub Safety) ---
                 const isAdminIdentity = (u.name.toLowerCase() === DEFAULT_ADMIN_NAME && u.email.toLowerCase() === DEFAULT_ADMIN_EMAIL);
                 if (isAdminIdentity && !u.isActive) {
                     await window.fs.updateDoc(userRef, { isActive: true, role: 'leadership' });
@@ -333,26 +339,22 @@
                     showMainUI(u);
                 }
                 
-                // الاستماع للتغييرات اللحظية
+                // مراقبة التفعيل السحابي اللحظي
                 window.fs.onSnapshot(userRef, (doc) => {
-                    if (doc.exists()) {
-                        const newData = doc.data();
-                        if (newData.isActive && (!currentUser || !currentUser.isActive)) {
-                            location.reload(); 
-                        }
+                    if (doc.exists() && doc.data().isActive && (!currentUser || !currentUser.isActive)) {
+                        location.reload(); 
                     }
                 });
             } else {
                 document.getElementById('role-selector-screen').classList.remove('hidden');
                 document.getElementById('main-ui').classList.add('opacity-0', 'pointer-events-none');
-                document.getElementById('waiting-screen').classList.add('hidden');
             }
         };
 
         const showMainUI = (u) => {
             document.getElementById('main-ui').classList.remove('opacity-0', 'pointer-events-none');
-            const roleLabels = {'leadership': 'مدير المدرسة', 'agency': 'وكيل المدرسة', 'performance': 'معلم'};
-            document.getElementById('active-role-badge').innerText = roleLabels[u.role] || 'مستخدم';
+            const labels = {'leadership': 'مدير المدرسة', 'agency': 'وكيل المدرسة', 'performance': 'معلم'};
+            document.getElementById('active-role-badge').innerText = labels[u.role] || 'مستخدم';
             
             if (u.role === 'leadership') {
                 document.getElementById('admin-deactivate-container').classList.remove('hidden');
@@ -388,8 +390,8 @@
             
             apps.forEach(appId => {
                 const card = document.createElement('div');
-                card.className = "app-card cursor-pointer p-6 text-center shadow-lg";
-                card.innerHTML = `<h2 class="font-bold text-slate-800 text-lg mb-4">${titles[appId]}</h2><button class="bg-teal-700 text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-teal-600 transition">فتح القسم</button>`;
+                card.className = "app-card cursor-pointer p-6 text-center shadow-md";
+                card.innerHTML = `<h2 class="font-bold text-slate-800 text-lg mb-4">${titles[appId]}</h2><button class="bg-teal-700 text-white px-6 py-2 rounded-xl text-xs font-bold">فتح القسم السحابي</button>`;
                 card.onclick = () => launchApp(appId);
                 grid.appendChild(card);
             });
@@ -417,7 +419,7 @@
             allUsers.forEach(user => {
                 if (user.id === window.currentUserUid) return;
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="p-2 border font-bold">${user.name}</td><td class="p-2 border text-center">${user.role}</td><td class="p-2 border text-center">${user.isActive ? '✅ نشط' : '⏳ معلق'}</td><td class="p-2 border text-center"><button onclick="toggleUserStatus('${user.id}', ${user.isActive})" class="text-blue-600 font-bold hover:underline">${user.isActive ? 'تعطيل' : 'تفعيل'}</button></td>`;
+                tr.innerHTML = `<td class="p-2 border font-bold">${user.name}</td><td class="p-2 border text-center text-[10px]">${user.role}</td><td class="p-2 border text-center">${user.isActive ? '✅' : '⏳'}</td><td class="p-2 border text-center"><button onclick="toggleUserStatus('${user.id}', ${user.isActive})" class="text-blue-600 font-bold hover:underline">${user.isActive ? 'تعطيل' : 'تفعيل'}</button></td>`;
                 tbody.appendChild(tr);
             });
         };
@@ -433,13 +435,13 @@
             if (document.getElementById('activation-code-input').value === "MOE-2024") {
                 const configRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'config', 'system');
                 await window.fs.setDoc(configRef, { isActivated: true });
-                alert("تم التنشيط السحابي بنجاح لجميع المنسوبين!");
+                alert("تم التنشيط بنجاح!");
                 closeModal('activation-modal');
-            } else alert("كود خاطئ");
+            } else alert("الكود غير صحيح");
         };
 
         const deactivateSystem = async () => {
-            if (confirm("هل تريد تسجيل الخروج ومسح الجلسة الحالية؟")) {
+            if (confirm("هل تريد تسجيل الخروج؟")) {
                 localStorage.clear();
                 location.reload();
             }
