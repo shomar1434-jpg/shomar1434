@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>منصة المدرسة الرقمية الذكية - نظام التحكم المركزي السحابي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
+
+        // Auth Logic
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.currentUserUid = user.uid;
+                window.dispatchEvent(new CustomEvent('authReady'));
+            }
+        });
+    </script>
+
+    <style>
+        :root {
+            --moe-primary: #1e7b78;
+            --moe-gold: #cfae5d;
+            --moe-secondary: #155e5c;
+            --moe-navy: #0f172a;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, var(--moe-navy) 0%, #1e293b 100%);
+            color: white;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #role-selector-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: linear-gradient(135deg, var(--moe-navy) 0%, #1e293b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .role-btn {
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .role-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
+            border-color: var(--moe-primary);
+        }
+
+        .app-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.98);
+            color: #1e293b;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto 0.4rem;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .app-iframe-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background: white;
+            flex-direction: column;
+        }
+
+        .app-iframe-container.active { display: flex; }
+        iframe { flex-grow: 1; border: none; }
+
+        .readonly-banner {
+            background: #fef3c7; color: #92400e; text-align: center;
+            padding: 0.4rem; font-weight: bold; font-size: 0.8rem;
+            border-bottom: 1px solid #f59e0b; display: none; z-index: 60;
+        }
+
+        .back-button {
+            position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+            background: var(--moe-primary); color: white; padding: 0.6rem 1.5rem;
+            border-radius: 9999px; z-index: 1001; font-weight: bold; display: none;
+            font-size: 0.9rem;
+        }
+
+        .global-admin-badge {
+            background: var(--moe-gold); color: var(--moe-navy); font-size: 0.7rem;
+            font-weight: 800; padding: 0.3rem 1.2rem; border-radius: 9999px;
+            box-shadow: 0 4px 12px rgba(207, 174, 93, 0.4);
+            position: absolute; top: 1.5rem; right: 1.5rem; z-index: 100;
+        }
+
+        .exit-app-btn {
+            background: #ef4444; color: white; font-size: 0.7rem;
+            font-weight: 800; padding: 0.3rem 1.2rem; border-radius: 9999px;
+            position: absolute; top: 1.5rem; left: 1.5rem; z-index: 100;
+            cursor: pointer;
+        }
+
+        #admin-control-bar {
+            background: var(--moe-navy); color: white; padding: 0.4rem 0.8rem;
+            border-bottom: 2px solid var(--moe-primary); display: flex;
+            justify-content: space-between; align-items: center; font-size: 0.8rem;
+        }
+
+        #user-management-modal, #activation-modal, #alerts-popup, #edit-user-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: white; color: #1e293b; width: 100%; max-width: 900px;
+            border-radius: 1.5rem; padding: 1.5rem; max-height: 85vh; overflow-y: auto;
+        }
+
+        .pending-badge { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; padding: 2px 8px; border-radius: 6px; font-size: 10px; }
+        .activation-status-badge { background: #f0fdf4; color: #166534; padding: 4px 12px; border-radius: 6px; font-size: 9px; font-weight: bold; }
+        
+        /* Custom Toast */
+        #toast-container {
+            position: fixed; bottom: 2rem; right: 2rem; z-index: 9999;
+        }
+        .toast {
+            background: #1e293b; color: white; padding: 1rem 1.5rem; border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-top: 0.5rem; border-left: 4px solid var(--moe-primary);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <!-- شاشة اختيار الدور -->
+    <div id="role-selector-screen">
+        <div class="max-w-xl w-full text-center">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-24 mx-auto mb-6">
+            <h2 class="text-2xl font-bold mb-2 text-white">بوابة الدخول السحابية</h2>
+            <div id="registration-context-msg" class="text-teal-400 mb-4 text-xs font-bold hidden">🔗 ربط سحابي مع مدرسة المدير</div>
+            
+            <div class="mb-6 space-y-3 max-w-sm mx-auto">
+                <input type="text" id="user-display-name" placeholder="الاسم الثلاثي" 
+                       class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center">
+                <input type="email" id="user-madrasati-email" placeholder="بريد منصة مدرستي" 
+                       class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center">
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <button onclick="handleRoleSelection('leadership')" class="role-btn p-4 rounded-2xl flex flex-col items-center">
+                    <span class="text-3xl mb-2">🏛️</span>
+                    <span class="text-sm font-bold text-white">مدير المدرسة</span>
+                </button>
+                <button onclick="handleRoleSelection('agency')" class="role-btn p-4 rounded-2xl flex flex-col items-center">
+                    <span class="text-3xl mb-2">📑</span>
+                    <span class="text-sm font-bold text-white">وكيل المدرسة</span>
+                </button>
+                <button onclick="handleRoleSelection('performance')" class="role-btn p-4 rounded-2xl flex flex-col items-center">
+                    <span class="text-3xl mb-2">👨‍🏫</span>
+                    <span class="text-sm font-bold text-white">المعلمين</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- شاشة الانتظار -->
+    <div id="waiting-screen" class="fixed inset-0 z-[3000] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden">
+        <span class="text-6xl mb-6 animate-pulse">⏳</span>
+        <h2 class="text-2xl font-bold text-white mb-2">عذراً</h2>
+        <p class="text-slate-400 text-sm max-w-md">نأسف جداً ..... حسابك لم يتم تفعيله بعد على السحابة</p>
+        <button onclick="logout()" class="mt-8 bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-bold">تسجيل خروج</button>
+    </div>
+
+    <!-- الواجهة الرئيسية -->
+    <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-6 opacity-0 pointer-events-none transition-opacity duration-500">
+        <div class="exit-app-btn" onclick="logout()">🚪 خروج</div>
+        <div id="active-role-badge" class="global-admin-badge">تحميل...</div>
+
+        <header class="text-center mb-6 flex flex-col items-center relative">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="moe-logo mx-auto">
+            <h1 class="header-title">منصة المدرسة الرقمية الذكية</h1>
+            <div id="header-msg" class="header-subtitle"><p>التفاعل السحابي نشط ✅</p></div>
+        </header>
+
+        <div id="bell-container" class="hidden w-full max-w-5xl mx-auto flex justify-center mb-6">
+            <div class="notification-bell bg-white/10 p-4 rounded-2xl border border-white/20 shadow-2xl transition-all" onclick="openAlertsPopup()">
+                <div class="relative">
+                    <span class="text-3xl">🔔</span>
+                    <div id="bell-badge" class="notification-badge hidden">0</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-extrabold text-teal-300">تنبيه سحابي عاجل</div>
+                    <div class="text-[10px] text-slate-300">لديك رسائل جديدة، اضغط للمعاينة</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
+
+        <footer class="mt-8 text-center text-slate-400 text-[10px] border-t border-slate-800 pt-4 pb-2">
+            <p>جميع الحقوق محفوظة لمنصة المدرسة الرقمية الذكية - التفاعل السحابي © 2024</p>
+        </footer>
+    </div>
+
+    <!-- حاويات التطبيقات -->
+    <div id="viewport-leadership" class="app-iframe-container">
+        <div id="admin-control-bar">
+            <div class="flex items-center gap-3">
+                <span class="text-[#1e7b78] font-bold">⚡ الإدارة السحابية</span>
+                <button onclick="showUserManagement()" class="bg-teal-700 px-2.5 py-1 rounded-lg text-[10px] hover:bg-teal-600 transition">👥 إدارة المنسوبين</button>
+                <button onclick="showActivationModal()" class="bg-indigo-700 px-2.5 py-1 rounded-lg text-[10px] hover:bg-indigo-600 transition">🗝️ التنشيط</button>
+                <button onclick="showSendNotifModal()" class="bg-yellow-600 px-2.5 py-1 rounded-lg text-[10px] hover:bg-yellow-500 transition">🔔 إرسال تنبيه</button>
+            </div>
+        </div>
+        <iframe id="frame-leadership"></iframe>
+    </div>
+
+    <!-- Modals -->
+    <div id="user-management-modal">
+        <div class="modal-content shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-xl font-bold text-teal-800">إدارة منسوبي السحابة</h3>
+                <button onclick="closeModal('user-management-modal')" class="text-slate-400 hover:text-red-500 text-xl">&times;</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right border-collapse text-xs">
+                    <thead><tr class="bg-slate-100"><th class="p-2 border">الاسم</th><th class="p-2 border">البريد</th><th class="p-2 border text-center">الرتبة</th><th class="p-2 border text-center">الحالة</th><th class="p-2 border text-center">الإجراءات</th></tr></thead>
+                    <tbody id="users-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        let allUsers = [];
+        let allNotifications = [];
+        let systemConfig = {};
+        let currentUser = null;
+
+        const showToast = (msg) => {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        };
+
+        const handleRoleSelection = async (role) => {
+            const name = document.getElementById('user-display-name').value || (role === 'leadership' ? 'admin' : '');
+            const email = document.getElementById('user-madrasati-email').value || (role === 'leadership' ? 'a123456@jzb.moe.gov.sa' : '');
+
+            if (!name || !email) { showToast("يرجى إدخال البيانات"); return; }
+
+            const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
+            const isInitialAdmin = (role === 'leadership' && name === 'admin');
+
+            const userData = {
+                id: window.currentUserUid,
+                name, email, role,
+                isActive: isInitialAdmin ? true : false,
+                dateJoined: new Date().toLocaleString('ar-SA')
+            };
+
+            await window.fs.setDoc(userRef, userData);
+            checkUserStatus();
+        };
+
+        const checkUserStatus = () => {
+            const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
+            window.fs.onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    const u = doc.data();
+                    currentUser = u;
+                    if (!u.isActive) {
+                        document.getElementById('role-selector-screen').style.display = 'none';
+                        document.getElementById('waiting-screen').classList.remove('hidden');
+                    } else {
+                        startApp(u);
+                    }
+                }
+            });
+        };
+
+        const startApp = (u) => {
+            document.getElementById('waiting-screen').classList.add('hidden');
+            document.getElementById('role-selector-screen').style.display = 'none';
+            document.getElementById('main-ui').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('active-role-badge').innerText = u.role === 'leadership' ? 'مدير المدرسة' : (u.role === 'agency' ? 'وكيل المدرسة' : 'معلم');
+            renderGrid(u.role);
+            syncCloudData();
+        };
+
+        const syncCloudData = () => {
+            // Sync Users
+            const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
+            window.fs.onSnapshot(usersRef, (snapshot) => {
+                allUsers = snapshot.docs.map(doc => doc.data());
+                if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
+            });
+
+            // Sync Notifications
+            const notifRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications');
+            window.fs.onSnapshot(notifRef, (snapshot) => {
+                allNotifications = snapshot.docs.map(doc => doc.data());
+                updateNotifBell();
+            });
+
+            // Sync Config
+            const configRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'config', 'system');
+            window.fs.onSnapshot(configRef, (doc) => {
+                if (doc.exists()) systemConfig = doc.data();
+            });
+        };
+
+        const renderGrid = (role) => {
+            const grid = document.getElementById('apps-grid');
+            grid.innerHTML = '';
+            const apps = [];
+            if (role === 'leadership') apps.push('leadership', 'agency', 'performance');
+            else apps.push(role);
+
+            grid.className = `grid grid-cols-1 md:grid-cols-${apps.length} gap-6 max-w-5xl mx-auto w-full px-4`;
+            apps.forEach(appId => {
+                const card = document.createElement('div');
+                card.className = "app-card cursor-pointer p-6 text-center";
+                card.innerHTML = `<h2 class="font-bold text-slate-800">${appId === 'leadership' ? 'الإدارة' : (appId === 'agency' ? 'الوكالة' : 'المعلمين')}</h2><button class="mt-4 bg-teal-700 text-white px-4 py-2 rounded-xl text-xs">فتح القسم</button>`;
+                card.onclick = () => launchApp(appId);
+                grid.appendChild(card);
+            });
+        };
+
+        const launchApp = (appId) => {
+            const v = document.getElementById('viewport-' + (appId === 'leadership' ? 'leadership' : (appId === 'agency' ? 'agency' : 'performance')));
+            document.getElementById('main-ui').style.display = 'none';
+            v.classList.add('active');
+            document.getElementById('backBtn').classList.add('visible');
+            const f = v.querySelector('iframe');
+            const isActivated = systemConfig.isActivated === true;
+            f.src = (appId === 'leadership' ? 'نظام القيادة المدرسية الذكي.html' : (appId === 'agency' ? 'التقارير الرقمية لوكالة المدرسة الذكية.html' : 'نظام تقارير الأداء الذكي.html')) + (isActivated ? '?activated=true' : '');
+        };
+
+        const showUserManagement = () => {
+            document.getElementById('user-management-modal').style.display = 'flex';
+            renderUserTable();
+        };
+
+        const renderUserTable = () => {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            allUsers.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 border">${user.name}</td>
+                    <td class="p-2 border text-[10px]">${user.email}</td>
+                    <td class="p-2 border text-center font-bold">${user.role}</td>
+                    <td class="p-2 border text-center">${user.isActive ? '✅ نشط' : '⏳ معلق'}</td>
+                    <td class="p-2 border text-center">
+                        <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="text-teal-600 font-bold">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        const toggleUserActivation = async (uid, currentStatus) => {
+            const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid);
+            await window.fs.updateDoc(userRef, { isActive: !currentStatus });
+            showToast("تم تحديث حالة الحساب");
+        };
+
+        const updateNotifBell = () => {
+            if (currentUser.role === 'leadership') return;
+            const unread = allNotifications.filter(n => !n.readBy.includes(currentUser.id)).length;
+            const bell = document.getElementById('bell-container');
+            if (unread > 0) {
+                bell.classList.remove('hidden');
+                document.getElementById('bell-badge').innerText = unread;
+                document.getElementById('bell-badge').classList.remove('hidden');
+            } else bell.classList.add('hidden');
+        };
+
+        const openAlertsPopup = () => {
+            const list = document.getElementById('alerts-list');
+            list.innerHTML = '';
+            allNotifications.forEach(n => {
+                list.innerHTML += `<div class="p-4 border mb-2 rounded-xl bg-slate-50">
+                    <p class="text-[10px] font-bold text-teal-700">${n.senderLabel}</p>
+                    <p class="text-sm">${n.text}</p>
+                </div>`;
+            });
+            document.getElementById('alerts-popup').style.display = 'flex';
+        };
+
+        const logout = () => { location.reload(); };
+        const closeModal = (id) => document.getElementById(id).style.display = 'none';
+        const closeApp = () => { document.getElementById('main-ui').style.display = 'flex'; document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); document.getElementById('backBtn').classList.remove('visible'); };
+
+        window.addEventListener('authReady', () => {
+            if (localStorage.getItem('is_registered_v2') === 'true') checkUserStatus();
+        });
+    </script>
+</body>
+</html>
