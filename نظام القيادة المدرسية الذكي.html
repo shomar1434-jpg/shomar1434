@@ -861,6 +861,59 @@
             let incompleteCount = 0;
             let completedGoals = [];
 
+            // عبارات انطلاقة الأسبوع (يوم الأحد)
+            const sundayPhrases = [
+                "صباح التجديد؛ لنبدأ أسبوعنا بقلوب تملؤها العزيمة، وعقول تخطط لرفع اسم مدرستنا عالياً.",
+                "كل يوم أحد هو بداية لقصة نجاح جديدة، فلنكتب سطورها بالإنجاز والعمل المتقن.",
+                "الريادة تبدأ من هنا، ومن هذه اللحظة؛ أتمنى لكم أسبوعاً حافلاً بالعطاء الذي لا ينضب.",
+                "بكم ومعكم، نطلق شرارة الإبداع لهذا الأسبوع، مؤمنين بأن كل جهد تبذلونه هو استثمار في مستقبل الوطن.",
+                "ليكن شعارنا لهذا الأسبوع: (التميز غايتنا، والإخلاص وسيلتنا)؛ انطلاقة مباركة للجميع.",
+                "النجاح لا يأتي بالمصادفة، بل بالتخطيط السليم والبدايات القوية.. لنبدأ على بركة الله.",
+                "إشراقة الأحد تذكرنا بأن الفرص متاحة لمن يسعى، وأنتم خير من يسعى للقمة.",
+                "دعونا نجعل من هذا الأسبوع نموذجاً يحتذى به في الانضباط والإنجاز التربوي.",
+                "بكل تفاؤل، نستقبل مهامنا الجديدة، واثقين أن كفاءتكم هي الضمان الحقيقي لنجاحنا.",
+                "صباح الخير لفرسان الميدان التربوي؛ لنرسم معاً ملامح التميز في كل حصة وكل مهمة."
+            ];
+
+            // عبارات منتصف الأسبوع (الثبات والاستمرارية)
+            const midWeekPhrases = [
+                "الاستمرارية هي سر العظمة؛ شكراً لكل من حافظ على عطائه بنفس الحماس والوتيرة.",
+                "نحن في منتصف الطريق، والنتائج المبشرة بدأت تلوح في الأفق بفضل تكاتفكم.",
+                "تذكروا أن الصعاب تذوب أمام الإرادة الصلبة؛ لنواصل المسير نحو أهدافنا التعليمية.",
+                "العمل الجماعي هو الوقود الذي يسمح للناس العاديين بتحقيق نتائج غير عادية.",
+                "كل مهمة صغيرة تنجزونها اليوم، تقربنا خطوة كبيرة نحو رؤية مدرستنا المستقبلية.",
+                "الجودة ليست خياراً بل هي أسلوب عمل نتبعه في كل تفاصيل يومنا الدراسي.",
+                "الفخر الحقيقي هو أن نرى أثر عملنا في عيون طلابنا.. واصلوا إبداعكم.",
+                "لا تنظروا إلى كم المهام، بل انظروا إلى عظمة الأثر الذي تتركونه في نفوس الأجيال.",
+                "الإبداع هو أن تؤدي عملك المعتاد بطريقة غير معتادة؛ أبهرونا بتميزكم اليوم.",
+                "قوتنا في وحدتنا وفي حرصنا المشترك على بقاء مدرستنا في الصدارة دائماً."
+            ];
+
+            // عبارات نهاية الأسبوع (الحصاد والتقدير)
+            const endWeekPhrases = [
+                "وصلنا لختام الأسبوع بحصيلة تفخر بها النفس؛ شكراً لكل يدٍ قدمت وعقلٍ فكر.",
+                "الإنجاز هو اللغة التي يتقنها المبدعون، وأنتم اليوم تتحدثونها بطلاقة.",
+                "مع نهاية مهام الأسبوع، نجدد العهد بأن يظل الاجتهاد هو هويتنا الثابتة.",
+                "لقد أثبتم خلال الأيام الماضية أنكم أهل للمسؤولية.. دمتم فخراً لهذا الصرح التربوي.",
+                "ننهي أسبوعنا لنستريح قليلاً، ونعود بشوق أكبر لمواصلة رحلة البناء والعطاء.",
+                "كل شكر وتقدير لا يفيكم حقكم؛ لقد جعلتم من هذا الأسبوع فصلاً من فصول الإبداع.",
+                "النجاح رحلة مستمرة، وما حققناه هذا الأسبوع هو مجرد محطة للانطلاق نحو الأفضل.",
+                "لنراجع إنجازاتنا بابتسامة، ولنستعد للأسبوع القادم بطموح يعانق السماء.",
+                "الاستمرارية في التميز هي التحدي الأكبر، وأنتم اليوم أثبتم أنكم قدر التحدي.",
+                "إجازة سعيدة ومستحقة لكل من أخلص واجتهد؛ نلتقي لنرتقي دوماً."
+            ];
+
+            // تحديد العبارة بناءً على اليوم
+            const jsDay = new Date().getDay(); // 0 is Sunday
+            let dailyQuote = "";
+            if (jsDay === 0) {
+                dailyQuote = sundayPhrases[Math.floor(Math.random() * sundayPhrases.length)];
+            } else if (jsDay >= 1 && jsDay <= 3) {
+                dailyQuote = midWeekPhrases[Math.floor(Math.random() * midWeekPhrases.length)];
+            } else {
+                dailyQuote = endWeekPhrases[Math.floor(Math.random() * endWeekPhrases.length)];
+            }
+
             Object.entries(CATEGORY_DATA).forEach(([id, data]) => {
                 const count = counts[id] || 0;
                 const goal = goals[id] || 10;
@@ -883,6 +936,9 @@
             });
 
             insightsHtml += `<div class="ai-message font-bold text-xs text-slate-700">مرحباً بك في وحدة التحليل الذكي. إليك قراءة سريعة لأدائك القيادي اليوم:</div>`;
+            
+            // إضافة عبارة الإلهام اليومية كرسالة أولى مميزة
+            insightsHtml += `<div class="ai-guide !bg-white !border-dashed border-2 !border-amber-400 !text-amber-800 italic p-4 mb-4">✨ إلهام اليوم: "${dailyQuote}"</div>`;
 
             if(incompleteCount > 0) {
                 insightsHtml += `<div class="ai-alert">⚠️ تنبيه: لديك (${incompleteCount}) تقارير في الأرشيف لم تكتمل بياناتها بعد. يرجى مراجعتها لضمان جودة التوثيق.</div>`;
@@ -1183,7 +1239,6 @@
             
             let found = false;
             for(let i=0; i<dateSel.options.length; i++) {
-                // البحث عن التاريخ بالاسم لضمان التطابق
                 if(dateSel.options[i].text === todayStr) {
                     dateSel.selectedIndex = i;
                     found = true;
@@ -1191,11 +1246,9 @@
                 }
             }
             
-            // في حال عدم التطابق، استخدم التاريخ الفعلي اليوم
             if (!found) {
                 for (let i = 0; i < dateSel.options.length; i++) {
-                    const optDate = new Date(todayDate); // محاكاة بسيطة
-                    if (dateSel.options[i].text.includes(todayStr.split(' ')[0])) { // تطابق اليوم
+                    if (dateSel.options[i].text.includes(todayStr.split(' ')[0])) { 
                          dateSel.selectedIndex = i;
                          break;
                     }
@@ -1342,8 +1395,6 @@
             const reports = JSON.parse(localStorage.getItem('school_reports') || '[]');
             const systemDateStr = new Date().toLocaleDateString('ar-SA-u-ca-islamic-uma');
             
-            // إصلاح هام: تثبيت القيم المختارة للقوائم المنسدلة في الـ HTML المحفوظ
-            // لأن innerHTML لا يحفظ حالة الـ SelectedIndex بشكل تلقائي
             const selects = document.querySelectorAll('#report-content-container select');
             selects.forEach(sel => {
                 for(let opt of sel.options) opt.removeAttribute('selected');
@@ -1522,13 +1573,11 @@
             const sel = document.getElementById('categorySelect');
             sel.innerHTML = '<option value="">اختر المجال</option>' + Object.entries(CATEGORY_DATA).map(([id, data]) => `<option value="${id}">${data.name}</option>`).join('');
             
-            // توليد التاريخ وتعبئة القائمة
             const dateSel = document.getElementById('dateInputHeader');
             dateSel.innerHTML = "";
             const startDate = new Date(2024, 0, 1); 
             const today = new Date();
             let counter = 0; let defaultIndex = 0;
-            // توليد تواريخ حرة واسعة المدى (من 2024 إلى 2030) لضمان عدم التقيد
             for (let d = new Date(startDate); d <= new Date(2030, 11, 31); d.setDate(d.getDate() + 1)) {
                 let opt = document.createElement('option');
                 opt.text = d.toLocaleDateString('ar-SA-u-ca-islamic-uma');
