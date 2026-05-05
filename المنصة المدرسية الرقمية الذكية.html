@@ -55,42 +55,96 @@
 
         body {
             font-family: 'Cairo', sans-serif;
-            background: linear-gradient(135deg, var(--moe-navy) 0%, #1e293b 100%);
+            background: var(--moe-navy);
             color: white;
             margin: 0;
             overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+
+        /* المزيج البصري: الصورة الخلفية مع التدرج المائي */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920'); 
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            filter: grayscale(100%);
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 15%, rgba(30, 123, 120, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 85% 85%, rgba(207, 174, 93, 0.25) 0%, transparent 50%),
+                linear-gradient(to bottom, rgba(15, 23, 42, 0.8), var(--moe-navy));
+            backdrop-filter: blur(5px);
+        }
+
+        /* فقاعات مائية إضافية للتجميل */
+        .watercolor-blob {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.25;
+            pointer-events: none;
         }
 
         #role-selector-screen {
             position: fixed;
             inset: 0;
             z-index: 2000;
-            background: linear-gradient(135deg, var(--moe-navy) 0%, #1e293b 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 0.5rem;
+            background: transparent;
+            overflow-y: auto;
+        }
+
+        /* تقليص حجم حاوية الدخول لتناسب الصفحة */
+        .login-container {
+            max-width: 32rem; 
+            width: 100%;
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border-radius: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .role-btn {
             transition: all 0.3s ease;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem !important;
         }
 
         .role-btn:hover {
             background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-3px);
+            transform: translateY(-5px);
             border-color: var(--moe-primary);
+            box-shadow: 0 10px 30px rgba(30, 123, 120, 0.3);
         }
 
         .action-btn {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 1rem;
             border-radius: 0.75rem;
             font-size: 0.75rem;
             font-weight: 700;
@@ -107,13 +161,14 @@
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             background: rgba(255, 255, 255, 0.98);
             color: #1e293b;
-            border-radius: 1.5rem;
+            border-radius: 2rem;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             height: 100%;
             border: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
 
         .app-iframe-container {
@@ -140,17 +195,18 @@
         .back-button.visible { display: block; }
 
         .global-admin-badge {
-            background: var(--moe-gold); color: var(--moe-navy); font-size: 0.7rem;
-            font-weight: 800; padding: 0.3rem 1.2rem; border-radius: 9999px;
+            background: var(--moe-gold); color: var(--moe-navy); font-size: 0.75rem;
+            font-weight: 800; padding: 0.4rem 1.5rem; border-radius: 9999px;
             box-shadow: 0 4px 12px rgba(207, 174, 93, 0.4);
             position: absolute; top: 1.5rem; right: 1.5rem; z-index: 100;
         }
 
         .exit-app-btn {
-            background: #ef4444; color: white; font-size: 0.7rem;
-            font-weight: 800; padding: 0.3rem 1.2rem; border-radius: 9999px;
+            background: #ef4444; color: white; font-size: 0.75rem;
+            font-weight: 800; padding: 0.4rem 1.5rem; border-radius: 9999px;
             position: absolute; top: 1.5rem; left: 1.5rem; z-index: 100;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
         #admin-control-bar {
@@ -172,7 +228,7 @@
 
         .modal-content {
             background: white; color: #1e293b; width: 100%; max-width: 800px;
-            border-radius: 1.5rem; padding: 2rem; max-height: 85vh; overflow-y: auto;
+            border-radius: 2rem; padding: 2.5rem; max-height: 85vh; overflow-y: auto;
         }
 
         .notification-badge {
@@ -202,44 +258,55 @@
 
         .bell-yellow { background-color: #facc15 !important; } 
         .bell-blue { background-color: #3b82f6 !important; }   
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(15px, 30px); }
+            100% { transform: translate(0, 0); }
+        }
+        .float-anim { animation: float 12s ease-in-out infinite; }
     </style>
 </head>
 <body>
 
     <div id="toast-container"></div>
 
+    <!-- فقاعات مائية للخلفية -->
+    <div class="watercolor-blob float-anim" style="top: -50px; left: -50px; background: var(--moe-primary);"></div>
+    <div class="watercolor-blob float-anim" style="bottom: -50px; right: -50px; background: var(--moe-gold); animation-delay: -6s;"></div>
+
     <!-- شاشة الدخول / التسجيل -->
     <div id="role-selector-screen">
-        <div class="max-w-xl w-full text-center">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-24 mx-auto mb-6" alt="Logo">
-            <h2 id="selector-title" class="text-2xl font-bold mb-2 text-white">بوابة تفعيل النظام</h2>
-            <p id="selector-subtitle" class="text-slate-400 text-xs mb-8">يرجى إدخال البيانات للوصول إلى المنصة</p>
+        <div class="login-container">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 mx-auto mb-6 drop-shadow-2xl" alt="Logo">
+            <h2 id="selector-title" class="text-3xl font-extrabold mb-2 text-white tracking-tight">بوابة تفعيل النظام</h2>
+            <p id="selector-subtitle" class="text-slate-300 text-xs mb-6 opacity-80">يرجى إدخال البيانات للوصول للمنصة</p>
             
-            <div class="mb-6 space-y-3 max-w-sm mx-auto">
+            <div class="mb-8 space-y-3 max-w-sm mx-auto">
                 <input type="text" id="user-display-name" placeholder="الاسم الرباعي أو معرف الإدارة" 
-                       class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center">
+                       class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center backdrop-blur-md transition-all text-sm">
                 
-                <div class="flex items-center justify-between px-2 py-1">
-                    <button id="btn-new-user" onclick="setMode('new')" class="action-btn">مستخدم جديد</button>
-                    <button id="btn-login" onclick="handleAdminDirectEntry()" class="action-btn">تسجيل الدخول</button>
+                <div class="flex items-center justify-between px-2">
+                    <button id="btn-new-user" onclick="setMode('new')" class="action-btn px-4">مستخدم جديد</button>
+                    <button id="btn-login" onclick="handleAdminDirectEntry()" class="action-btn px-5 bg-teal-600 border-none">دخول</button>
                 </div>
 
                 <input type="email" id="user-madrasati-email" placeholder="بريد منصة مدرستي" 
-                       class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center">
+                       class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center backdrop-blur-md transition-all text-sm">
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
-                <button onclick="handleRoleSelection('leadership')" class="role-btn p-4 rounded-2xl flex flex-col items-center">
-                    <span class="text-3xl mb-2">🏛️</span>
-                    <span class="text-sm font-bold text-white">مدير المدرسة</span>
+            <div class="grid grid-cols-3 gap-3 max-w-md mx-auto">
+                <button onclick="handleRoleSelection('leadership')" class="role-btn rounded-2xl flex flex-col items-center group">
+                    <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">🏛️</span>
+                    <span class="text-[10px] font-bold text-white">المدير</span>
                 </button>
-                <button onclick="handleRoleSelection('agency')" class="role-btn p-4 rounded-2xl flex flex-col items-center">
-                    <span class="text-3xl mb-2">📑</span>
-                    <span class="text-sm font-bold text-white">وكيل المدرسة</span>
+                <button onclick="handleRoleSelection('agency')" class="role-btn rounded-2xl flex flex-col items-center group">
+                    <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">📑</span>
+                    <span class="text-[10px] font-bold text-white">الوكيل</span>
                 </button>
-                <button onclick="handleRoleSelection('performance')" class="role-btn p-4 rounded-2xl flex flex-col items-center">
-                    <span class="text-3xl mb-2">👨‍🏫</span>
-                    <span class="text-sm font-bold text-white">المعلمين</span>
+                <button onclick="handleRoleSelection('performance')" class="role-btn rounded-2xl flex flex-col items-center group">
+                    <span class="text-3xl mb-2 group-hover:scale-110 transition-transform">👨‍🏫</span>
+                    <span class="text-[10px] font-bold text-white">المعلم</span>
                 </button>
             </div>
         </div>
@@ -249,39 +316,39 @@
     <div id="waiting-screen" class="fixed inset-0 z-[3000] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden">
         <span class="text-6xl mb-6 animate-pulse">🔒</span>
         <h2 class="text-2xl font-bold text-white mb-2">بانتظار مصادقة المدير</h2>
-        <p class="text-slate-400 text-sm max-w-md">نأسف، لا يمكنك الدخول حالياً. يجب على مدير المدرسة تفعيل حسابك أولاً من لوحة التحكم المركزية.</p>
-        <button onclick="logout()" class="mt-8 bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-bold">العودة للخلف</button>
+        <p class="text-slate-400 text-sm max-w-md">نأسف، لا يمكنك الدخول حالياً. يجب على مدير المدرسة تفعيل حسابك أولاً.</p>
+        <button onclick="logout()" class="mt-8 bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-bold">العودة</button>
     </div>
 
     <!-- الواجهة الرئيسية -->
-    <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-6 opacity-0 pointer-events-none transition-opacity duration-500">
+    <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-6 opacity-0 pointer-events-none transition-opacity duration-700">
         <div class="exit-app-btn" onclick="logout()">🚪 خروج</div>
         <div id="active-role-badge" class="global-admin-badge">تحميل...</div>
 
-        <header class="text-center mb-6 flex flex-col items-center relative">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="w-20 mx-auto">
-            <h1 class="text-xl font-bold mt-2">منصة المدرسة الرقمية الذكية</h1>
-            <div class="text-teal-400 text-xs font-bold mt-1">النظام السحابي نشط ✅</div>
+        <header class="text-center mb-8 flex flex-col items-center relative">
+            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="w-36 mx-auto mb-3 drop-shadow-xl">
+            <h1 class="text-3xl md:text-4xl font-black mt-2 text-white drop-shadow-lg">منصة المدرسة الرقمية الذكية</h1>
+            <div class="inline-block px-3 py-1 bg-teal-500/20 rounded-full text-teal-300 text-[10px] font-bold mt-2 border border-teal-500/30">النظام السحابي نشط ✅</div>
         </header>
 
         <!-- جرس التنبيهات -->
-        <div id="bell-container" class="hidden w-full max-w-5xl mx-auto flex justify-center mb-6">
-            <div id="bell-element" class="p-4 rounded-2xl border border-white/20 shadow-2xl cursor-pointer flex items-center gap-4 bell-yellow transition-colors duration-500" onclick="openAlertsPopup()">
+        <div id="bell-container" class="hidden w-full max-w-4xl mx-auto flex justify-center mb-8">
+            <div id="bell-element" class="p-4 rounded-3xl border border-white/20 shadow-2xl cursor-pointer flex items-center gap-4 bell-yellow transition-all duration-500 hover:scale-105" onclick="openAlertsPopup()">
                 <div class="relative">
                     <span class="text-3xl">🔔</span>
                     <div id="bell-badge" class="notification-badge hidden">0</div>
                 </div>
                 <div class="text-right">
                     <div id="bell-label" class="text-xs font-extrabold text-navy-900">تنبيهات النظام</div>
-                    <div class="text-[10px] text-navy-800">لديك رسائل جديدة، اضغط للمعاينة</div>
+                    <div class="text-[10px] text-navy-800 font-bold">لديك رسائل إدارية هامة</div>
                 </div>
             </div>
         </div>
 
         <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
 
-        <footer class="mt-8 text-center text-slate-400 text-[10px] border-t border-slate-800 pt-4 pb-2">
-            <p>جميع الحقوق محفوظة لمنصة المدرسة الرقمية الذكية © 2024</p>
+        <footer class="mt-8 text-center text-slate-400 text-[10px] border-t border-white/5 pt-4 pb-2">
+            <p class="opacity-60">جميع الحقوق محفوظة © 2024</p>
         </footer>
     </div>
 
@@ -303,11 +370,11 @@
     <div id="viewport-monitoring" class="app-iframe-container">
         <div class="monitoring-header">
             <div class="flex items-center gap-3">
-                <span>👁️ متابعة إنجازات:</span>
+                <span>👁️ متابعة:</span>
                 <span id="monitored-user-name" class="underline">...</span>
                 <span id="monitored-user-role" class="bg-white/20 px-2 py-0.5 rounded text-[10px]">...</span>
             </div>
-            <button onclick="closeApp()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق المتابعة ✖</button>
+            <button onclick="closeApp()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق ✖</button>
         </div>
         <iframe id="frame-monitoring"></iframe>
     </div>
@@ -337,17 +404,16 @@
             <div class="flex justify-between items-center mb-6 border-b pb-3">
                 <div class="flex flex-col">
                     <h3 class="text-lg font-bold">👥 إدارة مستخدمي النظام</h3>
-                    <p class="text-[10px] text-slate-500">يمكنك إضافة، حذف، تعديل، أو تفعيل منسوبي المدرسة</p>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="openAddUserModal()" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-teal-700 shadow-md transition-all">+ إضافة حساب جديد</button>
+                    <button onclick="openAddUserModal()" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-teal-700 shadow-md">+ إضافة</button>
                     <button onclick="closeModal('user-management-modal')" class="text-slate-400 hover:text-red-500 font-bold p-1">إغلاق</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-right text-sm">
                     <thead><tr class="bg-slate-100">
-                        <th class="p-3">الاسم الرباعي</th>
+                        <th class="p-3">الاسم</th>
                         <th class="p-3 text-center">الدور</th>
                         <th class="p-3 text-center">الحالة</th>
                         <th class="p-3 text-center">تعديل</th>
@@ -369,7 +435,7 @@
                     <input type="text" id="new-user-name" class="w-full p-2 border rounded-lg text-sm" placeholder="أدخل الاسم">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1">البريد الإلكتروني (منصة مدرستي)</label>
+                    <label class="block text-xs font-bold mb-1">البريد الإلكتروني</label>
                     <input type="email" id="new-user-email" class="w-full p-2 border rounded-lg text-sm" placeholder="example@moe.gov.sa">
                 </div>
                 <div>
@@ -379,9 +445,6 @@
                         <option value="performance">معلم</option>
                         <option value="leadership">مدير مدرسة</option>
                     </select>
-                </div>
-                <div class="bg-teal-50 p-2 rounded-lg text-[10px] text-teal-800 border border-teal-200">
-                    ℹ️ الحسابات المضافة بواسطة المدير يتم تفعيلها تلقائياً.
                 </div>
                 <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold hover:bg-teal-800 transition-colors">إضافة الحساب الآن</button>
                 <button onclick="closeModal('add-user-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">إلغاء</button>
@@ -429,7 +492,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1">نص التنبيه (بحد أقصى 500 حرف):</label>
+                    <label class="block text-xs font-bold mb-1">نص التنبيه:</label>
                     <textarea id="notif-text" maxlength="500" class="w-full p-3 border rounded-xl h-32 mb-1 outline-none focus:border-teal-500 text-sm" placeholder="اكتب نص التنبيه هنا..."></textarea>
                     <div id="char-counter" class="text-[10px] text-left text-slate-400">0 / 500</div>
                 </div>
@@ -451,7 +514,7 @@
                     </div>
                 </div>
                 <button onclick="sendCloudNotification()" id="btn-send-notif" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-bold hover:bg-yellow-700 transition-colors">إرسال الآن</button>
-                <button onclick="closeModal('send-notif-modal')" class="w-full text-slate-400 text-center block text-xs">إلغاء</button>
+                <button onclick="closeModal('send-notif-modal')" class="text-slate-400 text-center block text-xs">إلغاء</button>
             </div>
         </div>
     </div>
@@ -509,31 +572,41 @@
             const isManager = isManagerAccount(nameInput, emailInput);
             if (isManager) isManagerVerifiedInSession = true;
             const isInitialAdmin = (role === 'leadership' && isManager);
+            
             const userData = {
                 id: window.currentUserUid || "manager-session-" + Date.now(),
                 name: nameInput, email: emailInput, role: role,
                 isActive: isInitialAdmin ? true : false,
                 dateJoined: new Date().toLocaleString('ar-SA')
             };
+
             if (isInitialAdmin || isManagerVerifiedInSession) {
                 showToast("تم التحقق من الهوية، جاري الدخول المباشر...");
                 startApp(userData);
             }
+
             try {
-                if (window.auth?.currentUser) {
+                // تسجيل الحساب سحابياً فوراً ليظهر في القائمة
+                if (window.currentUserUid) {
                     const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
-                    await window.fs.setDoc(userRef, userData);
+                    await window.fs.setDoc(userRef, userData, { merge: true });
                 }
                 if (!isInitialAdmin) localStorage.setItem('has_registered_school_app', 'true');
                 checkUserStatus();
-            } catch (err) { console.warn("Sync deferred."); }
+            } catch (err) { console.warn("Cloud connection error."); }
         };
 
         const checkUserStatus = () => {
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
             if (isManagerVerifiedInSession || isManagerAccount(nameInput, emailInput)) {
-                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "a123456@jzb.moe.gov.sa", role: 'leadership', isActive: true };
+                const managerObj = { 
+                    name: nameInput || "مدير النظام", 
+                    email: emailInput || "a123456@jzb.moe.gov.sa", 
+                    role: 'leadership', 
+                    isActive: true,
+                    id: window.currentUserUid
+                };
                 document.getElementById('waiting-screen').classList.add('hidden');
                 document.getElementById('role-selector-screen').style.display = 'none';
                 startApp(managerObj);
@@ -583,7 +656,7 @@
                     allNotifications = snapshot.docs.map(doc => doc.data());
                     updateNotifBell();
                 });
-            } catch (e) { console.warn("Sync error."); }
+            } catch (e) { console.warn("Cloud sync error."); }
         };
 
         const renderGrid = (role) => {
@@ -593,10 +666,14 @@
             const apps = (role === 'leadership') ? ['leadership', 'agency', 'performance'] : [role];
             grid.className = `grid grid-cols-1 md:grid-cols-${apps.length} gap-6 max-w-5xl mx-auto w-full px-4`;
             apps.forEach(appId => {
-                const titles = {'leadership': '🏛️ الإدارة', 'agency': '📑 الوكالة', 'performance': '👨‍🏫 المعلمين'};
+                const titles = {'leadership': '🏛️ الإدارة المدرسية', 'agency': '📑 وكالة المدرسة', 'performance': '👨‍🏫 شؤون المعلمين'};
                 const card = document.createElement('div');
-                card.className = "app-card cursor-pointer p-8 text-center shadow-lg border-b-4 border-teal-600 hover:shadow-2xl transition-all";
-                card.innerHTML = `<h2 class="font-bold text-xl text-slate-800">${titles[appId]}</h2><p class="text-[10px] text-teal-600 font-bold mt-2">● القسم متاح لك الآن</p><button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-xl text-xs font-bold w-full hover:bg-teal-800 transition-colors">دخول القسم</button>`;
+                card.className = "app-card cursor-pointer p-8 text-center border-b-8 border-teal-600 hover:shadow-[0_20px_50px_rgba(30,123,120,0.4)] transition-all";
+                card.innerHTML = `
+                    <h2 class="font-extrabold text-xl text-slate-800">${titles[appId]}</h2>
+                    <p class="text-[10px] text-teal-600 font-bold mt-2">● القسم مفعل سحابياً</p>
+                    <button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-2xl text-sm font-bold w-full hover:bg-teal-800 transition-colors shadow-lg">دخول القسم</button>
+                `;
                 card.onclick = () => launchApp(appId);
                 grid.appendChild(card);
             });
@@ -609,11 +686,17 @@
             v.classList.add('active');
             document.getElementById('backBtn').classList.add('visible');
             const filenames = {'leadership': 'نظام القيادة المدرسية الذكي.html','agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html','performance': 'نظام تقارير الأداء الذكي.html'};
-            v.querySelector('iframe').src = filenames[appId]; 
+            
+            let authSuffix = `?active=true&session=${Date.now()}`;
+            if (currentUser && (currentUser.role === 'leadership' || isManagerAccount(currentUser.name, currentUser.email))) {
+                authSuffix += `&role=leadership&bypass=true&admin=true`;
+            } else if (currentUser) {
+                authSuffix += `&role=${currentUser.role}&uid=${currentUser.id}`;
+            }
+
+            v.querySelector('iframe').src = filenames[appId] + authSuffix; 
         };
 
-        // --- وظائف إدارة المستخدمين المطورة للمدير ---
-        
         const openAddUserModal = () => {
             document.getElementById('new-user-name').value = '';
             document.getElementById('new-user-email').value = '';
@@ -629,7 +712,7 @@
                 const manualUid = "manual-" + Math.random().toString(36).substr(2, 9);
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
                     id: manualUid, name, email, role,
-                    isActive: true, // الحسابات المضافة يدوياً تفعل فوراً
+                    isActive: true, 
                     dateJoined: new Date().toLocaleString('ar-SA')
                 });
                 showToast("تمت إضافة الحساب بنجاح");
@@ -644,6 +727,7 @@
             tbody.innerHTML = '';
             allUsers.forEach(user => {
                 const isMe = user.id === currentUser.id;
+                // المدير له صلاحية تعديل كافة الحسابات بما فيها حسابه الخاص لتخصيصه
                 tbody.innerHTML += `<tr>
                     <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنا)' : ''}</td>
                     <td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
@@ -653,7 +737,7 @@
                         ${!isMe ? `
                             <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'bg-orange-500' : 'bg-green-600'} text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
                             <button onclick="deleteUser('${user.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">حذف</button>
-                        ` : '<span class="text-[9px] text-slate-400">حسابك الرئيسي</span>'}
+                        ` : `<span class="text-[9px] text-teal-600 font-bold">حساب المدير الرئيسي</span>`}
                     </td>
                 </tr>`;
             });
@@ -662,9 +746,15 @@
         const toggleUserActivation = async (uid, c) => await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !c });
         const deleteUser = async (uid) => { if (confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
         const openEditModal = (uid, n, e) => { document.getElementById('edit-uid').value = uid; document.getElementById('edit-name').value = n; document.getElementById('edit-email').value = e; document.getElementById('edit-user-modal').style.display = 'flex'; };
-        const saveUserEdit = async () => { await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', document.getElementById('edit-uid').value), { name: document.getElementById('edit-name').value, email: document.getElementById('edit-email').value }); closeModal('edit-user-modal'); showToast("تم التحديث"); };
-
-        // --- وظائف التنبيهات والمرفقات ---
+        const saveUserEdit = async () => { 
+            const uid = document.getElementById('edit-uid').value;
+            await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { 
+                name: document.getElementById('edit-name').value, 
+                email: document.getElementById('edit-email').value 
+            }); 
+            closeModal('edit-user-modal'); 
+            showToast("تم تحديث بيانات الحساب بنجاح"); 
+        };
 
         const updateAttachmentInputUI = () => {
             const type = document.getElementById('notif-attachment-type').value;
