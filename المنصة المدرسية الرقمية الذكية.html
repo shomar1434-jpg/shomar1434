@@ -65,7 +65,6 @@
             position: relative;
         }
 
-        /* المزيج البصري: الصورة الخلفية مع التدرج المائي */
         body::before {
             content: "";
             position: fixed;
@@ -90,7 +89,6 @@
             backdrop-filter: blur(5px);
         }
 
-        /* فقاعات مائية إضافية للتجميل */
         .watercolor-blob {
             position: absolute;
             width: 350px;
@@ -114,7 +112,6 @@
             overflow-y: auto;
         }
 
-        /* تقليص حجم حاوية الدخول لتناسب الصفحة */
         .login-container {
             max-width: 32rem; 
             width: 100%;
@@ -275,19 +272,19 @@
     <div class="watercolor-blob float-anim" style="top: -50px; left: -50px; background: var(--moe-primary);"></div>
     <div class="watercolor-blob float-anim" style="bottom: -50px; right: -50px; background: var(--moe-gold); animation-delay: -6s;"></div>
 
-    <!-- شاشة الدخول / التسجيل -->
+    <!-- شاشة الدخول الرئيسية -->
     <div id="role-selector-screen">
         <div class="login-container">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 mx-auto mb-6 drop-shadow-2xl" alt="Logo">
             <h2 id="selector-title" class="text-3xl font-extrabold mb-2 text-white tracking-tight">بوابة تفعيل النظام</h2>
-            <p id="selector-subtitle" class="text-slate-300 text-xs mb-6 opacity-80">يرجى إدخال البيانات للوصول للمنصة</p>
+            <p id="selector-subtitle" class="text-slate-300 text-xs mb-6 opacity-80">يرجى تسجيل الدخول للوصول للمنصة</p>
             
             <div class="mb-8 space-y-3 max-w-sm mx-auto">
-                <input type="text" id="user-display-name" placeholder="الاسم الرباعي أو معرف الإدارة" 
+                <input type="text" id="user-display-name" placeholder="معرف الإدارة أو الاسم" 
                        class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center backdrop-blur-md transition-all text-sm">
                 
                 <div class="flex items-center justify-between px-2">
-                    <button id="btn-new-user" onclick="setMode('new')" class="action-btn px-4">مستخدم جديد</button>
+                    <button id="btn-new-user" onclick="openRegistrationModal()" class="action-btn px-4">مستخدم جديد</button>
                     <button id="btn-login" onclick="handleAdminDirectEntry()" class="action-btn px-5 bg-teal-600 border-none">دخول</button>
                 </div>
 
@@ -312,12 +309,44 @@
         </div>
     </div>
 
+    <!-- نافذة طلب تسجيل جديد -->
+    <div id="registration-modal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="text-center mb-6">
+                <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-20 mx-auto mb-4" alt="Logo">
+                <h3 class="text-xl font-bold text-slate-800">طلب تسجيل حساب جديد</h3>
+                <p class="text-xs text-slate-500 mt-2">يرجى إدخال بياناتك الرسمية لطلب التفعيل من المدير</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-slate-700">الاسم الرباعي:</label>
+                    <input type="text" id="reg-name" class="w-full p-3 border rounded-xl text-sm focus:border-teal-500 outline-none" placeholder="أدخل اسمك كما هو في سجلات الوزارة">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-slate-700">بريد منصة مدرستي:</label>
+                    <input type="email" id="reg-email" class="w-full p-3 border rounded-xl text-sm focus:border-teal-500 outline-none" placeholder="example@moe.gov.sa">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-slate-700">القسم المطلوب:</label>
+                    <select id="reg-role" class="w-full p-3 border rounded-xl text-sm bg-slate-50 outline-none">
+                        <option value="performance">معلم</option>
+                        <option value="agency">وكيل مدرسة</option>
+                    </select>
+                </div>
+                <button onclick="submitRegistrationRequest()" class="w-full bg-teal-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-teal-800 transition-colors">إرسال الطلب الآن</button>
+                <button onclick="closeModal('registration-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">العودة للخلف</button>
+            </div>
+        </div>
+    </div>
+
     <!-- شاشة الانتظار -->
     <div id="waiting-screen" class="fixed inset-0 z-[3000] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden">
-        <span class="text-6xl mb-6 animate-pulse">🔒</span>
-        <h2 class="text-2xl font-bold text-white mb-2">بانتظار مصادقة المدير</h2>
-        <p class="text-slate-400 text-sm max-w-md">نأسف، لا يمكنك الدخول حالياً. يجب على مدير المدرسة تفعيل حسابك أولاً.</p>
-        <button onclick="logout()" class="mt-8 bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-bold">العودة</button>
+        <div class="bg-white/5 p-12 rounded-[3rem] border border-white/10 backdrop-blur-xl">
+            <span class="text-7xl mb-6 block animate-bounce">⏳</span>
+            <h2 class="text-2xl font-bold text-white mb-2">طلبك قيد المراجعة</h2>
+            <p class="text-slate-400 text-sm max-w-md mx-auto">تم استلام بياناتك بنجاح. يرجى الانتظار حتى يقوم مدير المدرسة بتفعيل حسابك من لوحة التحكم المركزية.</p>
+            <button onclick="location.reload()" class="mt-8 bg-teal-600 text-white px-8 py-3 rounded-full font-bold shadow-lg">تحديث الحالة</button>
+        </div>
     </div>
 
     <!-- الواجهة الرئيسية -->
@@ -360,7 +389,7 @@
                 <button onclick="showRoleList('agency')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600 font-bold">📑 الوكلاء</button>
                 <button onclick="showRoleList('performance')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600 font-bold">👨‍🏫 المعلمين</button>
                 <button onclick="showUserManagement()" class="bg-slate-700 px-3 py-1 rounded-lg text-[10px] hover:bg-slate-600">👥 المستخدمين</button>
-                <button onclick="copyRegistrationLink()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 الرابط</button>
+                <button onclick="copyRegLinkForUsers()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 رابط التسجيل</button>
                 <button onclick="showSendNotifModal()" class="bg-yellow-600 px-3 py-1 rounded-lg text-[10px] hover:bg-yellow-500 font-bold">🔔 إرسال تنبيه</button>
             </div>
         </div>
@@ -425,7 +454,7 @@
         </div>
     </div>
 
-    <!-- مودال إضافة حساب جديد -->
+    <!-- مودال إضافة حساب جديد (للمدير) -->
     <div id="add-user-modal" class="modal">
         <div class="modal-content max-w-sm">
             <h3 class="text-lg font-bold mb-4 flex items-center gap-2">➕ إضافة حساب جديد</h3>
@@ -539,17 +568,56 @@
             setTimeout(() => t.remove(), 3000);
         };
 
-        const setMode = (mode) => {
-            authMode = mode;
-            showToast(mode === 'login' ? "وضع تسجيل الدخول" : "وضع تسجيل مستخدم جديد");
-        };
-
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
             const managerPatterns = ['admin', 'مدير', 'إدارة', 'المدير', 'الادارة'];
             const managerEmails = ['a123456@jzb.mo.gov.sa', 'a123456@jzb.moe.gov.sa'];
             return managerPatterns.includes(n) || managerEmails.includes(e);
+        };
+
+        // دالة فتح واجهة التسجيل (للمستخدم الجديد)
+        const openRegistrationModal = () => {
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-email').value = '';
+            document.getElementById('registration-modal').style.display = 'flex';
+        };
+
+        // دالة إرسال طلب التسجيل
+        const submitRegistrationRequest = async () => {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const role = document.getElementById('reg-role').value;
+
+            if (!name || !email) {
+                showToast("يرجى إدخال كافة البيانات المطلوبة");
+                return;
+            }
+
+            try {
+                // إذا كان المستخدم هو المدير فعلياً، يتم تفعيله فوراً (تجاوز الأمان)
+                const isManager = isManagerAccount(name, email);
+                const uid = window.currentUserUid || "user-" + Date.now();
+                
+                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), {
+                    id: uid, name, email, role,
+                    isActive: isManager ? true : false, // تفعيل المدير فوراً وتعليق البقية
+                    dateJoined: new Date().toLocaleString('ar-SA')
+                });
+
+                closeModal('registration-modal');
+                
+                if (isManager) {
+                    showToast("أهلاً بك مدير النظام، جاري الدخول...");
+                    isManagerVerifiedInSession = true;
+                    checkUserStatus();
+                } else {
+                    document.getElementById('waiting-screen').classList.remove('hidden');
+                    document.getElementById('role-selector-screen').style.display = 'none';
+                }
+            } catch (err) {
+                showToast("حدث خطأ أثناء إرسال البيانات");
+            }
         };
 
         const handleAdminDirectEntry = () => {
@@ -559,7 +627,6 @@
                 isManagerVerifiedInSession = true;
                 handleRoleSelection('leadership');
             } else {
-                setMode('login');
                 if (!name || !email) showToast("يرجى إدخال الاسم والبريد");
                 else checkUserStatus(); 
             }
@@ -571,44 +638,32 @@
             if (!nameInput || !emailInput) { showToast("يرجى إدخال البيانات كاملة"); return; }
             const isManager = isManagerAccount(nameInput, emailInput);
             if (isManager) isManagerVerifiedInSession = true;
-            const isInitialAdmin = (role === 'leadership' && isManager);
             
             const userData = {
                 id: window.currentUserUid || "manager-session-" + Date.now(),
                 name: nameInput, email: emailInput, role: role,
-                isActive: isInitialAdmin ? true : false,
+                isActive: isManager ? true : false,
                 dateJoined: new Date().toLocaleString('ar-SA')
             };
 
-            if (isInitialAdmin || isManagerVerifiedInSession) {
-                showToast("تم التحقق من الهوية، جاري الدخول المباشر...");
+            if (isManager || isManagerVerifiedInSession) {
                 startApp(userData);
             }
 
             try {
-                // تسجيل الحساب سحابياً فوراً ليظهر في القائمة
                 if (window.currentUserUid) {
                     const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
                     await window.fs.setDoc(userRef, userData, { merge: true });
                 }
-                if (!isInitialAdmin) localStorage.setItem('has_registered_school_app', 'true');
                 checkUserStatus();
-            } catch (err) { console.warn("Cloud connection error."); }
+            } catch (err) { console.warn("Sync error."); }
         };
 
         const checkUserStatus = () => {
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
             if (isManagerVerifiedInSession || isManagerAccount(nameInput, emailInput)) {
-                const managerObj = { 
-                    name: nameInput || "مدير النظام", 
-                    email: emailInput || "a123456@jzb.moe.gov.sa", 
-                    role: 'leadership', 
-                    isActive: true,
-                    id: window.currentUserUid
-                };
-                document.getElementById('waiting-screen').classList.add('hidden');
-                document.getElementById('role-selector-screen').style.display = 'none';
+                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "a123456@jzb.moe.gov.sa", role: 'leadership', isActive: true, id: window.currentUserUid };
                 startApp(managerObj);
                 return;
             }
@@ -618,14 +673,10 @@
                 if (doc.exists()) {
                     const u = doc.data();
                     currentUser = u;
-                    const isStillManager = isManagerAccount(u.name, u.email) || isManagerAccount(nameInput, emailInput) || isManagerVerifiedInSession;
-                    if (!u.isActive && !isStillManager) {
+                    if (!u.isActive && !isManagerAccount(u.name, u.email)) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
-                        document.getElementById('main-ui').classList.add('opacity-0', 'pointer-events-none');
                     } else {
-                        document.getElementById('waiting-screen').classList.add('hidden');
-                        document.getElementById('role-selector-screen').style.display = 'none';
                         startApp(u);
                     }
                 }
@@ -656,7 +707,7 @@
                     allNotifications = snapshot.docs.map(doc => doc.data());
                     updateNotifBell();
                 });
-            } catch (e) { console.warn("Cloud sync error."); }
+            } catch (e) { console.warn("Sync error."); }
         };
 
         const renderGrid = (role) => {
@@ -686,14 +737,12 @@
             v.classList.add('active');
             document.getElementById('backBtn').classList.add('visible');
             const filenames = {'leadership': 'نظام القيادة المدرسية الذكي.html','agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html','performance': 'نظام تقارير الأداء الذكي.html'};
-            
             let authSuffix = `?active=true&session=${Date.now()}`;
             if (currentUser && (currentUser.role === 'leadership' || isManagerAccount(currentUser.name, currentUser.email))) {
                 authSuffix += `&role=leadership&bypass=true&admin=true`;
             } else if (currentUser) {
                 authSuffix += `&role=${currentUser.role}&uid=${currentUser.id}`;
             }
-
             v.querySelector('iframe').src = filenames[appId] + authSuffix; 
         };
 
@@ -727,7 +776,6 @@
             tbody.innerHTML = '';
             allUsers.forEach(user => {
                 const isMe = user.id === currentUser.id;
-                // المدير له صلاحية تعديل كافة الحسابات بما فيها حسابه الخاص لتخصيصه
                 tbody.innerHTML += `<tr>
                     <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنا)' : ''}</td>
                     <td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
@@ -862,11 +910,29 @@
             closeModal('role-list-modal');
         };
 
-        const copyRegistrationLink = () => { const t = document.createElement('input'); t.value = window.location.href; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast("تم نسخ رابط المنصة"); };
-        const logout = () => { location.reload(); };
+        const copyRegLinkForUsers = () => { 
+            const regLink = window.location.origin + window.location.pathname + "?mode=register";
+            const t = document.createElement('input'); 
+            t.value = regLink; 
+            document.body.appendChild(t); 
+            t.select(); 
+            document.execCommand('copy'); 
+            document.body.removeChild(t); 
+            showToast("تم نسخ رابط التسجيل المباشر للأعضاء"); 
+        };
+
+        const logout = () => { location.replace(window.location.origin + window.location.pathname); };
         const closeModal = (id) => { const m = document.getElementById(id); if (m) m.style.display = 'none'; };
         const closeApp = () => { document.getElementById('main-ui').style.display = 'flex'; document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); document.getElementById('backBtn').classList.remove('visible'); };
-        window.onload = () => { if (localStorage.getItem('has_registered_school_app')) { const b = document.getElementById('btn-new-user'); if (b) b.classList.add('hidden'); } };
+        
+        window.onload = () => { 
+            // فحص الرابط إذا كان يحتوي على وضع التسجيل المباشر
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'register') {
+                setTimeout(openRegistrationModal, 500);
+            }
+        };
+
         window.addEventListener('authReady', () => { checkUserStatus(); });
     </script>
 </body>
