@@ -300,7 +300,6 @@
         <iframe id="frame-leadership"></iframe>
     </div>
 
-    <!-- حاوية المتابعة الذكية -->
     <div id="viewport-monitoring" class="app-iframe-container">
         <div class="monitoring-header">
             <div class="flex items-center gap-3">
@@ -444,24 +443,24 @@
             showToast(mode === 'login' ? "وضع تسجيل الدخول" : "وضع تسجيل مستخدم جديد");
         };
 
-        // دالة التعرف المباشر والموثوق على حساب الإدارة (تعمل محلياً)
+        // دالة التعرف المباشر والموثوق (تعمل سحابياً ومحلياً)
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
-            return (n === 'admin' || n === 'مدير' || n === 'إدارة' || e === 'a123456@jzb.moe.gov.sa');
+            return (n === 'admin' || n === 'مدير' || n === 'إدارة' || e === 'a123456@jzb.mo.gov.sa' || e === 'a123456@jzb.moe.gov.sa');
         };
 
         const handleAdminDirectEntry = () => {
             const name = document.getElementById('user-display-name').value.trim();
             const email = document.getElementById('user-madrasati-email').value.trim();
             
-            // الحل المباشر: إذا كانت البيانات تطابق المدير، يدخل فوراً بدون انتظار أي اتصال سحابي
+            // القاعدة الذهبية: إذا كان مديراً، ادخل فوراً
             if (isManagerAccount(name, email)) {
                 handleRoleSelection('leadership');
             } else {
                 setMode('login');
                 if (!name || !email) showToast("يرجى إدخال الاسم والبريد");
-                else checkUserStatus(); // فحص الحالة للمستخدمين العاديين
+                else checkUserStatus(); 
             }
         };
 
@@ -475,7 +474,7 @@
             const isInitialAdmin = (role === 'leadership' && isManager);
 
             const userData = {
-                id: window.currentUserUid || "local-manager-id",
+                id: window.currentUserUid || "manager-session-" + Date.now(),
                 name: nameInput, 
                 email: emailInput, 
                 role: role,
@@ -483,13 +482,12 @@
                 dateJoined: new Date().toLocaleString('ar-SA')
             };
 
-            // في حال حساب المدير، يتم الدخول فوراً وبدون انتظار نجاح Firestore
+            // الحل الجذري: في وضع السحابة أو المحلية، يتم تفعيل الحساب فوراً في واجهة المستخدم
             if (isInitialAdmin) {
                 showToast("أهلاً بك مدير النظام، جاري الدخول المباشر...");
                 startApp(userData);
             }
 
-            // محاولة المزامنة مع السحابة في الخلفية (لن تعيق الدخول إذا فشلت)
             try {
                 if (window.auth?.currentUser) {
                     const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
@@ -503,31 +501,29 @@
                 }
                 checkUserStatus();
             } catch (err) { 
-                console.warn("Cloud Sync Bypass:", err); 
-                if (!isInitialAdmin) showToast("تعذر الاتصال بالسحابة، يرجى التحقق من الإنترنت");
+                console.warn("Cloud Auth Bypass enabled."); 
             }
         };
 
         const checkUserStatus = () => {
-            // التحقق المحلي الفوري من البيانات المدخلة في الحقول
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
             
-            // الحل الجذري للنسخة المكتبية: النظام يتعرف داخلياً على حساب المدير
+            // التجاوز المزدوج (Dual Bypass): فحص المدخلات قبل الحالة السحابية
             if (isManagerAccount(nameInput, emailInput)) {
-                const localManager = {
+                const managerObj = {
                     name: nameInput || "مدير النظام",
-                    email: emailInput || "a123456@jzb.moe.gov.sa",
+                    email: emailInput || "a123456@jzb.mo.gov.sa",
                     role: 'leadership',
                     isActive: true
                 };
+                // إلغاء شاشة الانتظار فوراً
                 document.getElementById('waiting-screen').classList.add('hidden');
                 document.getElementById('role-selector-screen').style.display = 'none';
-                startApp(localManager);
-                return; // إنهاء الدالة هنا لمنع تفعيل شاشة الانتظار
+                startApp(managerObj);
+                return;
             }
 
-            // إذا لم يكن مديراً، يتم الانتقال للفحص السحابي إذا كان متاحاً
             if (!window.currentUserUid) return;
             const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
             
@@ -536,7 +532,10 @@
                     const u = doc.data();
                     currentUser = u;
 
-                    if (!u.isActive) {
+                    // فحص الحماية: إذا كانت السحابة تقول "غير نشط" ولكن البيانات تطابق المدير، اسمح له بالدخول
+                    const isStillManager = isManagerAccount(u.name, u.email) || isManagerAccount(nameInput, emailInput);
+
+                    if (!u.isActive && !isStillManager) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                         document.getElementById('main-ui').classList.add('opacity-0', 'pointer-events-none');
@@ -547,7 +546,7 @@
                     }
                 }
             }, (err) => {
-                console.error("Cloud connection failed, staying in local mode.");
+                console.log("Snapshot failed, relying on local entry.");
             });
         };
 
@@ -569,9 +568,11 @@
 
         const startApp = (u) => {
             currentUser = u;
+            // ضمان إخفاء شاشة الانتظار عند بدء التطبيق
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('role-selector-screen').style.display = 'none';
             document.getElementById('main-ui').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('main-ui').style.opacity = '1';
             document.getElementById('active-role-badge').innerText = u.role === 'leadership' ? 'مدير المدرسة' : (u.role === 'agency' ? 'وكيل المدرسة' : 'معلم');
             renderGrid(u.role);
             if (window.auth) syncCloudData();
@@ -590,7 +591,7 @@
                     allNotifications = snapshot.docs.map(doc => doc.data());
                     updateNotifBell();
                 });
-            } catch (e) { console.warn("Local storage only mode."); }
+            } catch (e) { console.warn("Sync deferred."); }
         };
 
         const renderGrid = (role) => {
