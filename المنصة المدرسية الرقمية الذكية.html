@@ -353,7 +353,6 @@
         </div>
     </div>
 
-    <!-- مودال تعديل بيانات مستخدم -->
     <div id="edit-user-modal" class="modal">
         <div class="modal-content max-w-sm">
             <h3 class="text-lg font-bold mb-4">✏️ تعديل بيانات المنسوب</h3>
@@ -410,7 +409,6 @@
                     </div>
                     <div id="attachment-input-wrapper">
                         <label id="attachment-input-label" class="block text-xs font-bold mb-1">رابط المرفق:</label>
-                        <!-- هذا الحقل سيتغير ديناميكياً بين ملف ونص -->
                         <div id="attachment-field-container">
                             <input type="text" id="notif-attachment-url" class="w-full p-2 border rounded-lg text-sm" placeholder="أدخل الرابط هنا">
                         </div>
@@ -429,7 +427,7 @@
         let allNotifications = [];
         let currentUser = null;
         let authMode = 'login';
-        let currentFileBase64 = null; // لتخزين الملف المرفوع مؤقتاً
+        let currentFileBase64 = null;
 
         const showToast = (msg) => {
             const container = document.getElementById('toast-container');
@@ -446,69 +444,110 @@
             showToast(mode === 'login' ? "وضع تسجيل الدخول" : "وضع تسجيل مستخدم جديد");
         };
 
+        // دالة التعرف المباشر والموثوق على حساب الإدارة (تعمل محلياً)
+        const isManagerAccount = (name, email) => {
+            const n = (name || "").toLowerCase().trim();
+            const e = (email || "").toLowerCase().trim();
+            return (n === 'admin' || n === 'مدير' || n === 'إدارة' || e === 'a123456@jzb.moe.gov.sa');
+        };
+
         const handleAdminDirectEntry = () => {
             const name = document.getElementById('user-display-name').value.trim();
             const email = document.getElementById('user-madrasati-email').value.trim();
-            const isAdminName = (name.toLowerCase() === 'admin' || name === 'مدير' || name === 'إدارة');
-            const isAdminEmail = (email === 'a123456@jzb.moe.gov.sa');
-            if (isAdminName || isAdminEmail) handleRoleSelection('leadership');
-            else setMode('login');
+            
+            // الحل المباشر: إذا كانت البيانات تطابق المدير، يدخل فوراً بدون انتظار أي اتصال سحابي
+            if (isManagerAccount(name, email)) {
+                handleRoleSelection('leadership');
+            } else {
+                setMode('login');
+                if (!name || !email) showToast("يرجى إدخال الاسم والبريد");
+                else checkUserStatus(); // فحص الحالة للمستخدمين العاديين
+            }
         };
 
         const handleRoleSelection = async (role) => {
-            const name = document.getElementById('user-display-name').value.trim();
-            const email = document.getElementById('user-madrasati-email').value.trim();
-            if (!name || !email) { showToast("يرجى إدخال البيانات كاملة"); return; }
-            if (!window.auth?.currentUser) { showToast("انتظار المصادقة..."); return; }
-            const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
-            const isAdminName = (name.toLowerCase() === 'admin' || name === 'مدير' || name === 'إدارة');
-            const isAdminEmail = (email === 'a123456@jzb.moe.gov.sa');
-            const isInitialAdmin = (role === 'leadership' && (isAdminName || isAdminEmail));
+            const nameInput = document.getElementById('user-display-name').value.trim();
+            const emailInput = document.getElementById('user-madrasati-email').value.trim();
+            
+            if (!nameInput || !emailInput) { showToast("يرجى إدخال البيانات كاملة"); return; }
+            
+            const isManager = isManagerAccount(nameInput, emailInput);
+            const isInitialAdmin = (role === 'leadership' && isManager);
+
             const userData = {
-                id: window.currentUserUid,
-                name, email, role,
+                id: window.currentUserUid || "local-manager-id",
+                name: nameInput, 
+                email: emailInput, 
+                role: role,
                 isActive: isInitialAdmin ? true : false,
                 dateJoined: new Date().toLocaleString('ar-SA')
             };
+
+            // في حال حساب المدير، يتم الدخول فوراً وبدون انتظار نجاح Firestore
+            if (isInitialAdmin) {
+                showToast("أهلاً بك مدير النظام، جاري الدخول المباشر...");
+                startApp(userData);
+            }
+
+            // محاولة المزامنة مع السحابة في الخلفية (لن تعيق الدخول إذا فشلت)
             try {
-                await window.fs.setDoc(userRef, userData);
-                if (isInitialAdmin) {
-                    showToast("أهلاً بك يا مدير النظام، يتم الدخول فوراً...");
-                    startApp(userData); 
-                } else {
+                if (window.auth?.currentUser) {
+                    const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
+                    await window.fs.setDoc(userRef, userData);
+                }
+                
+                if (!isInitialAdmin) {
                     localStorage.setItem('has_registered_school_app', 'true');
-                    document.getElementById('btn-new-user').classList.add('hidden');
+                    const btn = document.getElementById('btn-new-user');
+                    if (btn) btn.classList.add('hidden');
                 }
                 checkUserStatus();
-            } catch (err) { console.error(err); showToast("خطأ في الاتصال"); }
+            } catch (err) { 
+                console.warn("Cloud Sync Bypass:", err); 
+                if (!isInitialAdmin) showToast("تعذر الاتصال بالسحابة، يرجى التحقق من الإنترنت");
+            }
         };
 
         const checkUserStatus = () => {
+            // التحقق المحلي الفوري من البيانات المدخلة في الحقول
+            const nameInput = document.getElementById('user-display-name').value.trim();
+            const emailInput = document.getElementById('user-madrasati-email').value.trim();
+            
+            // الحل الجذري للنسخة المكتبية: النظام يتعرف داخلياً على حساب المدير
+            if (isManagerAccount(nameInput, emailInput)) {
+                const localManager = {
+                    name: nameInput || "مدير النظام",
+                    email: emailInput || "a123456@jzb.moe.gov.sa",
+                    role: 'leadership',
+                    isActive: true
+                };
+                document.getElementById('waiting-screen').classList.add('hidden');
+                document.getElementById('role-selector-screen').style.display = 'none';
+                startApp(localManager);
+                return; // إنهاء الدالة هنا لمنع تفعيل شاشة الانتظار
+            }
+
+            // إذا لم يكن مديراً، يتم الانتقال للفحص السحابي إذا كان متاحاً
             if (!window.currentUserUid) return;
             const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
+            
             window.fs.onSnapshot(userRef, (doc) => {
                 if (doc.exists()) {
                     const u = doc.data();
                     currentUser = u;
-                    const nameInput = document.getElementById('user-display-name').value.trim();
-                    const emailInput = document.getElementById('user-madrasati-email').value.trim();
-                    const isHardcodedAdmin = (nameInput.toLowerCase() === 'admin' || emailInput === 'a123456@jzb.moe.gov.sa');
-                    if (!u.isActive && !isHardcodedAdmin) {
+
+                    if (!u.isActive) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                         document.getElementById('main-ui').classList.add('opacity-0', 'pointer-events-none');
-                    } else startApp(u);
+                    } else {
+                        document.getElementById('waiting-screen').classList.add('hidden');
+                        document.getElementById('role-selector-screen').style.display = 'none';
+                        startApp(u);
+                    }
                 }
-            }, (err) => console.error(err));
-            const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
-            window.fs.onSnapshot(usersRef, (snapshot) => {
-                const adminExists = snapshot.docs.some(d => {
-                    const data = d.data();
-                    const isAdminName = (data.name.toLowerCase() === 'admin' || data.name === 'مدير');
-                    const isAdminEmail = (data.email === 'a123456@jzb.moe.gov.sa');
-                    return data.role === 'leadership' && data.isActive && (isAdminName || isAdminEmail);
-                });
-                if (adminExists) updateUIForRegistration();
+            }, (err) => {
+                console.error("Cloud connection failed, staying in local mode.");
             });
         };
 
@@ -518,8 +557,13 @@
                 title.innerText = "تسجيل الدخول / مستخدم جديد";
                 const n = document.getElementById('user-display-name');
                 const e = document.getElementById('user-madrasati-email');
-                if (n && (n.value.toLowerCase() === 'admin' || n.value === 'مدير')) if (document.activeElement !== n) n.value = '';
-                if (e && e.value === 'a123456@jzb.moe.gov.sa') if (document.activeElement !== e) e.value = '';
+                
+                if (n && isManagerAccount(n.value, "")) {
+                    if (document.activeElement !== n) n.value = '';
+                }
+                if (e && isManagerAccount("", e.value)) {
+                    if (document.activeElement !== e) e.value = '';
+                }
             }
         };
 
@@ -535,16 +579,18 @@
 
         const syncCloudData = () => {
             if (!currentUser) return;
-            const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
-            window.fs.onSnapshot(usersRef, (snapshot) => {
-                allUsers = snapshot.docs.map(doc => doc.data());
-                if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
-            }, (err) => console.error(err));
-            const notifRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications');
-            window.fs.onSnapshot(notifRef, (snapshot) => {
-                allNotifications = snapshot.docs.map(doc => doc.data());
-                updateNotifBell();
-            }, (err) => console.error(err));
+            try {
+                const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
+                window.fs.onSnapshot(usersRef, (snapshot) => {
+                    allUsers = snapshot.docs.map(doc => doc.data());
+                    if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
+                });
+                const notifRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications');
+                window.fs.onSnapshot(notifRef, (snapshot) => {
+                    allNotifications = snapshot.docs.map(doc => doc.data());
+                    updateNotifBell();
+                });
+            } catch (e) { console.warn("Local storage only mode."); }
         };
 
         const renderGrid = (role) => {
@@ -573,13 +619,11 @@
             v.querySelector('iframe').src = filenames[appId]; 
         };
 
-        // --- نظام المرفقات المطور ---
-
         const updateAttachmentInputUI = () => {
             const type = document.getElementById('notif-attachment-type').value;
             const container = document.getElementById('attachment-field-container');
             const label = document.getElementById('attachment-input-label');
-            currentFileBase64 = null; // إعادة تعيين الملف
+            currentFileBase64 = null;
 
             if (type === 'image' || type === 'file') {
                 label.innerText = type === 'image' ? "اختيار صورة من الجهاز:" : "اختيار ملف من الجهاز:";
@@ -596,15 +640,15 @@
         const handleFileUpload = (event) => {
             const file = event.target.files[0];
             if (!file) return;
-            if (file.size > 800000) { // حد أقصى تقريباً 800KB لضمان عدم تجاوز حد المستند في Firestore
-                showToast("حجم الملف كبير جداً، يرجى اختيار ملف أقل من 800 كيلوبايت");
+            if (file.size > 800000) {
+                showToast("حجم الملف كبير جداً (الأقصى 800KB)");
                 event.target.value = '';
                 return;
             }
             const reader = new FileReader();
             reader.onload = (e) => {
                 currentFileBase64 = e.target.result;
-                showToast("تم تجهيز الملف للرفع");
+                showToast("تم تجهيز الملف");
             };
             reader.readAsDataURL(file);
         };
@@ -613,13 +657,7 @@
             const text = document.getElementById('notif-text').value;
             const targetRole = document.getElementById('notif-target').value;
             const type = document.getElementById('notif-attachment-type').value;
-            
-            let finalUrl = "";
-            if (type === 'link') {
-                finalUrl = document.getElementById('notif-attachment-url')?.value || "";
-            } else if (type === 'image' || type === 'file') {
-                finalUrl = currentFileBase64 || "";
-            }
+            let finalUrl = (type === 'link') ? (document.getElementById('notif-attachment-url')?.value || "") : (currentFileBase64 || "");
 
             if (!text) { showToast("يرجى كتابة نص التنبيه"); return; }
             if (type !== 'none' && !finalUrl) { showToast("يرجى إرفاق الملف أو الرابط"); return; }
@@ -630,11 +668,10 @@
                     senderRole: currentUser.role, senderName: currentUser.name, 
                     timestamp: new Date().toLocaleString('ar-SA'), senderId: currentUser.id
                 });
-                showToast("تم إرسال التنبيه بنجاح");
+                showToast("تم الإرسال بنجاح");
                 document.getElementById('notif-text').value = '';
-                currentFileBase64 = null;
                 closeModal('send-notif-modal');
-            } catch (err) { console.error(err); showToast("فشل الإرسال"); }
+            } catch (err) { showToast("فشل الإرسال"); }
         };
 
         const showSendNotifModal = () => {
@@ -646,10 +683,8 @@
             } else if (currentUser.role === 'agency') {
                 targetSelect.innerHTML = `<option value="all">الكل</option><option value="performance">المعلمين فقط</option>`;
             }
-            updateAttachmentInputUI(); // تصفير الواجهة عند الفتح
+            updateAttachmentInputUI();
         };
-
-        // --- دوال مساعدة ---
 
         const updateNotifBell = () => {
             if (!currentUser) return;
@@ -658,10 +693,16 @@
             if (bc) {
                 if (myNotifs.length > 0) {
                     bc.classList.remove('hidden');
-                    document.getElementById('bell-badge').innerText = myNotifs.length;
-                    document.getElementById('bell-badge').classList.remove('hidden');
-                    const latest = myNotifs[myNotifs.length - 1];
-                    document.getElementById('bell-element').className = latest.senderRole === 'leadership' ? "p-4 rounded-2xl border bell-yellow flex items-center gap-4" : "p-4 rounded-2xl border bell-blue flex items-center gap-4";
+                    const badge = document.getElementById('bell-badge');
+                    if (badge) {
+                        badge.innerText = myNotifs.length;
+                        badge.classList.remove('hidden');
+                    }
+                    const bellElem = document.getElementById('bell-element');
+                    if (bellElem) {
+                        const latest = myNotifs[myNotifs.length - 1];
+                        bellElem.className = latest.senderRole === 'leadership' ? "p-4 rounded-2xl border bell-yellow flex items-center gap-4" : "p-4 rounded-2xl border bell-blue flex items-center gap-4";
+                    }
                 } else bc.classList.add('hidden');
             }
         };
@@ -730,7 +771,6 @@
         const closeApp = () => { document.getElementById('main-ui').style.display = 'flex'; document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); document.getElementById('backBtn').classList.remove('visible'); };
         window.onload = () => { if (localStorage.getItem('has_registered_school_app')) { const b = document.getElementById('btn-new-user'); if (b) b.classList.add('hidden'); } };
         window.addEventListener('authReady', () => { checkUserStatus(); });
-        // عداد الحروف
         document.getElementById('notif-text')?.addEventListener('input', function() {
             document.getElementById('char-counter').innerText = `${this.value.length} / 500`;
         });
