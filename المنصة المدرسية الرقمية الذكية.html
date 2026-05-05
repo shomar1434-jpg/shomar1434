@@ -87,6 +87,22 @@
             border-color: var(--moe-primary);
         }
 
+        .action-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: var(--moe-primary);
+            border-color: var(--moe-primary);
+        }
+
         .app-card {
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             background: rgba(255, 255, 255, 0.98);
@@ -155,7 +171,7 @@
         }
 
         .modal-content {
-            background: white; color: #1e293b; width: 100%; max-width: 700px;
+            background: white; color: #1e293b; width: 100%; max-width: 800px;
             border-radius: 1.5rem; padding: 2rem; max-height: 85vh; overflow-y: auto;
         }
 
@@ -172,21 +188,42 @@
             background: #1e293b; color: white; padding: 1rem 1.5rem; border-radius: 1rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-top: 0.5rem; border-left: 4px solid var(--moe-primary);
         }
+
+        .monitoring-header {
+            background: var(--moe-gold);
+            color: var(--moe-navy);
+            padding: 0.5rem 1rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1100;
+        }
+
+        .bell-yellow { background-color: #facc15 !important; } 
+        .bell-blue { background-color: #3b82f6 !important; }   
     </style>
 </head>
 <body>
 
     <div id="toast-container"></div>
 
-    <!-- شاشة اختيار الدور -->
+    <!-- شاشة الدخول / التسجيل -->
     <div id="role-selector-screen">
         <div class="max-w-xl w-full text-center">
-            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-24 mx-auto mb-6">
-            <h2 class="text-2xl font-bold mb-2 text-white">بوابة الدخول الذكية</h2>
+            <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-24 mx-auto mb-6" alt="Logo">
+            <h2 id="selector-title" class="text-2xl font-bold mb-2 text-white">بوابة تفعيل النظام</h2>
+            <p id="selector-subtitle" class="text-slate-400 text-xs mb-8">يرجى إدخال البيانات للوصول إلى المنصة</p>
             
             <div class="mb-6 space-y-3 max-w-sm mx-auto">
-                <input type="text" id="user-display-name" placeholder="الاسم الثلاثي" 
+                <input type="text" id="user-display-name" placeholder="الاسم الرباعي أو معرف الإدارة" 
                        class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center">
+                
+                <div class="flex items-center justify-between px-2 py-1">
+                    <button id="btn-new-user" onclick="setMode('new')" class="action-btn">مستخدم جديد</button>
+                    <button id="btn-login" onclick="handleAdminDirectEntry()" class="action-btn">تسجيل الدخول</button>
+                </div>
+
                 <input type="email" id="user-madrasati-email" placeholder="بريد منصة مدرستي" 
                        class="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-white focus:border-teal-400 outline-none text-center">
             </div>
@@ -210,10 +247,10 @@
 
     <!-- شاشة الانتظار -->
     <div id="waiting-screen" class="fixed inset-0 z-[3000] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden">
-        <span class="text-6xl mb-6 animate-pulse">⏳</span>
-        <h2 class="text-2xl font-bold text-white mb-2">عذراً</h2>
-        <p class="text-slate-400 text-sm max-w-md">نأسف جداً ..... حسابك لم يتم تفعيله بعد من قبل الإدارة</p>
-        <button onclick="logout()" class="mt-8 bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-bold">تسجيل خروج</button>
+        <span class="text-6xl mb-6 animate-pulse">🔒</span>
+        <h2 class="text-2xl font-bold text-white mb-2">بانتظار مصادقة المدير</h2>
+        <p class="text-slate-400 text-sm max-w-md">نأسف، لا يمكنك الدخول حالياً. يجب على مدير المدرسة تفعيل حسابك أولاً من لوحة التحكم المركزية.</p>
+        <button onclick="logout()" class="mt-8 bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 text-sm font-bold">العودة للخلف</button>
     </div>
 
     <!-- الواجهة الرئيسية -->
@@ -229,14 +266,14 @@
 
         <!-- جرس التنبيهات -->
         <div id="bell-container" class="hidden w-full max-w-5xl mx-auto flex justify-center mb-6">
-            <div class="bg-white/10 p-4 rounded-2xl border border-white/20 shadow-2xl cursor-pointer flex items-center gap-4" onclick="openAlertsPopup()">
+            <div id="bell-element" class="p-4 rounded-2xl border border-white/20 shadow-2xl cursor-pointer flex items-center gap-4 bell-yellow transition-colors duration-500" onclick="openAlertsPopup()">
                 <div class="relative">
                     <span class="text-3xl">🔔</span>
                     <div id="bell-badge" class="notification-badge hidden">0</div>
                 </div>
                 <div class="text-right">
-                    <div class="text-xs font-extrabold text-teal-300">تنبيه إداري عاجل</div>
-                    <div class="text-[10px] text-slate-300">لديك رسائل جديدة، اضغط للمعاينة</div>
+                    <div id="bell-label" class="text-xs font-extrabold text-navy-900">تنبيهات النظام</div>
+                    <div class="text-[10px] text-navy-800">لديك رسائل جديدة، اضغط للمعاينة</div>
                 </div>
             </div>
         </div>
@@ -251,29 +288,87 @@
     <!-- حاويات التطبيقات -->
     <div id="viewport-leadership" class="app-iframe-container">
         <div id="admin-control-bar">
-            <div class="flex items-center gap-3">
-                <span class="text-teal-400 font-bold text-xs">⚡ الإدارة المركزية</span>
-                <button onclick="showUserManagement()" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600">👥 إدارة المنسوبين</button>
-                <button onclick="showSendNotifModal()" class="bg-yellow-600 px-3 py-1 rounded-lg text-[10px] hover:bg-yellow-500">🔔 إرسال تنبيه</button>
+            <div class="flex items-center gap-2 overflow-x-auto">
+                <span class="text-teal-400 font-bold text-xs whitespace-nowrap">⚡ الإدارة</span>
+                <button onclick="showRoleList('agency')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600 font-bold">📑 الوكلاء</button>
+                <button onclick="showRoleList('performance')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600 font-bold">👨‍🏫 المعلمين</button>
+                <button onclick="showUserManagement()" class="bg-slate-700 px-3 py-1 rounded-lg text-[10px] hover:bg-slate-600">👥 المستخدمين</button>
+                <button onclick="copyRegistrationLink()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 الرابط</button>
+                <button onclick="showSendNotifModal()" class="bg-yellow-600 px-3 py-1 rounded-lg text-[10px] hover:bg-yellow-500 font-bold">🔔 إرسال تنبيه</button>
             </div>
         </div>
         <iframe id="frame-leadership"></iframe>
     </div>
-    <div id="viewport-agency" class="app-iframe-container"><iframe id="frame-agency"></iframe></div>
+
+    <!-- حاوية المتابعة الذكية -->
+    <div id="viewport-monitoring" class="app-iframe-container">
+        <div class="monitoring-header">
+            <div class="flex items-center gap-3">
+                <span>👁️ متابعة إنجازات:</span>
+                <span id="monitored-user-name" class="underline">...</span>
+                <span id="monitored-user-role" class="bg-white/20 px-2 py-0.5 rounded text-[10px]">...</span>
+            </div>
+            <button onclick="closeApp()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق المتابعة ✖</button>
+        </div>
+        <iframe id="frame-monitoring"></iframe>
+    </div>
+
+    <div id="viewport-agency" class="app-iframe-container">
+        <div id="agency-control-bar" class="bg-slate-800 p-2 border-b-2 border-blue-500 flex items-center gap-4">
+             <span class="text-blue-400 font-bold text-xs">⚡ الوكالة</span>
+             <button onclick="showSendNotifModal()" class="bg-blue-600 px-3 py-1 rounded-lg text-[10px] text-white hover:bg-blue-500 font-bold">🔔 إرسال تنبيه</button>
+        </div>
+        <iframe id="frame-agency"></iframe>
+    </div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
 
-    <!-- المودالات -->
+    <div id="role-list-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6 border-b pb-3">
+                <h3 id="role-list-title" class="text-lg font-bold">القائمة</h3>
+                <button onclick="closeModal('role-list-modal')" class="text-slate-400 hover:text-red-500 font-bold">إغلاق</button>
+            </div>
+            <div id="role-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+    </div>
+
     <div id="user-management-modal" class="modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-6 border-b pb-3">
-                <h3 class="text-lg font-bold">👥 إدارة منسوبي المدرسة</h3>
+                <h3 class="text-lg font-bold">👥 إدارة مستخدمي النظام</h3>
                 <button onclick="closeModal('user-management-modal')" class="text-slate-400 hover:text-red-500 font-bold">إغلاق</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-right text-sm">
-                    <thead><tr class="bg-slate-100"><th class="p-2">الاسم</th><th class="p-2 text-center">الرتبة</th><th class="p-2 text-center">الحالة</th><th class="p-2 text-center">الإجراء</th></tr></thead>
+                    <thead><tr class="bg-slate-100">
+                        <th class="p-3">الاسم الرباعي</th>
+                        <th class="p-3 text-center">الدور</th>
+                        <th class="p-3 text-center">الحالة</th>
+                        <th class="p-3 text-center">تعديل</th>
+                        <th class="p-3 text-center">الإجراء</th>
+                    </tr></thead>
                     <tbody id="users-table-body"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال تعديل بيانات مستخدم -->
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-content max-w-sm">
+            <h3 class="text-lg font-bold mb-4">✏️ تعديل بيانات المنسوب</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="edit-uid">
+                <div>
+                    <label class="block text-xs font-bold mb-1">الاسم الرباعي</label>
+                    <input type="text" id="edit-name" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="edit-email" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+                <button onclick="saveUserEdit()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">حفظ التغييرات</button>
+                <button onclick="closeModal('edit-user-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">إلغاء</button>
             </div>
         </div>
     </div>
@@ -288,10 +383,42 @@
 
     <div id="send-notif-modal" class="modal">
         <div class="modal-content max-w-md">
-            <h3 class="text-lg font-bold mb-4">🔔 إرسال تنبيه للمنسوبين</h3>
-            <textarea id="notif-text" class="w-full p-3 border rounded-xl h-32 mb-4 outline-none focus:border-teal-500" placeholder="اكتب نص التنبيه هنا..."></textarea>
-            <button onclick="sendCloudNotification()" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-bold">إرسال الآن</button>
-            <button onclick="closeModal('send-notif-modal')" class="w-full mt-2 text-slate-400">إلغاء</button>
+            <h3 id="notif-modal-title" class="text-lg font-bold mb-4">🔔 إرسال تنبيه جديد</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold mb-1">توجيه التنبيه إلى:</label>
+                    <select id="notif-target" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                        <option value="all">الكل</option>
+                        <option value="agency">الوكلاء فقط</option>
+                        <option value="performance">المعلمين فقط</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">نص التنبيه (بحد أقصى 500 حرف):</label>
+                    <textarea id="notif-text" maxlength="500" class="w-full p-3 border rounded-xl h-32 mb-1 outline-none focus:border-teal-500 text-sm" placeholder="اكتب نص التنبيه هنا..."></textarea>
+                    <div id="char-counter" class="text-[10px] text-left text-slate-400">0 / 500</div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">نوع المرفق:</label>
+                        <select id="notif-attachment-type" class="w-full p-2 border rounded-lg text-sm bg-slate-50" onchange="updateAttachmentInputUI()">
+                            <option value="none">بدون مرفق</option>
+                            <option value="image">صورة (تحميل)</option>
+                            <option value="file">ملف (تحميل)</option>
+                            <option value="link">رابط تفاعلي (لصق)</option>
+                        </select>
+                    </div>
+                    <div id="attachment-input-wrapper">
+                        <label id="attachment-input-label" class="block text-xs font-bold mb-1">رابط المرفق:</label>
+                        <!-- هذا الحقل سيتغير ديناميكياً بين ملف ونص -->
+                        <div id="attachment-field-container">
+                            <input type="text" id="notif-attachment-url" class="w-full p-2 border rounded-lg text-sm" placeholder="أدخل الرابط هنا">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="sendCloudNotification()" id="btn-send-notif" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-bold hover:bg-yellow-700 transition-colors">إرسال الآن</button>
+                <button onclick="closeModal('send-notif-modal')" class="w-full text-slate-400 text-center block text-xs">إلغاء</button>
+            </div>
         </div>
     </div>
 
@@ -301,6 +428,8 @@
         let allUsers = [];
         let allNotifications = [];
         let currentUser = null;
+        let authMode = 'login';
+        let currentFileBase64 = null; // لتخزين الملف المرفوع مؤقتاً
 
         const showToast = (msg) => {
             const container = document.getElementById('toast-container');
@@ -312,77 +441,110 @@
             setTimeout(() => t.remove(), 3000);
         };
 
+        const setMode = (mode) => {
+            authMode = mode;
+            showToast(mode === 'login' ? "وضع تسجيل الدخول" : "وضع تسجيل مستخدم جديد");
+        };
+
+        const handleAdminDirectEntry = () => {
+            const name = document.getElementById('user-display-name').value.trim();
+            const email = document.getElementById('user-madrasati-email').value.trim();
+            const isAdminName = (name.toLowerCase() === 'admin' || name === 'مدير' || name === 'إدارة');
+            const isAdminEmail = (email === 'a123456@jzb.moe.gov.sa');
+            if (isAdminName || isAdminEmail) handleRoleSelection('leadership');
+            else setMode('login');
+        };
+
         const handleRoleSelection = async (role) => {
-            const name = document.getElementById('user-display-name').value || (role === 'leadership' ? 'admin' : '');
-            const email = document.getElementById('user-madrasati-email').value || (role === 'leadership' ? 'a123456@jzb.moe.gov.sa' : '');
-
-            if (!name || !email) { showToast("يرجى إدخال البيانات"); return; }
-            if (!window.auth.currentUser) { showToast("انتظار المصادقة..."); return; }
-
+            const name = document.getElementById('user-display-name').value.trim();
+            const email = document.getElementById('user-madrasati-email').value.trim();
+            if (!name || !email) { showToast("يرجى إدخال البيانات كاملة"); return; }
+            if (!window.auth?.currentUser) { showToast("انتظار المصادقة..."); return; }
             const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
-            const isInitialAdmin = (role === 'leadership' && name === 'admin');
-
+            const isAdminName = (name.toLowerCase() === 'admin' || name === 'مدير' || name === 'إدارة');
+            const isAdminEmail = (email === 'a123456@jzb.moe.gov.sa');
+            const isInitialAdmin = (role === 'leadership' && (isAdminName || isAdminEmail));
             const userData = {
                 id: window.currentUserUid,
                 name, email, role,
                 isActive: isInitialAdmin ? true : false,
                 dateJoined: new Date().toLocaleString('ar-SA')
             };
-
             try {
                 await window.fs.setDoc(userRef, userData);
+                if (isInitialAdmin) {
+                    showToast("أهلاً بك يا مدير النظام، يتم الدخول فوراً...");
+                    startApp(userData); 
+                } else {
+                    localStorage.setItem('has_registered_school_app', 'true');
+                    document.getElementById('btn-new-user').classList.add('hidden');
+                }
                 checkUserStatus();
-            } catch (err) {
-                console.error("SetDoc Error:", err);
-                showToast("خطأ في الاتصال بالسحابة");
-            }
+            } catch (err) { console.error(err); showToast("خطأ في الاتصال"); }
         };
 
         const checkUserStatus = () => {
             if (!window.currentUserUid) return;
             const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
-            
             window.fs.onSnapshot(userRef, (doc) => {
                 if (doc.exists()) {
                     const u = doc.data();
                     currentUser = u;
-                    if (!u.isActive) {
+                    const nameInput = document.getElementById('user-display-name').value.trim();
+                    const emailInput = document.getElementById('user-madrasati-email').value.trim();
+                    const isHardcodedAdmin = (nameInput.toLowerCase() === 'admin' || emailInput === 'a123456@jzb.moe.gov.sa');
+                    if (!u.isActive && !isHardcodedAdmin) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
-                    } else {
-                        startApp(u);
-                    }
+                        document.getElementById('main-ui').classList.add('opacity-0', 'pointer-events-none');
+                    } else startApp(u);
                 }
-            }, (err) => {
-                console.error("Status Listener Error:", err);
+            }, (err) => console.error(err));
+            const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
+            window.fs.onSnapshot(usersRef, (snapshot) => {
+                const adminExists = snapshot.docs.some(d => {
+                    const data = d.data();
+                    const isAdminName = (data.name.toLowerCase() === 'admin' || data.name === 'مدير');
+                    const isAdminEmail = (data.email === 'a123456@jzb.moe.gov.sa');
+                    return data.role === 'leadership' && data.isActive && (isAdminName || isAdminEmail);
+                });
+                if (adminExists) updateUIForRegistration();
             });
         };
 
+        const updateUIForRegistration = () => {
+            const title = document.getElementById('selector-title');
+            if (title && title.innerText !== "تسجيل الدخول / مستخدم جديد") {
+                title.innerText = "تسجيل الدخول / مستخدم جديد";
+                const n = document.getElementById('user-display-name');
+                const e = document.getElementById('user-madrasati-email');
+                if (n && (n.value.toLowerCase() === 'admin' || n.value === 'مدير')) if (document.activeElement !== n) n.value = '';
+                if (e && e.value === 'a123456@jzb.moe.gov.sa') if (document.activeElement !== e) e.value = '';
+            }
+        };
+
         const startApp = (u) => {
+            currentUser = u;
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('role-selector-screen').style.display = 'none';
             document.getElementById('main-ui').classList.remove('opacity-0', 'pointer-events-none');
             document.getElementById('active-role-badge').innerText = u.role === 'leadership' ? 'مدير المدرسة' : (u.role === 'agency' ? 'وكيل المدرسة' : 'معلم');
             renderGrid(u.role);
-            syncCloudData();
+            if (window.auth) syncCloudData();
         };
 
         const syncCloudData = () => {
             if (!currentUser) return;
-
-            // Sync Users
             const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
             window.fs.onSnapshot(usersRef, (snapshot) => {
                 allUsers = snapshot.docs.map(doc => doc.data());
                 if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
-            }, (err) => console.error("Users Sync Error:", err));
-
-            // Sync Notifications
+            }, (err) => console.error(err));
             const notifRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications');
             window.fs.onSnapshot(notifRef, (snapshot) => {
                 allNotifications = snapshot.docs.map(doc => doc.data());
                 updateNotifBell();
-            }, (err) => console.error("Notif Sync Error:", err));
+            }, (err) => console.error(err));
         };
 
         const renderGrid = (role) => {
@@ -390,21 +552,12 @@
             if (!grid) return;
             grid.innerHTML = '';
             const apps = (role === 'leadership') ? ['leadership', 'agency', 'performance'] : [role];
-            
             grid.className = `grid grid-cols-1 md:grid-cols-${apps.length} gap-6 max-w-5xl mx-auto w-full px-4`;
-            
             apps.forEach(appId => {
                 const titles = {'leadership': '🏛️ الإدارة', 'agency': '📑 الوكالة', 'performance': '👨‍🏫 المعلمين'};
                 const card = document.createElement('div');
                 card.className = "app-card cursor-pointer p-8 text-center shadow-lg border-b-4 border-teal-600 hover:shadow-2xl transition-all";
-                
-                card.innerHTML = `
-                    <h2 class="font-bold text-xl text-slate-800">${titles[appId]}</h2>
-                    <p class="text-[10px] text-teal-600 font-bold mt-2">● النظام نشط ومفعل</p>
-                    <button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-xl text-xs font-bold w-full hover:bg-teal-800 transition-colors">
-                        دخول القسم
-                    </button>
-                `;
+                card.innerHTML = `<h2 class="font-bold text-xl text-slate-800">${titles[appId]}</h2><p class="text-[10px] text-teal-600 font-bold mt-2">● القسم متاح لك الآن</p><button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-xl text-xs font-bold w-full hover:bg-teal-800 transition-colors">دخول القسم</button>`;
                 card.onclick = () => launchApp(appId);
                 grid.appendChild(card);
             });
@@ -416,112 +569,170 @@
             document.getElementById('main-ui').style.display = 'none';
             v.classList.add('active');
             document.getElementById('backBtn').classList.add('visible');
-            const filenames = {
-                'leadership': 'نظام القيادة المدرسية الذكي.html',
-                'agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html',
-                'performance': 'نظام تقارير الأداء الذكي.html'
+            const filenames = {'leadership': 'نظام القيادة المدرسية الذكي.html','agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html','performance': 'نظام تقارير الأداء الذكي.html'};
+            v.querySelector('iframe').src = filenames[appId]; 
+        };
+
+        // --- نظام المرفقات المطور ---
+
+        const updateAttachmentInputUI = () => {
+            const type = document.getElementById('notif-attachment-type').value;
+            const container = document.getElementById('attachment-field-container');
+            const label = document.getElementById('attachment-input-label');
+            currentFileBase64 = null; // إعادة تعيين الملف
+
+            if (type === 'image' || type === 'file') {
+                label.innerText = type === 'image' ? "اختيار صورة من الجهاز:" : "اختيار ملف من الجهاز:";
+                container.innerHTML = `<input type="file" id="notif-file-input" class="w-full p-1 border rounded-lg text-xs" onchange="handleFileUpload(event)">`;
+            } else if (type === 'link') {
+                label.innerText = "لصق الرابط التفاعلي:";
+                container.innerHTML = `<input type="text" id="notif-attachment-url" class="w-full p-2 border rounded-lg text-sm" placeholder="https://...">`;
+            } else {
+                label.innerText = "المرفق:";
+                container.innerHTML = `<input type="text" disabled class="w-full p-2 border rounded-lg text-sm bg-slate-100" placeholder="لا يوجد مرفق">`;
+            }
+        };
+
+        const handleFileUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 800000) { // حد أقصى تقريباً 800KB لضمان عدم تجاوز حد المستند في Firestore
+                showToast("حجم الملف كبير جداً، يرجى اختيار ملف أقل من 800 كيلوبايت");
+                event.target.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentFileBase64 = e.target.result;
+                showToast("تم تجهيز الملف للرفع");
             };
-            const f = v.querySelector('iframe');
-            f.src = filenames[appId]; // تم إزالة معاملات التنشيط
+            reader.readAsDataURL(file);
         };
 
-        const showUserManagement = () => {
-            document.getElementById('user-management-modal').style.display = 'flex';
-            renderUserTable();
+        const sendCloudNotification = async () => {
+            const text = document.getElementById('notif-text').value;
+            const targetRole = document.getElementById('notif-target').value;
+            const type = document.getElementById('notif-attachment-type').value;
+            
+            let finalUrl = "";
+            if (type === 'link') {
+                finalUrl = document.getElementById('notif-attachment-url')?.value || "";
+            } else if (type === 'image' || type === 'file') {
+                finalUrl = currentFileBase64 || "";
+            }
+
+            if (!text) { showToast("يرجى كتابة نص التنبيه"); return; }
+            if (type !== 'none' && !finalUrl) { showToast("يرجى إرفاق الملف أو الرابط"); return; }
+
+            try {
+                await window.fs.addDoc(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications'), {
+                    text, targetRole, attachmentType: type, attachmentUrl: finalUrl,
+                    senderRole: currentUser.role, senderName: currentUser.name, 
+                    timestamp: new Date().toLocaleString('ar-SA'), senderId: currentUser.id
+                });
+                showToast("تم إرسال التنبيه بنجاح");
+                document.getElementById('notif-text').value = '';
+                currentFileBase64 = null;
+                closeModal('send-notif-modal');
+            } catch (err) { console.error(err); showToast("فشل الإرسال"); }
         };
 
-        const renderUserTable = () => {
-            const tbody = document.getElementById('users-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            allUsers.forEach(user => {
-                if (currentUser && user.id === currentUser.id) return;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-3 border-b">${user.name}</td>
-                    <td class="p-3 border-b text-center text-xs">${user.role}</td>
-                    <td class="p-3 border-b text-center">${user.isActive ? '✅' : '⏳'}</td>
-                    <td class="p-3 border-b text-center">
-                        <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="text-blue-600 font-bold hover:underline">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+        const showSendNotifModal = () => {
+            const modal = document.getElementById('send-notif-modal');
+            const targetSelect = document.getElementById('notif-target');
+            modal.style.display = 'flex';
+            if (currentUser.role === 'leadership') {
+                targetSelect.innerHTML = `<option value="all">الكل</option><option value="agency">الوكلاء فقط</option><option value="performance">المعلمين فقط</option>`;
+            } else if (currentUser.role === 'agency') {
+                targetSelect.innerHTML = `<option value="all">الكل</option><option value="performance">المعلمين فقط</option>`;
+            }
+            updateAttachmentInputUI(); // تصفير الواجهة عند الفتح
         };
 
-        const toggleUserActivation = async (uid, currentStatus) => {
-            const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid);
-            await window.fs.updateDoc(userRef, { isActive: !currentStatus });
-            showToast("تم تحديث حالة الحساب بنجاح");
-        };
+        // --- دوال مساعدة ---
 
         const updateNotifBell = () => {
-            if (!currentUser || currentUser.role === 'leadership') return;
-            const myNotifs = allNotifications.filter(n => n.targetRole === 'all' || n.targetRole === currentUser.role);
-            const bell = document.getElementById('bell-container');
-            if (myNotifs.length > 0) {
-                bell.classList.remove('hidden');
-                const badge = document.getElementById('bell-badge');
-                if (badge) {
-                    badge.innerText = myNotifs.length;
-                    badge.classList.remove('hidden');
-                }
-            } else bell.classList.add('hidden');
+            if (!currentUser) return;
+            const myNotifs = allNotifications.filter(n => (n.targetRole === 'all' || n.targetRole === currentUser.role) && n.senderId !== currentUser.id);
+            const bc = document.getElementById('bell-container');
+            if (bc) {
+                if (myNotifs.length > 0) {
+                    bc.classList.remove('hidden');
+                    document.getElementById('bell-badge').innerText = myNotifs.length;
+                    document.getElementById('bell-badge').classList.remove('hidden');
+                    const latest = myNotifs[myNotifs.length - 1];
+                    document.getElementById('bell-element').className = latest.senderRole === 'leadership' ? "p-4 rounded-2xl border bell-yellow flex items-center gap-4" : "p-4 rounded-2xl border bell-blue flex items-center gap-4";
+                } else bc.classList.add('hidden');
+            }
         };
 
         const openAlertsPopup = () => {
             const list = document.getElementById('alerts-list');
-            if (!list) return;
             list.innerHTML = '';
-            const myNotifs = allNotifications.filter(n => n.targetRole === 'all' || n.targetRole === currentUser.role);
-            
-            if (myNotifs.length === 0) {
-                list.innerHTML = '<p class="text-center py-10 text-slate-400 italic">لا توجد تنبيهات حالياً</p>';
-            }
+            const myNotifs = allNotifications.filter(n => (n.targetRole === 'all' || n.targetRole === currentUser.role));
+            myNotifs.slice().reverse().forEach(n => {
+                let attachmentHTML = "";
+                if (n.attachmentType === 'image') attachmentHTML = `<img src="${n.attachmentUrl}" class="mt-2 rounded-lg max-h-40 border">`;
+                else if (n.attachmentType === 'file') attachmentHTML = `<a href="${n.attachmentUrl}" download="file" class="text-blue-600 text-xs underline mt-2 inline-block font-bold">📥 تحميل الملف المرفق</a>`;
+                else if (n.attachmentType === 'link') attachmentHTML = `<a href="${n.attachmentUrl}" target="_blank" class="text-blue-600 text-xs underline mt-2 inline-block font-bold">🔗 فتح الرابط التفاعلي</a>`;
 
-            myNotifs.forEach(n => {
-                list.innerHTML += `<div class="p-4 border-r-4 border-teal-500 mb-2 rounded-xl bg-slate-50">
-                    <p class="text-[10px] font-bold text-teal-700">مرسل من: الإدارة المركزية</p>
-                    <p class="text-sm mt-1 text-slate-700 font-medium">${n.text}</p>
-                    <p class="text-[9px] text-slate-400 mt-2">${n.timestamp || ''}</p>
+                list.innerHTML += `<div class="p-4 border-r-4 ${n.senderRole==='leadership'?'border-yellow-500 bg-yellow-50':'border-blue-500 bg-blue-50'} mb-3 rounded-xl shadow-sm">
+                    <p class="text-xs font-bold text-slate-500">${n.senderName}</p>
+                    <p class="text-sm mt-1 text-slate-800 font-medium">${n.text}</p>
+                    ${attachmentHTML}
                 </div>`;
             });
             document.getElementById('alerts-popup').style.display = 'flex';
         };
 
-        const showSendNotifModal = () => document.getElementById('send-notif-modal').style.display = 'flex';
-
-        const sendCloudNotification = async () => {
-            const input = document.getElementById('notif-text');
-            const text = input ? input.value : "";
-            if (!text) return;
-            try {
-                await window.fs.addDoc(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications'), {
-                    text,
-                    targetRole: 'all',
-                    timestamp: new Date().toLocaleString('ar-SA'),
-                    senderId: currentUser.id
-                });
-                showToast("تم إرسال التنبيه بنجاح");
-                if (input) input.value = '';
-                closeModal('send-notif-modal');
-            } catch (err) { showToast("خطأ في الإرسال"); }
+        const showRoleList = (role) => {
+            const modal = document.getElementById('role-list-modal');
+            const container = document.getElementById('role-list-container');
+            document.getElementById('role-list-title').innerText = role === 'agency' ? 'قائمة الوكلاء' : 'قائمة المعلمين';
+            container.innerHTML = '';
+            allUsers.filter(u => u.role === role && u.isActive).forEach(u => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 border p-4 rounded-xl hover:border-teal-500 cursor-pointer flex justify-between items-center";
+                card.innerHTML = `<div><span class="font-bold text-sm">${u.name}</span></div><span class="text-teal-600 font-bold text-xs">متابعة ⬅</span>`;
+                card.onclick = () => monitorUser(u);
+                container.appendChild(card);
+            });
+            modal.style.display = 'flex';
         };
 
-        const logout = () => { localStorage.clear(); location.reload(); };
-        const closeModal = (id) => {
-            const modal = document.getElementById(id);
-            if (modal) modal.style.display = 'none';
-        };
-        const closeApp = () => { 
-            document.getElementById('main-ui').style.display = 'flex'; 
-            document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); 
-            const backBtn = document.getElementById('backBtn');
-            if (backBtn) backBtn.classList.remove('visible'); 
+        const monitorUser = (user) => {
+            const v = document.getElementById('viewport-monitoring');
+            document.getElementById('monitored-user-name').innerText = user.name;
+            document.getElementById('monitored-user-role').innerText = user.role === 'agency' ? 'وكيل' : 'معلم';
+            document.getElementById('frame-monitoring').src = (user.role === 'agency' ? 'التقارير الرقمية لوكالة المدرسة الذكية.html' : 'نظام تقارير الأداء الذكي.html') + `?monitoring=true&uid=${user.id}`;
+            document.getElementById('main-ui').style.display = 'none';
+            document.querySelectorAll('.app-iframe-container').forEach(el => el.classList.remove('active'));
+            v.classList.add('active');
+            closeModal('role-list-modal');
         };
 
-        window.addEventListener('authReady', () => {
-            checkUserStatus();
+        const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
+        const renderUserTable = () => {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            allUsers.forEach(user => {
+                const isMe = user.id === currentUser.id;
+                tbody.innerHTML += `<tr><td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنا)' : ''}</td><td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td><td class="p-3 border-b text-center">${user.isActive ? '<span class="text-green-600 font-bold">نشط</span>' : '<span class="text-yellow-600 font-bold">معلق</span>'}</td><td class="p-3 border-b text-center"><button onclick="openEditModal('${user.id}', '${user.name}', '${user.email}')" class="text-blue-600 hover:underline text-[10px]">تعديل</button></td><td class="p-3 border-b text-center flex items-center justify-center gap-2">${!isMe ? `<button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'bg-orange-500' : 'bg-green-600'} text-white px-2 py-1 rounded text-[10px] font-bold">${user.isActive ? 'تعطيل' : 'تفعيل'}</button><button onclick="deleteUser('${user.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">حذف</button>` : '<span class="text-[9px] text-slate-400">تحكم كامل</span>'}</td></tr>`;
+            });
+        };
+        const toggleUserActivation = async (uid, c) => await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !c });
+        const deleteUser = async (uid) => { if (confirm("حذف نهائي؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
+        const openEditModal = (uid, n, e) => { document.getElementById('edit-uid').value = uid; document.getElementById('edit-name').value = n; document.getElementById('edit-email').value = e; document.getElementById('edit-user-modal').style.display = 'flex'; };
+        const saveUserEdit = async () => { await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', document.getElementById('edit-uid').value), { name: document.getElementById('edit-name').value, email: document.getElementById('edit-email').value }); closeModal('edit-user-modal'); };
+        const copyRegistrationLink = () => { const t = document.createElement('input'); t.value = window.location.href; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast("تم نسخ الرابط"); };
+        const logout = () => { location.reload(); };
+        const closeModal = (id) => { const m = document.getElementById(id); if (m) m.style.display = 'none'; };
+        const closeApp = () => { document.getElementById('main-ui').style.display = 'flex'; document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); document.getElementById('backBtn').classList.remove('visible'); };
+        window.onload = () => { if (localStorage.getItem('has_registered_school_app')) { const b = document.getElementById('btn-new-user'); if (b) b.classList.add('hidden'); } };
+        window.addEventListener('authReady', () => { checkUserStatus(); });
+        // عداد الحروف
+        document.getElementById('notif-text')?.addEventListener('input', function() {
+            document.getElementById('char-counter').innerText = `${this.value.length} / 500`;
         });
     </script>
 </body>
