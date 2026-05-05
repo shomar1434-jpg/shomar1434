@@ -344,8 +344,8 @@
         <div class="bg-white/5 p-12 rounded-[3rem] border border-white/10 backdrop-blur-xl">
             <span class="text-7xl mb-6 block animate-bounce">⏳</span>
             <h2 class="text-2xl font-bold text-white mb-2">طلبك قيد المراجعة</h2>
-            <p class="text-slate-400 text-sm max-w-md mx-auto">تم استلام بياناتك بنجاح. يرجى الانتظار حتى يقوم مدير المدرسة بتفعيل حسابك من لوحة التحكم المركزية.</p>
-            <button onclick="location.reload()" class="mt-8 bg-teal-600 text-white px-8 py-3 rounded-full font-bold shadow-lg">تحديث الحالة</button>
+            <p class="text-slate-400 text-sm max-w-md mx-auto">تم استلام بياناتك بنجاح. يرجى الانتظار حتى يقوم مدير المدرسة بتفعيل حسابك سحابياً.</p>
+            <button onclick="clearRegistrationState()" class="mt-8 bg-red-600/20 text-red-400 border border-red-600/30 px-6 py-2 rounded-full text-xs font-bold">إلغاء الطلب محلياً</button>
         </div>
     </div>
 
@@ -470,8 +470,8 @@
                 <div>
                     <label class="block text-xs font-bold mb-1">الدور الوظيفي</label>
                     <select id="new-user-role" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
-                        <option value="agency">وكيل مدرسة</option>
                         <option value="performance">معلم</option>
+                        <option value="agency">وكيل مدرسة</option>
                         <option value="leadership">مدير مدرسة</option>
                     </select>
                 </div>
@@ -500,62 +500,12 @@
         </div>
     </div>
 
-    <div id="alerts-popup" class="modal">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-4">🔔 التنبيهات الإدارية</h3>
-            <div id="alerts-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
-            <button onclick="closeModal('alerts-popup')" class="w-full mt-6 bg-slate-800 text-white py-3 rounded-xl">إغلاق</button>
-        </div>
-    </div>
-
-    <div id="send-notif-modal" class="modal">
-        <div class="modal-content max-w-md">
-            <h3 id="notif-modal-title" class="text-lg font-bold mb-4">🔔 إرسال تنبيه جديد</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold mb-1">توجيه التنبيه إلى:</label>
-                    <select id="notif-target" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
-                        <option value="all">الكل</option>
-                        <option value="agency">الوكلاء فقط</option>
-                        <option value="performance">المعلمين فقط</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1">نص التنبيه:</label>
-                    <textarea id="notif-text" maxlength="500" class="w-full p-3 border rounded-xl h-32 mb-1 outline-none focus:border-teal-500 text-sm" placeholder="اكتب نص التنبيه هنا..."></textarea>
-                    <div id="char-counter" class="text-[10px] text-left text-slate-400">0 / 500</div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold mb-1">نوع المرفق:</label>
-                        <select id="notif-attachment-type" class="w-full p-2 border rounded-lg text-sm bg-slate-50" onchange="updateAttachmentInputUI()">
-                            <option value="none">بدون مرفق</option>
-                            <option value="image">صورة (تحميل)</option>
-                            <option value="file">ملف (تحميل)</option>
-                            <option value="link">رابط تفاعلي (لصق)</option>
-                        </select>
-                    </div>
-                    <div id="attachment-input-wrapper">
-                        <label id="attachment-input-label" class="block text-xs font-bold mb-1">رابط المرفق:</label>
-                        <div id="attachment-field-container">
-                            <input type="text" id="notif-attachment-url" class="w-full p-2 border rounded-lg text-sm" placeholder="أدخل الرابط هنا">
-                        </div>
-                    </div>
-                </div>
-                <button onclick="sendCloudNotification()" id="btn-send-notif" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-bold hover:bg-yellow-700 transition-colors">إرسال الآن</button>
-                <button onclick="closeModal('send-notif-modal')" class="text-slate-400 text-center block text-xs">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
     <button id="backBtn" class="back-button" onclick="closeApp()">🏠 العودة للقائمة</button>
 
     <script>
         let allUsers = [];
         let allNotifications = [];
         let currentUser = null;
-        let authMode = 'login';
-        let currentFileBase64 = null;
         let isManagerVerifiedInSession = false;
 
         const showToast = (msg) => {
@@ -576,39 +526,38 @@
             return managerPatterns.includes(n) || managerEmails.includes(e);
         };
 
-        // دالة فتح واجهة التسجيل (للمستخدم الجديد)
         const openRegistrationModal = () => {
             document.getElementById('reg-name').value = '';
             document.getElementById('reg-email').value = '';
             document.getElementById('registration-modal').style.display = 'flex';
         };
 
-        // دالة إرسال طلب التسجيل
+        // دالة التسجيل (مزامنة محلي + سحابي)
         const submitRegistrationRequest = async () => {
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const role = document.getElementById('reg-role').value;
 
-            if (!name || !email) {
-                showToast("يرجى إدخال كافة البيانات المطلوبة");
-                return;
-            }
+            if (!name || !email) { showToast("يرجى إدخال كافة البيانات"); return; }
+
+            const uid = window.currentUserUid || "user-" + Date.now();
+            const isManager = isManagerAccount(name, email);
+            
+            const userData = {
+                id: uid, name, email, role,
+                isActive: isManager ? true : false,
+                dateJoined: new Date().toLocaleString('ar-SA')
+            };
+
+            // 1. الحفظ المحلي (للنسخة المحلية)
+            localStorage.setItem('pending_reg_data', JSON.stringify(userData));
 
             try {
-                // إذا كان المستخدم هو المدير فعلياً، يتم تفعيله فوراً (تجاوز الأمان)
-                const isManager = isManagerAccount(name, email);
-                const uid = window.currentUserUid || "user-" + Date.now();
+                // 2. الحفظ السحابي (للنسخة السحابية)
+                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), userData);
                 
-                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), {
-                    id: uid, name, email, role,
-                    isActive: isManager ? true : false, // تفعيل المدير فوراً وتعليق البقية
-                    dateJoined: new Date().toLocaleString('ar-SA')
-                });
-
                 closeModal('registration-modal');
-                
                 if (isManager) {
-                    showToast("أهلاً بك مدير النظام، جاري الدخول...");
                     isManagerVerifiedInSession = true;
                     checkUserStatus();
                 } else {
@@ -616,8 +565,13 @@
                     document.getElementById('role-selector-screen').style.display = 'none';
                 }
             } catch (err) {
-                showToast("حدث خطأ أثناء إرسال البيانات");
+                showToast("خطأ في الاتصال السحابي، جاري المحاولة محلياً...");
             }
+        };
+
+        const clearRegistrationState = () => {
+            localStorage.removeItem('pending_reg_data');
+            location.reload();
         };
 
         const handleAdminDirectEntry = () => {
@@ -635,49 +589,57 @@
         const handleRoleSelection = async (role) => {
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
-            if (!nameInput || !emailInput) { showToast("يرجى إدخال البيانات كاملة"); return; }
+            if (!nameInput || !emailInput) { showToast("يرجى إدخال البيانات"); return; }
             const isManager = isManagerAccount(nameInput, emailInput);
             if (isManager) isManagerVerifiedInSession = true;
             
             const userData = {
-                id: window.currentUserUid || "manager-session-" + Date.now(),
+                id: window.currentUserUid || "manager-" + Date.now(),
                 name: nameInput, email: emailInput, role: role,
-                isActive: isManager ? true : false,
-                dateJoined: new Date().toLocaleString('ar-SA')
+                isActive: isManager ? true : false
             };
 
-            if (isManager || isManagerVerifiedInSession) {
-                startApp(userData);
-            }
+            if (isManager) startApp(userData);
 
             try {
                 if (window.currentUserUid) {
-                    const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
-                    await window.fs.setDoc(userRef, userData, { merge: true });
+                    await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid), userData, { merge: true });
                 }
                 checkUserStatus();
-            } catch (err) { console.warn("Sync error."); }
+            } catch (err) { console.warn("Cloud sync deferred."); }
         };
 
         const checkUserStatus = () => {
+            // فحص محلي أولاً للاستجابة السريعة
+            const localPending = localStorage.getItem('pending_reg_data');
+            if (localPending && !isManagerVerifiedInSession) {
+                const p = JSON.parse(localPending);
+                if (!isManagerAccount(p.name, p.email)) {
+                    document.getElementById('role-selector-screen').style.display = 'none';
+                    document.getElementById('waiting-screen').classList.remove('hidden');
+                }
+            }
+
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
+            
             if (isManagerVerifiedInSession || isManagerAccount(nameInput, emailInput)) {
-                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "a123456@jzb.moe.gov.sa", role: 'leadership', isActive: true, id: window.currentUserUid };
+                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "admin", role: 'leadership', isActive: true, id: window.currentUserUid };
                 startApp(managerObj);
                 return;
             }
+
             if (!window.currentUserUid) return;
-            const userRef = window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid);
-            window.fs.onSnapshot(userRef, (doc) => {
+            window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid), (doc) => {
                 if (doc.exists()) {
                     const u = doc.data();
                     currentUser = u;
-                    if (!u.isActive && !isManagerAccount(u.name, u.email)) {
+                    if (u.isActive) {
+                        localStorage.removeItem('pending_reg_data'); // تم التفعيل سحابياً، امسح المحلي
+                        startApp(u);
+                    } else if (!isManagerAccount(u.name, u.email)) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
-                    } else {
-                        startApp(u);
                     }
                 }
             });
@@ -695,19 +657,12 @@
         };
 
         const syncCloudData = () => {
-            if (!currentUser) return;
             try {
-                const usersRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users');
-                window.fs.onSnapshot(usersRef, (snapshot) => {
+                window.fs.onSnapshot(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users'), (snapshot) => {
                     allUsers = snapshot.docs.map(doc => doc.data());
                     if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
                 });
-                const notifRef = window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications');
-                window.fs.onSnapshot(notifRef, (snapshot) => {
-                    allNotifications = snapshot.docs.map(doc => doc.data());
-                    updateNotifBell();
-                });
-            } catch (e) { console.warn("Sync error."); }
+            } catch (e) {}
         };
 
         const renderGrid = (role) => {
@@ -715,16 +670,11 @@
             if (!grid) return;
             grid.innerHTML = '';
             const apps = (role === 'leadership') ? ['leadership', 'agency', 'performance'] : [role];
-            grid.className = `grid grid-cols-1 md:grid-cols-${apps.length} gap-6 max-w-5xl mx-auto w-full px-4`;
             apps.forEach(appId => {
                 const titles = {'leadership': '🏛️ الإدارة المدرسية', 'agency': '📑 وكالة المدرسة', 'performance': '👨‍🏫 شؤون المعلمين'};
                 const card = document.createElement('div');
-                card.className = "app-card cursor-pointer p-8 text-center border-b-8 border-teal-600 hover:shadow-[0_20px_50px_rgba(30,123,120,0.4)] transition-all";
-                card.innerHTML = `
-                    <h2 class="font-extrabold text-xl text-slate-800">${titles[appId]}</h2>
-                    <p class="text-[10px] text-teal-600 font-bold mt-2">● القسم مفعل سحابياً</p>
-                    <button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-2xl text-sm font-bold w-full hover:bg-teal-800 transition-colors shadow-lg">دخول القسم</button>
-                `;
+                card.className = "app-card cursor-pointer p-8 text-center border-b-8 border-teal-600 hover:shadow-2xl transition-all";
+                card.innerHTML = `<h2 class="font-extrabold text-xl text-slate-800">${titles[appId]}</h2><p class="text-[10px] text-teal-600 font-bold mt-2">● مفعل سحابياً ومحلياً</p><button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-2xl text-sm font-bold w-full shadow-lg">دخول</button>`;
                 card.onclick = () => launchApp(appId);
                 grid.appendChild(card);
             });
@@ -756,17 +706,13 @@
             const name = document.getElementById('new-user-name').value.trim();
             const email = document.getElementById('new-user-email').value.trim();
             const role = document.getElementById('new-user-role').value;
-            if (!name || !email) { showToast("يرجى تعبئة كافة الحقول"); return; }
-            try {
-                const manualUid = "manual-" + Math.random().toString(36).substr(2, 9);
-                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
-                    id: manualUid, name, email, role,
-                    isActive: true, 
-                    dateJoined: new Date().toLocaleString('ar-SA')
-                });
-                showToast("تمت إضافة الحساب بنجاح");
-                closeModal('add-user-modal');
-            } catch (err) { showToast("فشل في إضافة الحساب"); }
+            if (!name || !email) { showToast("يرجى تعبئة الحقول"); return; }
+            const manualUid = "manual-" + Date.now();
+            await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
+                id: manualUid, name, email, role, isActive: true, dateJoined: new Date().toLocaleString('ar-SA')
+            });
+            showToast("تمت الإضافة سحابياً");
+            closeModal('add-user-modal');
         };
 
         const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
@@ -777,7 +723,7 @@
             allUsers.forEach(user => {
                 const isMe = user.id === currentUser.id;
                 tbody.innerHTML += `<tr>
-                    <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنا)' : ''}</td>
+                    <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنت)' : ''}</td>
                     <td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
                     <td class="p-3 border-b text-center">${user.isActive ? '<span class="text-green-600 font-bold">نشط</span>' : '<span class="text-yellow-600 font-bold">معلق</span>'}</td>
                     <td class="p-3 border-b text-center"><button onclick="openEditModal('${user.id}', '${user.name}', '${user.email}')" class="text-blue-600 hover:underline text-[10px]">تعديل</button></td>
@@ -785,140 +731,26 @@
                         ${!isMe ? `
                             <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'bg-orange-500' : 'bg-green-600'} text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
                             <button onclick="deleteUser('${user.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">حذف</button>
-                        ` : `<span class="text-[9px] text-teal-600 font-bold">حساب المدير الرئيسي</span>`}
+                        ` : `<span class="text-[9px] text-teal-600 font-bold">الحساب الحالي</span>`}
                     </td>
                 </tr>`;
             });
         };
 
         const toggleUserActivation = async (uid, c) => await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !c });
-        const deleteUser = async (uid) => { if (confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
+        const deleteUser = async (uid) => { if (confirm("حذف نهائي؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
         const openEditModal = (uid, n, e) => { document.getElementById('edit-uid').value = uid; document.getElementById('edit-name').value = n; document.getElementById('edit-email').value = e; document.getElementById('edit-user-modal').style.display = 'flex'; };
         const saveUserEdit = async () => { 
-            const uid = document.getElementById('edit-uid').value;
-            await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { 
+            await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', document.getElementById('edit-uid').value), { 
                 name: document.getElementById('edit-name').value, 
                 email: document.getElementById('edit-email').value 
             }); 
-            closeModal('edit-user-modal'); 
-            showToast("تم تحديث بيانات الحساب بنجاح"); 
-        };
-
-        const updateAttachmentInputUI = () => {
-            const type = document.getElementById('notif-attachment-type').value;
-            const container = document.getElementById('attachment-field-container');
-            const label = document.getElementById('attachment-input-label');
-            currentFileBase64 = null;
-            if (type === 'image' || type === 'file') {
-                label.innerText = type === 'image' ? "اختيار صورة من الجهاز:" : "اختيار ملف من الجهاز:";
-                container.innerHTML = `<input type="file" id="notif-file-input" class="w-full p-1 border rounded-lg text-xs" onchange="handleFileUpload(event)">`;
-            } else if (type === 'link') {
-                label.innerText = "لصق الرابط التفاعلي:";
-                container.innerHTML = `<input type="text" id="notif-attachment-url" class="w-full p-2 border rounded-lg text-sm" placeholder="https://...">`;
-            } else {
-                label.innerText = "المرفق:";
-                container.innerHTML = `<input type="text" disabled class="w-full p-2 border rounded-lg text-sm bg-slate-100" placeholder="لا يوجد مرفق">`;
-            }
-        };
-
-        const handleFileUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (file.size > 800000) { showToast("حجم الملف كبير جداً"); event.target.value = ''; return; }
-            const reader = new FileReader();
-            reader.onload = (e) => { currentFileBase64 = e.target.result; showToast("تم تجهيز الملف"); };
-            reader.readAsDataURL(file);
-        };
-
-        const sendCloudNotification = async () => {
-            const text = document.getElementById('notif-text').value;
-            const targetRole = document.getElementById('notif-target').value;
-            const type = document.getElementById('notif-attachment-type').value;
-            let finalUrl = (type === 'link') ? (document.getElementById('notif-attachment-url')?.value || "") : (currentFileBase64 || "");
-            if (!text) { showToast("يرجى كتابة نص التنبيه"); return; }
-            try {
-                await window.fs.addDoc(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications'), {
-                    text, targetRole, attachmentType: type, attachmentUrl: finalUrl,
-                    senderRole: currentUser.role, senderName: currentUser.name, 
-                    timestamp: new Date().toLocaleString('ar-SA'), senderId: currentUser.id
-                });
-                showToast("تم الإرسال");
-                document.getElementById('notif-text').value = '';
-                closeModal('send-notif-modal');
-            } catch (err) { showToast("فشل الإرسال"); }
-        };
-
-        const showSendNotifModal = () => {
-            const modal = document.getElementById('send-notif-modal');
-            modal.style.display = 'flex';
-            const targetSelect = document.getElementById('notif-target');
-            if (currentUser.role === 'leadership') targetSelect.innerHTML = `<option value="all">الكل</option><option value="agency">الوكلاء فقط</option><option value="performance">المعلمين فقط</option>`;
-            else if (currentUser.role === 'agency') targetSelect.innerHTML = `<option value="all">الكل</option><option value="performance">المعلمين فقط</option>`;
-            updateAttachmentInputUI();
-        };
-
-        const updateNotifBell = () => {
-            if (!currentUser) return;
-            const myNotifs = allNotifications.filter(n => (n.targetRole === 'all' || n.targetRole === currentUser.role) && n.senderId !== currentUser.id);
-            const bc = document.getElementById('bell-container');
-            if (bc && myNotifs.length > 0) {
-                bc.classList.remove('hidden');
-                document.getElementById('bell-badge').innerText = myNotifs.length;
-                document.getElementById('bell-badge').classList.remove('hidden');
-            } else if (bc) bc.classList.add('hidden');
-        };
-
-        const openAlertsPopup = () => {
-            const list = document.getElementById('alerts-list');
-            list.innerHTML = '';
-            allNotifications.filter(n => (n.targetRole === 'all' || n.targetRole === currentUser.role)).slice().reverse().forEach(n => {
-                let attachmentHTML = "";
-                if (n.attachmentType === 'image') attachmentHTML = `<img src="${n.attachmentUrl}" class="mt-2 rounded-lg max-h-40 border">`;
-                else if (n.attachmentType === 'file') attachmentHTML = `<a href="${n.attachmentUrl}" download="file" class="text-blue-600 text-xs underline mt-2 inline-block font-bold">📥 تحميل الملف</a>`;
-                else if (n.attachmentType === 'link') attachmentHTML = `<a href="${n.attachmentUrl}" target="_blank" class="text-blue-600 text-xs underline mt-2 inline-block font-bold">🔗 فتح الرابط</a>`;
-                list.innerHTML += `<div class="p-4 border-r-4 ${n.senderRole==='leadership'?'border-yellow-500 bg-yellow-50':'border-blue-500 bg-blue-50'} mb-3 rounded-xl">
-                    <p class="text-xs font-bold text-slate-500">${n.senderName}</p>
-                    <p class="text-sm mt-1 font-medium">${n.text}</p>
-                    ${attachmentHTML}
-                </div>`;
-            });
-            document.getElementById('alerts-popup').style.display = 'flex';
-        };
-
-        const showRoleList = (role) => {
-            const modal = document.getElementById('role-list-modal');
-            const container = document.getElementById('role-list-container');
-            document.getElementById('role-list-title').innerText = role === 'agency' ? 'قائمة الوكلاء' : 'قائمة المعلمين';
-            container.innerHTML = '';
-            allUsers.filter(u => u.role === role && u.isActive).forEach(u => {
-                const card = document.createElement('div');
-                card.className = "bg-slate-50 border p-4 rounded-xl hover:border-teal-500 cursor-pointer flex justify-between items-center";
-                card.innerHTML = `<div><span class="font-bold text-sm">${u.name}</span></div><span class="text-teal-600 font-bold text-xs">متابعة ⬅</span>`;
-                card.onclick = () => monitorUser(u);
-                container.appendChild(card);
-            });
-            modal.style.display = 'flex';
-        };
-
-        const monitorUser = (user) => {
-            const v = document.getElementById('viewport-monitoring');
-            document.getElementById('monitored-user-name').innerText = user.name;
-            document.getElementById('monitored-user-role').innerText = user.role === 'agency' ? 'وكيل' : 'معلم';
-            document.getElementById('frame-monitoring').src = (user.role === 'agency' ? 'التقارير الرقمية لوكالة المدرسة الذكية.html' : 'نظام تقارير الأداء الذكي.html') + `?monitoring=true&uid=${user.id}`;
-            document.getElementById('main-ui').style.display = 'none';
-            v.classList.add('active');
-            closeModal('role-list-modal');
+            closeModal('edit-user-modal'); showToast("تم التحديث سحابياً"); 
         };
 
         const copyRegLinkForUsers = () => { 
             const regLink = window.location.origin + window.location.pathname + "?mode=register";
-            const t = document.createElement('input'); 
-            t.value = regLink; 
-            document.body.appendChild(t); 
-            t.select(); 
-            document.execCommand('copy'); 
-            document.body.removeChild(t); 
-            showToast("تم نسخ رابط التسجيل المباشر للأعضاء"); 
+            const t = document.createElement('input'); t.value = regLink; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast("تم نسخ رابط التسجيل"); 
         };
 
         const logout = () => { location.replace(window.location.origin + window.location.pathname); };
@@ -926,11 +758,9 @@
         const closeApp = () => { document.getElementById('main-ui').style.display = 'flex'; document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); document.getElementById('backBtn').classList.remove('visible'); };
         
         window.onload = () => { 
-            // فحص الرابط إذا كان يحتوي على وضع التسجيل المباشر
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('mode') === 'register') {
-                setTimeout(openRegistrationModal, 500);
-            }
+            if (urlParams.get('mode') === 'register') setTimeout(openRegistrationModal, 500);
+            checkUserStatus();
         };
 
         window.addEventListener('authReady', () => { checkUserStatus(); });
