@@ -24,12 +24,14 @@
         window.appId = appId;
         window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
 
-        // ضمان المصادقة قبل العمليات
+        // دالة تضمن توفر المصادقة قبل أي عملية سحابية
         window.ensureAuth = () => {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 if (auth.currentUser) return resolve(auth.currentUser);
+                const timeout = setTimeout(() => reject(new Error("Timeout waiting for auth")), 10000);
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
                     if (user) {
+                        clearTimeout(timeout);
                         unsubscribe();
                         resolve(user);
                     }
@@ -198,15 +200,13 @@
             background: #1e293b; color: white; padding: 1rem 1.5rem; border-radius: 1rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-top: 0.5rem; border-left: 4px solid var(--moe-primary);
         }
-
-        @keyframes float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, 30px); } 100% { transform: translate(0, 0); } }
-        .float-anim { animation: float 12s ease-in-out infinite; }
     </style>
 </head>
 <body>
 
     <div id="toast-container"></div>
 
+    <!-- شاشة الدخول الرئيسية -->
     <div id="role-selector-screen">
         <div class="login-container">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 mx-auto mb-6 drop-shadow-2xl" alt="Logo">
@@ -251,23 +251,14 @@
                 <h3 class="text-xl font-bold text-slate-800">طلب تسجيل حساب جديد</h3>
             </div>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-slate-700">الاسم الرباعي:</label>
-                    <input type="text" id="reg-name" class="w-full p-3 border rounded-xl text-sm outline-none" placeholder="الاسم الكامل">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-slate-700">بريد منصة مدرستي:</label>
-                    <input type="email" id="reg-email" class="w-full p-3 border rounded-xl text-sm outline-none" placeholder="example@moe.gov.sa">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-slate-700">القسم:</label>
-                    <select id="reg-role" class="w-full p-3 border rounded-xl text-sm bg-slate-50">
-                        <option value="performance">معلم</option>
-                        <option value="agency">وكيل مدرسة</option>
-                    </select>
-                </div>
-                <button onclick="submitRegistrationRequest()" class="w-full bg-teal-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-teal-800 transition-colors">إرسال الطلب سحابياً</button>
-                <button onclick="closeModal('registration-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">إلغاء</button>
+                <input type="text" id="reg-name" class="w-full p-3 border rounded-xl text-sm outline-none" placeholder="الاسم الرباعي">
+                <input type="email" id="reg-email" class="w-full p-3 border rounded-xl text-sm outline-none" placeholder="البريد الإلكتروني">
+                <select id="reg-role" class="w-full p-3 border rounded-xl text-sm bg-slate-50">
+                    <option value="performance">معلم</option>
+                    <option value="agency">وكيل مدرسة</option>
+                </select>
+                <button onclick="submitRegistrationRequest()" class="w-full bg-teal-700 text-white py-3 rounded-xl font-bold shadow-lg">إرسال الطلب سحابياً</button>
+                <button onclick="closeModal('registration-modal')" class="w-full text-slate-400 text-xs text-center mt-2">إلغاء</button>
             </div>
         </div>
     </div>
@@ -290,14 +281,9 @@
         <header class="text-center mb-8 flex flex-col items-center">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="w-36 mx-auto mb-3 drop-shadow-xl">
             <h1 class="text-3xl md:text-4xl font-black mt-2 text-white">منصة المدرسة الرقمية الذكية</h1>
-            <div class="inline-block px-3 py-1 bg-teal-500/20 rounded-full text-teal-300 text-[10px] font-bold mt-2 border border-teal-500/30">النظام السحابي نشط ✅</div>
         </header>
 
         <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
-
-        <footer class="mt-8 text-center text-slate-400 text-[10px] border-t border-white/5 pt-4 pb-2">
-            <p class="opacity-60">جميع الحقوق محفوظة © 2024</p>
-        </footer>
     </div>
 
     <!-- حاويات التطبيقات -->
@@ -305,26 +291,14 @@
         <div id="admin-control-bar">
             <div class="flex items-center gap-2 overflow-x-auto">
                 <span class="text-teal-400 font-bold text-xs">⚡ الإدارة</span>
-                <button onclick="showRoleList('agency')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600">📑 الوكلاء</button>
-                <button onclick="showRoleList('performance')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600">👨‍🏫 المعلمين</button>
                 <button onclick="showUserManagement()" class="bg-slate-700 px-3 py-1 rounded-lg text-[10px] hover:bg-slate-600">👥 المستخدمين</button>
-                <button onclick="copyRegLinkForUsers()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 الرابط</button>
+                <button onclick="copyRegLinkForUsers()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 رابط التسجيل</button>
             </div>
         </div>
         <iframe id="frame-leadership"></iframe>
     </div>
 
-    <div id="viewport-monitoring" class="app-iframe-container">
-        <div class="monitoring-header">
-            <div class="flex items-center gap-3">
-                <span>👁️ متابعة:</span>
-                <span id="monitored-user-name">...</span>
-            </div>
-            <button onclick="closeApp()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق ✖</button>
-        </div>
-        <iframe id="frame-monitoring"></iframe>
-    </div>
-
+    <div id="viewport-monitoring" class="app-iframe-container"><iframe id="frame-monitoring"></iframe></div>
     <div id="viewport-agency" class="app-iframe-container"><iframe id="frame-agency"></iframe></div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
 
@@ -352,19 +326,19 @@
         </div>
     </div>
 
-    <!-- مودال إضافة حساب (للمدير) -->
+    <!-- مودال إضافة حساب -->
     <div id="add-user-modal" class="modal">
         <div class="modal-content max-w-sm">
-            <h3 class="text-lg font-bold mb-4">➕ إضافة حساب سحابي</h3>
+            <h3 class="text-lg font-bold mb-4">➕ إضافة حساب وتفعيل فوري</h3>
             <div class="space-y-4">
                 <input type="text" id="new-user-name" class="w-full p-2 border rounded-lg text-sm" placeholder="الاسم">
                 <input type="email" id="new-user-email" class="w-full p-2 border rounded-lg text-sm" placeholder="البريد">
                 <select id="new-user-role" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
-                    <option value="agency">وكيل</option>
                     <option value="performance">معلم</option>
+                    <option value="agency">وكيل</option>
                     <option value="leadership">مدير</option>
                 </select>
-                <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold hover:bg-teal-800">إضافة وتفعيل</button>
+                <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">إضافة وتفعيل سحابياً</button>
                 <button onclick="closeModal('add-user-modal')" class="w-full text-slate-400 text-xs mt-2">إلغاء</button>
             </div>
         </div>
@@ -411,29 +385,28 @@
             document.getElementById('registration-modal').style.display = 'flex';
         };
 
-        // دالة التسجيل السحابي المصححة
         const submitRegistrationRequest = async () => {
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const role = document.getElementById('reg-role').value;
-
-            if (!name || !email) { showToast("يرجى إدخال البيانات"); return; }
-
-            const user = await window.ensureAuth();
-            const uid = user.uid;
-            const isManager = isManagerAccount(name, email);
-            
-            const userData = {
-                id: uid, name, email, role,
-                isActive: isManager ? true : false,
-                dateJoined: new Date().toLocaleString('ar-SA')
-            };
-
-            localStorage.setItem('pending_reg_data', JSON.stringify(userData));
+            if (!name || !email) { showToast("يرجى إدخال كافة البيانات"); return; }
 
             try {
-                // الحفظ السحابي
+                const user = await window.ensureAuth(); // التأكد من اكتمال المصادقة
+                const uid = user.uid;
+                const isManager = isManagerAccount(name, email);
+                
+                const userData = {
+                    id: uid, name, email, role,
+                    isActive: isManager ? true : false,
+                    dateJoined: new Date().toLocaleString('ar-SA')
+                };
+
+                localStorage.setItem('pending_reg_data', JSON.stringify(userData));
+                
+                // حفظ سحابي مؤكد
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), userData);
+                
                 closeModal('registration-modal');
                 if (isManager) {
                     isManagerVerifiedInSession = true;
@@ -443,26 +416,23 @@
                     document.getElementById('role-selector-screen').style.display = 'none';
                 }
             } catch (err) {
-                showToast("خطأ في المزامنة السحابية");
-                console.error(err);
+                showToast("خطأ في الاتصال السحابي، جرب مرة أخرى");
             }
-        };
-
-        const clearRegistrationState = () => {
-            localStorage.removeItem('pending_reg_data');
-            location.reload();
         };
 
         const handleAdminDirectEntry = async () => {
             const name = document.getElementById('user-display-name').value.trim();
             const email = document.getElementById('user-madrasati-email').value.trim();
+            
             if (isManagerAccount(name, email)) {
-                isManagerVerifiedInSession = true;
-                // تسجيل المدير سحابياً لضمان ظهوره في القائمة
-                const user = await window.ensureAuth();
-                const userData = { id: user.uid, name: name || 'المدير', email: email || 'admin@moe.sa', role: 'leadership', isActive: true };
-                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
-                handleRoleSelection('leadership');
+                try {
+                    const user = await window.ensureAuth();
+                    isManagerVerifiedInSession = true;
+                    // تسجيل فوري للمدير في السحابة ليظهر في القائمة
+                    const userData = { id: user.uid, name: name || 'المدير', email: email || 'admin', role: 'leadership', isActive: true };
+                    await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
+                    handleRoleSelection('leadership');
+                } catch(e) { showToast("فشل التحقق السحابي"); }
             } else {
                 if (!name || !email) showToast("يرجى إدخال البيانات");
                 else checkUserStatus(); 
@@ -470,57 +440,52 @@
         };
 
         const handleRoleSelection = async (role) => {
-            const nameInput = document.getElementById('user-display-name').value.trim();
-            const emailInput = document.getElementById('user-madrasati-email').value.trim();
-            if (!nameInput || !emailInput) { showToast("يرجى إدخال البيانات"); return; }
-            const isManager = isManagerAccount(nameInput, emailInput);
-            if (isManager) isManagerVerifiedInSession = true;
+            const name = document.getElementById('user-display-name').value.trim();
+            const email = document.getElementById('user-madrasati-email').value.trim();
+            if (!name || !email) { showToast("يرجى إدخال البيانات"); return; }
             
-            const user = await window.ensureAuth();
-            const userData = { id: user.uid, name: nameInput, email: emailInput, role: role, isActive: isManager };
-
-            if (isManager) startApp(userData);
-
             try {
+                const user = await window.ensureAuth();
+                const isManager = isManagerAccount(name, email);
+                if (isManager) isManagerVerifiedInSession = true;
+                
+                const userData = { id: user.uid, name, email, role, isActive: isManager };
+                if (isManager) startApp(userData);
+
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
                 checkUserStatus();
-            } catch (err) { console.warn("Cloud sync deferred."); }
+            } catch (err) { showToast("خطأ في المزامنة"); }
         };
 
         const checkUserStatus = async () => {
-            const localPending = localStorage.getItem('pending_reg_data');
-            if (localPending && !isManagerVerifiedInSession) {
-                const p = JSON.parse(localPending);
-                if (!isManagerAccount(p.name, p.email)) {
-                    document.getElementById('role-selector-screen').style.display = 'none';
-                    document.getElementById('waiting-screen').classList.remove('hidden');
-                }
-            }
-
-            const nameInput = document.getElementById('user-display-name').value.trim();
-            const emailInput = document.getElementById('user-madrasati-email').value.trim();
-            
-            const user = await window.ensureAuth();
-            
-            if (isManagerVerifiedInSession || isManagerAccount(nameInput, emailInput)) {
-                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "admin", role: 'leadership', isActive: true, id: user.uid };
-                startApp(managerObj);
-                return;
-            }
-
-            window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
-                if (doc.exists()) {
-                    const u = doc.data();
-                    currentUser = u;
-                    if (u.isActive) {
-                        localStorage.removeItem('pending_reg_data');
-                        startApp(u);
-                    } else if (!isManagerAccount(u.name, u.email)) {
+            try {
+                const user = await window.ensureAuth();
+                
+                // فحص محلي مؤقت
+                const localPending = localStorage.getItem('pending_reg_data');
+                if (localPending && !isManagerVerifiedInSession) {
+                    const p = JSON.parse(localPending);
+                    if (!isManagerAccount(p.name, p.email)) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                     }
                 }
-            }, (error) => { console.error("Firestore Listen Error:", error); });
+
+                // فحص سحابي مستمر
+                window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
+                    if (doc.exists()) {
+                        const u = doc.data();
+                        currentUser = u;
+                        if (u.isActive) {
+                            localStorage.removeItem('pending_reg_data');
+                            startApp(u);
+                        } else if (!isManagerAccount(u.name, u.email)) {
+                            document.getElementById('role-selector-screen').style.display = 'none';
+                            document.getElementById('waiting-screen').classList.remove('hidden');
+                        }
+                    }
+                });
+            } catch(e) {}
         };
 
         const startApp = (u) => {
@@ -531,16 +496,14 @@
             document.getElementById('main-ui').style.opacity = '1';
             document.getElementById('active-role-badge').innerText = u.role === 'leadership' ? 'مدير المدرسة' : (u.role === 'agency' ? 'وكيل المدرسة' : 'معلم');
             renderGrid(u.role);
-            if (window.auth) syncCloudData();
+            syncCloudData();
         };
 
         const syncCloudData = () => {
-            try {
-                window.fs.onSnapshot(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users'), (snapshot) => {
-                    allUsers = snapshot.docs.map(doc => doc.data());
-                    if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
-                }, (err) => console.error(err));
-            } catch (e) {}
+            window.fs.onSnapshot(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users'), (snapshot) => {
+                allUsers = snapshot.docs.map(doc => doc.data());
+                if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
+            });
         };
 
         const renderGrid = (role) => {
@@ -575,19 +538,16 @@
         };
 
         const openAddUserModal = () => {
-            document.getElementById('new-user-name').value = '';
-            document.getElementById('new-user-email').value = '';
             document.getElementById('add-user-modal').style.display = 'flex';
         };
 
-        // دالة إضافة حساب بواسطة المدير المصححة
         const saveNewUser = async () => {
             const name = document.getElementById('new-user-name').value.trim();
             const email = document.getElementById('new-user-email').value.trim();
             const role = document.getElementById('new-user-role').value;
             if (!name || !email) { showToast("يرجى تعبئة الحقول"); return; }
             
-            const manualUid = "user-" + Date.now() + Math.random().toString(36).substr(2, 5);
+            const manualUid = "manual-user-" + Date.now() + Math.random().toString(36).substr(2, 4);
             try {
                 await window.ensureAuth();
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
@@ -595,10 +555,7 @@
                 });
                 showToast("تمت الإضافة والتفعيل سحابياً");
                 closeModal('add-user-modal');
-            } catch (err) {
-                showToast("فشل في إضافة الحساب");
-                console.error(err);
-            }
+            } catch (err) { showToast("فشل في الإضافة السحابية"); }
         };
 
         const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
@@ -607,7 +564,7 @@
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '';
             allUsers.forEach(user => {
-                const isMe = user.id === window.auth.currentUser.uid;
+                const isMe = user.id === window.auth.currentUser?.uid;
                 tbody.innerHTML += `<tr>
                     <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنت)' : ''}</td>
                     <td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
