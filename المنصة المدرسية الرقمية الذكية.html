@@ -24,18 +24,31 @@
         window.appId = appId;
         window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
 
-        // دالة تضمن توفر المصادقة قبل أي عملية سحابية
+        // دالة تضمن توفر المصادقة قبل أي عملية سحابية مع آلية إعادة محاولة
         window.ensureAuth = () => {
             return new Promise((resolve, reject) => {
                 if (auth.currentUser) return resolve(auth.currentUser);
-                const timeout = setTimeout(() => reject(new Error("Timeout waiting for auth")), 10000);
+                
+                let attempts = 0;
+                const checkAuth = () => {
+                    attempts++;
+                    if (auth.currentUser) {
+                        resolve(auth.currentUser);
+                    } else if (attempts > 50) { // 10 ثوانٍ تقريباً
+                        reject(new Error("Timeout waiting for auth"));
+                    } else {
+                        setTimeout(checkAuth, 200);
+                    }
+                };
+
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        clearTimeout(timeout);
                         unsubscribe();
                         resolve(user);
                     }
                 });
+                
+                checkAuth();
             });
         };
 
@@ -281,6 +294,7 @@
         <header class="text-center mb-8 flex flex-col items-center">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="w-36 mx-auto mb-3 drop-shadow-xl">
             <h1 class="text-3xl md:text-4xl font-black mt-2 text-white">منصة المدرسة الرقمية الذكية</h1>
+            <div class="inline-block px-3 py-1 bg-teal-500/20 rounded-full text-teal-300 text-[10px] font-bold mt-2 border border-teal-500/30">النظام السحابي نشط ✅</div>
         </header>
 
         <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
@@ -378,8 +392,8 @@
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
-            // إصلاح آلية التعرف على المدير لتشمل admin وأي بريد رسمي مرتبط
-            return n === 'admin' || n === 'مدير' || e === 'admin' || e.includes('admin') || e.includes('a123456');
+            // إصلاح آلية التعرف لضمان قبول كافة الصيغ الإدارية
+            return n === 'admin' || n === 'مدير' || n === 'المدير' || e === 'admin' || e.includes('admin') || e.includes('a123456');
         };
 
         const openRegistrationModal = () => {
@@ -420,34 +434,39 @@
             }
         };
 
+        // إصلاح آلية دخول المدير سحابياً
         const handleAdminDirectEntry = async () => {
-            const name = document.getElementById('user-display-name').value.trim();
-            const email = document.getElementById('user-madrasati-email').value.trim();
+            const nameInput = document.getElementById('user-display-name').value.trim();
+            const emailInput = document.getElementById('user-madrasati-email').value.trim();
             
-            if (isManagerAccount(name, email)) {
+            // التحقق من أن الحساب إداري
+            if (isManagerAccount(nameInput, emailInput)) {
                 try {
+                    // الانتظار حتى استقرار المصادقة مجهولة الهوية أولاً
                     const user = await window.ensureAuth();
                     isManagerVerifiedInSession = true;
                     
-                    // تصحيح آلية الدخول السحابي للمدير: ضمان الكتابة المباشرة والمزامنة قبل الانتقال
+                    // بيانات حساب المدير للتسجيل السحابي
                     const userData = { 
                         id: user.uid, 
-                        name: name || 'مدير النظام', 
-                        email: email || 'admin', 
+                        name: nameInput || 'مدير النظام', 
+                        email: emailInput || 'admin', 
                         role: 'leadership', 
                         isActive: true,
                         dateJoined: new Date().toLocaleString('ar-SA')
                     };
                     
+                    // محاولة الكتابة السحابية مع دمج البيانات
                     await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
                     
-                    // تحويل المستخدم فورياً مع بيانات الجلسة المؤكدة
+                    // تشغيل التطبيق للمدير
                     startApp(userData);
                 } catch(e) { 
-                    showToast("فشل المصادقة السحابية للمدير"); 
+                    console.error("Cloud Admin Login Error:", e);
+                    showToast("خطأ في مزامنة حساب المدير سحابياً"); 
                 }
             } else {
-                if (!name || !email) showToast("يرجى إدخال البيانات");
+                if (!nameInput || !emailInput) showToast("يرجى إدخال البيانات");
                 else checkUserStatus(); 
             }
         };
@@ -471,18 +490,23 @@
                     dateJoined: new Date().toLocaleString('ar-SA')
                 };
                 
-                if (isManager) startApp(userData);
-
-                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
-                checkUserStatus();
-            } catch (err) { showToast("خطأ في مزامنة الدور سحابياً"); }
+                if (isManager) {
+                    await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
+                    startApp(userData);
+                } else {
+                    await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
+                    checkUserStatus();
+                }
+            } catch (err) { 
+                showToast("خطأ في مزامنة الدور سحابياً"); 
+            }
         };
 
         const checkUserStatus = async () => {
             try {
                 const user = await window.ensureAuth();
                 
-                // الأولوية دائماً لحالة المدير المؤكدة في الجلسة
+                // حالة المدير المؤكدة في الجلسة تتجاوز الفحص
                 if (isManagerVerifiedInSession) {
                     const localName = document.getElementById('user-display-name').value.trim();
                     const localEmail = document.getElementById('user-madrasati-email').value.trim();
