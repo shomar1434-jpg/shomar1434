@@ -85,6 +85,15 @@
         .modal-content { background: white; color: #1e293b; width: 100%; max-width: 800px; border-radius: 2rem; padding: 2rem; max-height: 85vh; overflow-y: auto; }
         #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; }
         .toast { background: #1e293b; color: white; padding: 1rem; border-radius: 1rem; margin-top: 0.5rem; border-left: 4px solid var(--moe-primary); }
+
+        .notification-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #ef4444; color: white; font-size: 10px;
+            width: 18px; height: 18px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--moe-navy);
+        }
+        .bell-yellow { background-color: #facc15 !important; }
     </style>
 </head>
 <body>
@@ -148,30 +157,94 @@
     <!-- الواجهة الرئيسية -->
     <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-8 opacity-0 pointer-events-none transition-opacity duration-700">
         <div id="active-role-badge" class="global-admin-badge">تحميل...</div>
-        <header class="text-center mb-12">
+        <header class="text-center mb-6">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 mx-auto mb-4 drop-shadow-2xl">
             <h1 class="text-3xl md:text-4xl font-black text-white drop-shadow-md">منصة المدرسة الرقمية الذكية</h1>
             <p class="text-teal-300 text-xs mt-2 font-bold">النظام السحابي نشط ✅</p>
         </header>
+
+        <!-- جرس التنبيهات -->
+        <div id="bell-container" class="w-full max-w-4xl mx-auto flex justify-center mb-8">
+            <div id="bell-element" class="p-4 rounded-3xl border border-white/20 shadow-2xl cursor-pointer flex items-center gap-4 bg-slate-800 transition-all hover:scale-105" onclick="openAlertsPopup()">
+                <div class="relative">
+                    <span class="text-3xl">🔔</span>
+                    <div id="bell-badge" class="notification-badge hidden">0</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-extrabold text-white">تنبيهات النظام</div>
+                    <div class="text-[10px] text-slate-400 font-bold">لديك رسائل إدارية هامة</div>
+                </div>
+            </div>
+        </div>
+
         <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
     </div>
 
-    <!-- حاوية الإدارة -->
+    <!-- حاويات التطبيقات -->
     <div id="viewport-leadership" class="app-iframe-container">
         <div id="admin-control-bar" class="bg-slate-900 p-2 flex items-center justify-between border-b border-teal-600">
-            <div class="flex items-center gap-4">
-                <span class="text-teal-400 font-bold text-xs pr-4">⚡ نظام القيادة المدرسية</span>
-                <button onclick="showUserManagement()" class="bg-slate-700 text-white px-4 py-1 rounded-lg text-[10px] font-bold hover:bg-slate-600">👥 إدارة المستخدمين</button>
+            <div class="flex items-center gap-2 overflow-x-auto">
+                <span class="text-teal-400 font-bold text-xs pr-2 whitespace-nowrap">⚡ الإدارة</span>
+                <button onclick="showRoleList('agency')" class="bg-teal-700 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-teal-600 whitespace-nowrap">📑 الوكلاء</button>
+                <button onclick="showRoleList('performance')" class="bg-teal-700 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-teal-600 whitespace-nowrap">👨‍🏫 المعلمين</button>
+                <button onclick="showUserManagement()" class="bg-slate-700 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-slate-600 whitespace-nowrap">👥 المستخدمين</button>
+                <button onclick="copyRegLinkForUsers()" class="bg-blue-700 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-blue-600 whitespace-nowrap">🔗 رابط التسجيل</button>
+                <button onclick="showSendNotifModal()" class="bg-yellow-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-yellow-500 whitespace-nowrap">🔔 إرسال تنبيه</button>
             </div>
-            <button onclick="closeApp()" class="bg-red-600 text-white px-4 py-1 rounded-lg text-[10px] font-bold shadow-md">خروج 🏠</button>
+            <button onclick="closeApp()" class="bg-red-600 text-white px-4 py-1 rounded-lg text-[10px] font-bold shadow-md ml-2">خروج 🏠</button>
         </div>
         <iframe id="frame-leadership"></iframe>
     </div>
 
-    <div id="viewport-agency" class="app-iframe-container"><iframe id="frame-agency"></iframe></div>
+    <div id="viewport-agency" class="app-iframe-container">
+        <div class="bg-slate-800 p-2 border-b border-blue-500 flex items-center gap-4">
+             <span class="text-blue-400 font-bold text-xs">⚡ الوكالة</span>
+             <button onclick="showSendNotifModal()" class="bg-blue-600 px-3 py-1 rounded-lg text-[10px] text-white hover:bg-blue-500 font-bold">🔔 إرسال تنبيه</button>
+             <button onclick="closeApp()" class="bg-red-600 text-white px-4 py-1 rounded-lg text-[10px] font-bold mr-auto">خروج 🏠</button>
+        </div>
+        <iframe id="frame-agency"></iframe>
+    </div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
 
-    <!-- مودال إدارة المستخدمين -->
+    <!-- مودالات النظام -->
+    <div id="role-list-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6 border-b pb-3">
+                <h3 id="role-list-title" class="text-lg font-bold">قائمة الكادر</h3>
+                <button onclick="closeModal('role-list-modal')" class="text-slate-400 hover:text-red-500 font-bold">إغلاق</button>
+            </div>
+            <div id="role-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+    </div>
+
+    <div id="send-notif-modal" class="modal">
+        <div class="modal-content max-w-sm">
+            <h3 class="text-lg font-bold mb-4">🔔 إرسال تنبيه للنظام</h3>
+            <div class="space-y-4">
+                <textarea id="notif-text" class="w-full p-3 border rounded-xl text-sm h-24" placeholder="اكتب نص التنبيه هنا..."></textarea>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold">درجة الأهمية:</label>
+                    <select id="notif-type" class="p-2 border rounded-lg text-xs">
+                        <option value="important">هام (أصفر)</option>
+                        <option value="critical">عاجل (أحمر)</option>
+                    </select>
+                </div>
+                <button onclick="saveNotification()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">إرسال التنبيه الآن</button>
+                <button onclick="closeModal('send-notif-modal')" class="w-full text-slate-400 text-xs mt-2">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="alerts-popup-modal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">🔔 تنبيهات الإدارة</h3>
+                <button onclick="closeModal('alerts-popup-modal')" class="text-slate-400">إغلاق</button>
+            </div>
+            <div id="alerts-container" class="space-y-3"></div>
+        </div>
+    </div>
+
     <div id="user-management-modal" class="modal">
         <div class="modal-content text-right">
             <div class="flex justify-between items-center mb-6">
@@ -195,7 +268,6 @@
         </div>
     </div>
 
-    <!-- مودال الإضافة/التعديل -->
     <div id="edit-user-modal" class="modal">
         <div class="modal-content max-w-sm text-right">
             <h3 id="edit-modal-title" class="text-lg font-bold mb-4">تعديل بيانات الحساب</h3>
@@ -218,6 +290,7 @@
 
     <script>
         let allUsers = [];
+        let allNotifications = [];
         let currentUser = null;
         let isManagerVerifiedInSession = false;
 
@@ -230,14 +303,11 @@
             setTimeout(() => t.remove(), 3000);
         };
 
-        // دالة التعرف الجذري والنهائي على المدير (admin) - المصدر النهائي للحقيقة
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
             const keywords = ['admin', 'مدير', 'المدير', 'إدارة', 'ادارة'];
-            // حل جذري: التعرف المباشر سحابياً ومحلياً
             const isMatch = keywords.some(kw => n === kw || e === kw) || e.includes('a123456');
-            
             if (isMatch) {
                 localStorage.setItem('root_access_active', 'true');
                 localStorage.setItem('admin_verified', 'true');
@@ -245,7 +315,7 @@
             return isMatch;
         };
 
-        const openRegistrationModal = () => { closeModal('role-list-modal'); document.getElementById('registration-modal').style.display = 'flex'; };
+        const openRegistrationModal = () => { closeModal('registration-modal'); document.getElementById('registration-modal').style.display = 'flex'; };
         const openAddUserModal = () => { openEditModal('new-'+Date.now(), '', '', 'performance'); };
 
         const submitRegistrationRequest = async () => {
@@ -253,84 +323,48 @@
             const email = document.getElementById('reg-email').value.trim();
             const role = document.getElementById('reg-role').value;
             if (!name || !email) { showToast("يرجى إدخال كافة البيانات"); return; }
-
             try {
                 const user = await window.ensureAuth(); 
-                if (!user) { showToast("خطأ في الاتصال بالسحابة"); return; }
-
-                const isManager = isManagerAccount(name, email);
-                const userData = { id: user.uid, name, email, role, isActive: isManager, dateJoined: new Date().toLocaleString('ar-SA') };
-
+                const userData = { id: user.uid, name, email, role, isActive: isManagerAccount(name, email), dateJoined: new Date().toLocaleString('ar-SA') };
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData);
-                
                 closeModal('registration-modal');
-                if (isManager) {
-                    isManagerVerifiedInSession = true;
-                    checkUserStatus();
-                } else {
-                    document.getElementById('role-selector-screen').style.display = 'none';
-                    document.getElementById('waiting-screen').classList.remove('hidden');
-                }
+                if (userData.isActive) { isManagerVerifiedInSession = true; checkUserStatus(); }
+                else { document.getElementById('role-selector-screen').style.display = 'none'; document.getElementById('waiting-screen').classList.remove('hidden'); }
             } catch (err) { showToast("فشل إرسال الطلب سحابياً"); }
         };
 
-        // دخول المدير المباشر - حل جذري وشامل للمزامنة دون الحاجة للمصادقة اليدوية
         const handleAdminDirectEntry = async () => {
             const n = document.getElementById('user-display-name').value.trim();
             const e = document.getElementById('user-madrasati-email').value.trim();
-            
             if (isManagerAccount(n, e)) {
                 try {
-                    // تسجيل دخول صامت في الخلفية لتلبية متطلبات Firebase دون إزعاج المستخدم
-                    const user = await window.ensureAuth();
-                    if (!user) throw new Error("Root Auth Failed");
+                    // حل جذري: مسح أي طلبات انتظار سابقة لهذا الجهاز عند دخول المدير
+                    localStorage.removeItem('pending_reg_data'); 
+                    localStorage.setItem('root_access_active', 'true');
 
+                    const user = await window.ensureAuth();
                     isManagerVerifiedInSession = true;
-                    const userData = { 
-                        id: user.uid, 
-                        name: n || 'مدير النظام', 
-                        email: e || 'admin', 
-                        role: 'leadership', 
-                        isActive: true,
-                        root: true,
-                        lastSync: new Date().toISOString()
-                    };
+                    const userData = { id: user.uid, name: n || 'مدير النظام', email: e || 'admin', role: 'leadership', isActive: true, root: true };
                     
-                    // فرض المزامنة السحابية الجذرية فوراً
+                    // تحديث قسري للسحابة لضمان حالة "نشط"
                     await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
-                    
-                    // حفظ الحالة محلياً للتعرف المباشر مستقبلاً
                     localStorage.setItem('cached_manager_uid', user.uid);
-                    localStorage.setItem('admin_session_active', 'true');
                     
                     startApp(userData);
-                } catch(e) { 
-                    console.error("Manager Final Sync Error:", e);
-                    // في حالة الخطأ الجذري، يتم الدخول محلياً على الأقل
-                    isManagerVerifiedInSession = true;
-                    startApp({ id: 'local-admin', name: n || 'مدير النظام', email: e || 'admin', role: 'leadership', isActive: true });
-                }
-            } else {
-                if (!n || !e) showToast("يرجى إدخال البيانات");
-                else checkUserStatus();
-            }
+                } catch(e) { startApp({ id: 'local-admin', name: n || 'مدير النظام', email: e || 'admin', role: 'leadership', isActive: true }); }
+            } else { if (!n || !e) showToast("يرجى إدخال البيانات"); else checkUserStatus(); }
         };
 
         const handleRoleSelection = async (role) => {
             const n = document.getElementById('user-display-name').value.trim();
             const e = document.getElementById('user-madrasati-email').value.trim();
             if (!n || !e) { showToast("يرجى إدخال البيانات"); return; }
-            
             try {
                 const user = await window.ensureAuth();
-                if (!user) return;
-
                 const isManager = isManagerAccount(n, e);
                 if (isManager) isManagerVerifiedInSession = true;
-                
                 const userData = { id: user.uid, name: n, email: e, role, isActive: isManager };
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
-                
                 if (isManager) startApp(userData); else checkUserStatus();
             } catch(e) { showToast("خطأ في تسجيل البيانات"); }
         };
@@ -338,32 +372,25 @@
         const checkUserStatus = async () => {
             try {
                 const user = await window.ensureAuth();
-                if (!user) return;
-
                 const n = document.getElementById('user-display-name').value.trim();
                 const e = document.getElementById('user-madrasati-email').value.trim();
                 
-                // الحل الجذري: التعرف الفوري محلياً وسحابياً للمدير دون شاشات انتظار
-                const isAdminCached = localStorage.getItem('admin_session_active') === 'true' || localStorage.getItem('root_access_active') === 'true';
-                
-                if (isManagerVerifiedInSession || isManagerAccount(n, e) || isAdminCached) {
+                // تجاوز فوري للمدير بناءً على البيانات المخزنة محلياً لسرعة الاستجابة
+                if (isManagerVerifiedInSession || isManagerAccount(n, e) || localStorage.getItem('root_access_active') === 'true') {
                     startApp({ id: user.uid, name: n || 'المدير', email: e || 'admin', role: 'leadership', isActive: true });
                     return;
                 }
 
-                // مراقبة سحابية آمنة مع معالج أخطاء (Error Callback)
                 window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
                     if (doc.exists() && doc.data().isActive) {
                         startApp(doc.data());
                     } else {
+                        // إذا لم يكن مديراً والحساب غير نشط، نظهر شاشة الانتظار
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                     }
-                }, (error) => {
-                    // في حالة خطأ الصلاحيات، لا نغلق التطبيق بل نكتفي بالسماح بالدخول إذا كان محققاً محلياً
-                    console.warn("Firestore access restricted, relying on local auth state.");
-                });
-            } catch(e) { console.error("Root Check Error:", e); }
+                }, (error) => { console.warn("Firestore listener restricted."); });
+            } catch(e) { console.error("Root Check Error"); }
         };
 
         const startApp = (u) => {
@@ -376,6 +403,7 @@
             document.getElementById('active-role-badge').innerText = u.role === 'leadership' ? 'مدير المدرسة' : 'منسوب المدرسة';
             renderGrid(u.role);
             syncCloudData();
+            syncNotifications();
         };
 
         const syncCloudData = () => {
@@ -384,8 +412,24 @@
             window.fs.onSnapshot(usersRef, (snap) => {
                 allUsers = snap.docs.map(d => d.data());
                 if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
-            }, (error) => {
-                console.error("Users list access denied by cloud rules.");
+            }, (error) => { console.error("List sync denied."); });
+        };
+
+        const syncNotifications = () => {
+            if (!window.db) return;
+            window.fs.onSnapshot(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications'), (snap) => {
+                allNotifications = snap.docs.map(d => d.data()).sort((a,b) => b.timestamp - a.timestamp);
+                const badge = document.getElementById('bell-badge');
+                const bell = document.getElementById('bell-element');
+                if (allNotifications.length > 0) {
+                    badge.innerText = allNotifications.length;
+                    badge.classList.remove('hidden');
+                    if (allNotifications[0].type === 'critical') bell.classList.add('bg-red-900', 'border-red-500');
+                    else {
+                        bell.classList.remove('bg-red-900', 'border-red-500');
+                        bell.classList.add('bg-slate-800');
+                    }
+                }
             });
         };
 
@@ -410,12 +454,13 @@
             document.getElementById('main-ui').style.display = 'none';
             v.classList.add('active');
             document.getElementById('backBtn').classList.add('visible');
-            const files = {'leadership':'نظام القيادة المدرسية الذكي.html','agency':'التقارير الرقمية لوكالة المدرسة الذكية.html','performance':'نظام تقارير الأداء الذكي.html'};
+            const files = {'leadership':'leadership_system.html','agency':'agency_reports.html','performance':'performance_reports.html'};
             let suffix = `?role=${currentUser.role}&uid=${currentUser.id}`;
             if (currentUser.role === 'leadership') suffix += `&admin=true&bypass=true`;
             v.querySelector('iframe').src = files[appId] + suffix;
         };
 
+        // إدارة المستخدمين
         const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
         const renderUserTable = () => {
             const tbody = document.getElementById('users-table-body');
@@ -435,10 +480,63 @@
         };
 
         const toggleActive = async (uid, current) => {
+            try { await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !current }); showToast("تم تحديث الحالة"); }
+            catch(e) { showToast("خطأ في التحديث"); }
+        };
+
+        // عرض القوائم (الوكلاء/المعلمين)
+        const showRoleList = (role) => {
+            const titleMap = { 'agency': '📑 قائمة الوكلاء والمساعدين', 'performance': '👨‍🏫 قائمة الكادر التعليمي' };
+            document.getElementById('role-list-title').innerText = titleMap[role] || 'القائمة';
+            const container = document.getElementById('role-list-container');
+            container.innerHTML = '';
+            const filtered = allUsers.filter(u => u.role === role);
+            if (filtered.length === 0) container.innerHTML = '<p class="text-center text-slate-400 text-xs py-10 col-span-2">لا يوجد مستخدمين مسجلين بهذا الدور</p>';
+            filtered.forEach(u => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-4 rounded-2xl border-r-4 border-teal-600 flex justify-between items-center";
+                card.innerHTML = `<div><div class="font-bold text-sm">${u.name}</div><div class="text-[10px] text-slate-500">${u.email}</div></div><button onclick="launchMonitoring('${u.id}', '${u.name}', '${u.role}')" class="bg-teal-700 text-white px-3 py-1 rounded-lg text-[9px] font-bold">متابعة 👁️</button>`;
+                container.appendChild(card);
+            });
+            document.getElementById('role-list-modal').style.display = 'flex';
+        };
+
+        const launchMonitoring = (uid, name, role) => {
+            const v = document.getElementById('viewport-monitoring');
+            if (v) v.style.display = 'flex';
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('monitored-user-name').innerText = name;
+            const files = { 'agency': 'agency_reports.html', 'performance': 'performance_reports.html' };
+            v.querySelector('iframe').src = files[role] + `?uid=${uid}&monitoring=true`;
+            closeModal('role-list-modal');
+        };
+
+        // التنبيهات
+        const showSendNotifModal = () => { document.getElementById('send-notif-modal').style.display = 'flex'; };
+        const saveNotification = async () => {
+            const text = document.getElementById('notif-text').value.trim();
+            const type = document.getElementById('notif-type').value;
+            if (!text) return showToast("اكتب نص التنبيه أولاً");
+            const notif = { text, type, sender: currentUser.name, timestamp: Date.now() };
             try {
-                await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !current });
-                showToast("تم تحديث حالة الحساب سحابياً");
-            } catch(e) { showToast("خطأ في تحديث البيانات"); }
+                await window.fs.addDoc(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'notifications'), notif);
+                showToast("تم إرسال التنبيه لكافة المنسوبين");
+                closeModal('send-notif-modal');
+                document.getElementById('notif-text').value = '';
+            } catch(e) { showToast("خطأ في الإرسال السحابي"); }
+        };
+
+        const openAlertsPopup = () => {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = '';
+            if (allNotifications.length === 0) container.innerHTML = '<p class="text-center text-slate-400 py-10">لا يوجد تنبيهات حالياً</p>';
+            allNotifications.forEach(n => {
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-2xl border-r-4 ${n.type === 'critical' ? 'bg-red-50 border-red-500 text-red-900' : 'bg-yellow-50 border-yellow-500 text-yellow-900'}`;
+                div.innerHTML = `<div class="font-bold text-xs mb-1">${n.sender}</div><div class="text-sm">${n.text}</div><div class="text-[9px] opacity-60 mt-2">${new Date(n.timestamp).toLocaleString('ar-SA')}</div>`;
+                container.appendChild(div);
+            });
+            document.getElementById('alerts-popup-modal').style.display = 'flex';
         };
 
         const openEditModal = (uid, n, e, r) => { 
@@ -446,26 +544,34 @@
             document.getElementById('edit-email').value = e; document.getElementById('edit-role').value = r; 
             document.getElementById('edit-user-modal').style.display = 'flex'; 
         };
-        
         const saveUserEdit = async () => {
             const uid = document.getElementById('edit-uid').value;
-            const data = { 
-                id: uid, name: document.getElementById('edit-name').value, 
-                email: document.getElementById('edit-email').value, 
-                role: document.getElementById('edit-role').value,
-                isActive: true 
-            };
-            try {
-                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), data, {merge:true});
-                closeModal('edit-user-modal'); showToast("تم الحفظ سحابياً ومحلياً");
-            } catch(e) { showToast("خطأ في حفظ البيانات"); }
+            const data = { id: uid, name: document.getElementById('edit-name').value, email: document.getElementById('edit-email').value, role: document.getElementById('edit-role').value, isActive: true };
+            await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), data, {merge:true});
+            closeModal('edit-user-modal'); showToast("تم الحفظ سحابياً بنجاح");
+        };
+
+        const copyRegLinkForUsers = () => { 
+            const regLink = window.location.origin + window.location.pathname + "?mode=register";
+            const t = document.createElement('input'); t.value = regLink; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast("تم نسخ رابط التسجيل"); 
         };
 
         const logout = () => { localStorage.clear(); location.reload(); };
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
-        const closeApp = () => { document.getElementById('main-ui').style.display = 'flex'; document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); document.getElementById('backBtn').classList.remove('visible'); };
+        const closeApp = () => { 
+            document.getElementById('main-ui').style.display = 'flex'; 
+            document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); 
+            const monitor = document.getElementById('viewport-monitoring');
+            if (monitor) monitor.style.display = 'none';
+            document.getElementById('backBtn').classList.remove('visible'); 
+        };
         
-        window.onload = () => { checkUserStatus(); };
+        window.onload = () => { 
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'register') setTimeout(openRegistrationModal, 500);
+            checkUserStatus(); 
+        };
+        window.addEventListener('authReady', () => { checkUserStatus(); });
     </script>
 </body>
 </html>
