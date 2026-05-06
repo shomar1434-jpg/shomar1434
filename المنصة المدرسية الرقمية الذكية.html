@@ -378,7 +378,8 @@
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
-            return n === 'admin' || n === 'مدير' || e === 'admin' || e.includes('a123456');
+            // إصلاح آلية التعرف على المدير لتشمل admin وأي بريد رسمي مرتبط
+            return n === 'admin' || n === 'مدير' || e === 'admin' || e.includes('admin') || e.includes('a123456');
         };
 
         const openRegistrationModal = () => {
@@ -392,7 +393,7 @@
             if (!name || !email) { showToast("يرجى إدخال كافة البيانات"); return; }
 
             try {
-                const user = await window.ensureAuth(); // التأكد من اكتمال المصادقة
+                const user = await window.ensureAuth(); 
                 const uid = user.uid;
                 const isManager = isManagerAccount(name, email);
                 
@@ -404,7 +405,6 @@
 
                 localStorage.setItem('pending_reg_data', JSON.stringify(userData));
                 
-                // حفظ سحابي مؤكد
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), userData);
                 
                 closeModal('registration-modal');
@@ -428,11 +428,24 @@
                 try {
                     const user = await window.ensureAuth();
                     isManagerVerifiedInSession = true;
-                    // تسجيل فوري للمدير في السحابة ليظهر في القائمة
-                    const userData = { id: user.uid, name: name || 'المدير', email: email || 'admin', role: 'leadership', isActive: true };
+                    
+                    // تصحيح آلية الدخول السحابي للمدير: ضمان الكتابة المباشرة والمزامنة قبل الانتقال
+                    const userData = { 
+                        id: user.uid, 
+                        name: name || 'مدير النظام', 
+                        email: email || 'admin', 
+                        role: 'leadership', 
+                        isActive: true,
+                        dateJoined: new Date().toLocaleString('ar-SA')
+                    };
+                    
                     await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
-                    handleRoleSelection('leadership');
-                } catch(e) { showToast("فشل التحقق السحابي"); }
+                    
+                    // تحويل المستخدم فورياً مع بيانات الجلسة المؤكدة
+                    startApp(userData);
+                } catch(e) { 
+                    showToast("فشل المصادقة السحابية للمدير"); 
+                }
             } else {
                 if (!name || !email) showToast("يرجى إدخال البيانات");
                 else checkUserStatus(); 
@@ -449,21 +462,43 @@
                 const isManager = isManagerAccount(name, email);
                 if (isManager) isManagerVerifiedInSession = true;
                 
-                const userData = { id: user.uid, name, email, role, isActive: isManager };
+                const userData = { 
+                    id: user.uid, 
+                    name, 
+                    email, 
+                    role, 
+                    isActive: isManager,
+                    dateJoined: new Date().toLocaleString('ar-SA')
+                };
+                
                 if (isManager) startApp(userData);
 
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
                 checkUserStatus();
-            } catch (err) { showToast("خطأ في المزامنة"); }
+            } catch (err) { showToast("خطأ في مزامنة الدور سحابياً"); }
         };
 
         const checkUserStatus = async () => {
             try {
                 const user = await window.ensureAuth();
                 
-                // فحص محلي مؤقت
+                // الأولوية دائماً لحالة المدير المؤكدة في الجلسة
+                if (isManagerVerifiedInSession) {
+                    const localName = document.getElementById('user-display-name').value.trim();
+                    const localEmail = document.getElementById('user-madrasati-email').value.trim();
+                    const managerObj = { 
+                        name: localName || "مدير النظام", 
+                        email: localEmail || "admin", 
+                        role: 'leadership', 
+                        isActive: true, 
+                        id: user.uid 
+                    };
+                    startApp(managerObj);
+                    return;
+                }
+
                 const localPending = localStorage.getItem('pending_reg_data');
-                if (localPending && !isManagerVerifiedInSession) {
+                if (localPending) {
                     const p = JSON.parse(localPending);
                     if (!isManagerAccount(p.name, p.email)) {
                         document.getElementById('role-selector-screen').style.display = 'none';
@@ -471,7 +506,6 @@
                     }
                 }
 
-                // فحص سحابي مستمر
                 window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
                     if (doc.exists()) {
                         const u = doc.data();
@@ -494,6 +528,7 @@
             document.getElementById('role-selector-screen').style.display = 'none';
             document.getElementById('main-ui').classList.remove('opacity-0', 'pointer-events-none');
             document.getElementById('main-ui').style.opacity = '1';
+            document.getElementById('main-ui').style.display = 'flex';
             document.getElementById('active-role-badge').innerText = u.role === 'leadership' ? 'مدير المدرسة' : (u.role === 'agency' ? 'وكيل المدرسة' : 'معلم');
             renderGrid(u.role);
             syncCloudData();
