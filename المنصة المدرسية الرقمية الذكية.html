@@ -24,6 +24,19 @@
         window.appId = appId;
         window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
 
+        // ضمان المصادقة قبل العمليات
+        window.ensureAuth = () => {
+            return new Promise((resolve) => {
+                if (auth.currentUser) return resolve(auth.currentUser);
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        unsubscribe();
+                        resolve(user);
+                    }
+                });
+            });
+        };
+
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -89,38 +102,16 @@
             backdrop-filter: blur(5px);
         }
 
-        .watercolor-blob {
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            opacity: 0.25;
-            pointer-events: none;
-        }
-
         #role-selector-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            background: transparent;
-            overflow-y: auto;
+            position: fixed; inset: 0; z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.5rem; background: transparent; overflow-y: auto;
         }
 
         .login-container {
-            max-width: 32rem; 
-            width: 100%;
-            text-align: center;
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            border-radius: 2.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 32rem; width: 100%; text-align: center; padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px);
+            border-radius: 2.5rem; border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
@@ -141,43 +132,24 @@
         .action-btn {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 0.4rem 1rem;
-            border-radius: 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: white;
+            padding: 0.4rem 1rem; border-radius: 0.75rem;
+            font-size: 0.75rem; font-weight: 700; color: white;
             transition: all 0.2s ease;
         }
         
-        .action-btn:hover {
-            background: var(--moe-primary);
-            border-color: var(--moe-primary);
-        }
+        .action-btn:hover { background: var(--moe-primary); border-color: var(--moe-primary); }
 
         .app-card {
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(255, 255, 255, 0.98);
-            color: #1e293b;
-            border-radius: 2rem;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.98); color: #1e293b;
+            border-radius: 2rem; overflow: hidden; display: flex; flex-direction: column;
+            height: 100%; border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
 
         .app-iframe-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            background: white;
-            flex-direction: column;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1000; background: white; flex-direction: column;
         }
 
         .app-iframe-container.active { display: flex; }
@@ -202,8 +174,7 @@
             background: #ef4444; color: white; font-size: 0.75rem;
             font-weight: 800; padding: 0.4rem 1.5rem; border-radius: 9999px;
             position: absolute; top: 1.5rem; left: 1.5rem; z-index: 100;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
         #admin-control-bar {
@@ -213,14 +184,8 @@
         }
 
         .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
+            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
+            z-index: 3000; align-items: center; justify-content: center; padding: 1rem;
         }
 
         .modal-content {
@@ -228,39 +193,13 @@
             border-radius: 2rem; padding: 2.5rem; max-height: 85vh; overflow-y: auto;
         }
 
-        .notification-badge {
-            position: absolute; top: -5px; right: -5px;
-            background: #ef4444; color: white; font-size: 10px;
-            width: 18px; height: 18px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            border: 2px solid var(--moe-navy);
-        }
-        
         #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; }
         .toast {
             background: #1e293b; color: white; padding: 1rem 1.5rem; border-radius: 1rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-top: 0.5rem; border-left: 4px solid var(--moe-primary);
         }
 
-        .monitoring-header {
-            background: var(--moe-gold);
-            color: var(--moe-navy);
-            padding: 0.5rem 1rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1100;
-        }
-
-        .bell-yellow { background-color: #facc15 !important; } 
-        .bell-blue { background-color: #3b82f6 !important; }   
-
-        @keyframes float {
-            0% { transform: translate(0, 0); }
-            50% { transform: translate(15px, 30px); }
-            100% { transform: translate(0, 0); }
-        }
+        @keyframes float { 0% { transform: translate(0, 0); } 50% { transform: translate(15px, 30px); } 100% { transform: translate(0, 0); } }
         .float-anim { animation: float 12s ease-in-out infinite; }
     </style>
 </head>
@@ -268,11 +207,6 @@
 
     <div id="toast-container"></div>
 
-    <!-- فقاعات مائية للخلفية -->
-    <div class="watercolor-blob float-anim" style="top: -50px; left: -50px; background: var(--moe-primary);"></div>
-    <div class="watercolor-blob float-anim" style="bottom: -50px; right: -50px; background: var(--moe-gold); animation-delay: -6s;"></div>
-
-    <!-- شاشة الدخول الرئيسية -->
     <div id="role-selector-screen">
         <div class="login-container">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 mx-auto mb-6 drop-shadow-2xl" alt="Logo">
@@ -315,26 +249,25 @@
             <div class="text-center mb-6">
                 <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-20 mx-auto mb-4" alt="Logo">
                 <h3 class="text-xl font-bold text-slate-800">طلب تسجيل حساب جديد</h3>
-                <p class="text-xs text-slate-500 mt-2">يرجى إدخال بياناتك الرسمية لطلب التفعيل من المدير</p>
             </div>
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold mb-1 text-slate-700">الاسم الرباعي:</label>
-                    <input type="text" id="reg-name" class="w-full p-3 border rounded-xl text-sm focus:border-teal-500 outline-none" placeholder="أدخل اسمك كما هو في سجلات الوزارة">
+                    <input type="text" id="reg-name" class="w-full p-3 border rounded-xl text-sm outline-none" placeholder="الاسم الكامل">
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-1 text-slate-700">بريد منصة مدرستي:</label>
-                    <input type="email" id="reg-email" class="w-full p-3 border rounded-xl text-sm focus:border-teal-500 outline-none" placeholder="example@moe.gov.sa">
+                    <input type="email" id="reg-email" class="w-full p-3 border rounded-xl text-sm outline-none" placeholder="example@moe.gov.sa">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-slate-700">القسم المطلوب:</label>
-                    <select id="reg-role" class="w-full p-3 border rounded-xl text-sm bg-slate-50 outline-none">
+                    <label class="block text-xs font-bold mb-1 text-slate-700">القسم:</label>
+                    <select id="reg-role" class="w-full p-3 border rounded-xl text-sm bg-slate-50">
                         <option value="performance">معلم</option>
                         <option value="agency">وكيل مدرسة</option>
                     </select>
                 </div>
-                <button onclick="submitRegistrationRequest()" class="w-full bg-teal-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-teal-800 transition-colors">إرسال الطلب الآن</button>
-                <button onclick="closeModal('registration-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">العودة للخلف</button>
+                <button onclick="submitRegistrationRequest()" class="w-full bg-teal-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-teal-800 transition-colors">إرسال الطلب سحابياً</button>
+                <button onclick="closeModal('registration-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">إلغاء</button>
             </div>
         </div>
     </div>
@@ -343,9 +276,9 @@
     <div id="waiting-screen" class="fixed inset-0 z-[3000] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden">
         <div class="bg-white/5 p-12 rounded-[3rem] border border-white/10 backdrop-blur-xl">
             <span class="text-7xl mb-6 block animate-bounce">⏳</span>
-            <h2 class="text-2xl font-bold text-white mb-2">طلبك قيد المراجعة</h2>
-            <p class="text-slate-400 text-sm max-w-md mx-auto">تم استلام بياناتك بنجاح. يرجى الانتظار حتى يقوم مدير المدرسة بتفعيل حسابك سحابياً.</p>
-            <button onclick="clearRegistrationState()" class="mt-8 bg-red-600/20 text-red-400 border border-red-600/30 px-6 py-2 rounded-full text-xs font-bold">إلغاء الطلب محلياً</button>
+            <h2 class="text-2xl font-bold text-white mb-2">طلبك قيد المراجعة سحابياً</h2>
+            <p class="text-slate-400 text-sm max-w-md mx-auto">سيتم تفعيل حسابك من قبل مدير المدرسة فوراً.</p>
+            <button onclick="clearRegistrationState()" class="mt-8 bg-red-600/20 text-red-400 border border-red-600/30 px-6 py-2 rounded-full text-xs font-bold">إلغاء الطلب</button>
         </div>
     </div>
 
@@ -354,25 +287,11 @@
         <div class="exit-app-btn" onclick="logout()">🚪 خروج</div>
         <div id="active-role-badge" class="global-admin-badge">تحميل...</div>
 
-        <header class="text-center mb-8 flex flex-col items-center relative">
+        <header class="text-center mb-8 flex flex-col items-center">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" alt="شعار الوزارة" class="w-36 mx-auto mb-3 drop-shadow-xl">
-            <h1 class="text-3xl md:text-4xl font-black mt-2 text-white drop-shadow-lg">منصة المدرسة الرقمية الذكية</h1>
+            <h1 class="text-3xl md:text-4xl font-black mt-2 text-white">منصة المدرسة الرقمية الذكية</h1>
             <div class="inline-block px-3 py-1 bg-teal-500/20 rounded-full text-teal-300 text-[10px] font-bold mt-2 border border-teal-500/30">النظام السحابي نشط ✅</div>
         </header>
-
-        <!-- جرس التنبيهات -->
-        <div id="bell-container" class="hidden w-full max-w-4xl mx-auto flex justify-center mb-8">
-            <div id="bell-element" class="p-4 rounded-3xl border border-white/20 shadow-2xl cursor-pointer flex items-center gap-4 bell-yellow transition-all duration-500 hover:scale-105" onclick="openAlertsPopup()">
-                <div class="relative">
-                    <span class="text-3xl">🔔</span>
-                    <div id="bell-badge" class="notification-badge hidden">0</div>
-                </div>
-                <div class="text-right">
-                    <div id="bell-label" class="text-xs font-extrabold text-navy-900">تنبيهات النظام</div>
-                    <div class="text-[10px] text-navy-800 font-bold">لديك رسائل إدارية هامة</div>
-                </div>
-            </div>
-        </div>
 
         <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full px-4"></div>
 
@@ -385,12 +304,11 @@
     <div id="viewport-leadership" class="app-iframe-container">
         <div id="admin-control-bar">
             <div class="flex items-center gap-2 overflow-x-auto">
-                <span class="text-teal-400 font-bold text-xs whitespace-nowrap">⚡ الإدارة</span>
-                <button onclick="showRoleList('agency')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600 font-bold">📑 الوكلاء</button>
-                <button onclick="showRoleList('performance')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600 font-bold">👨‍🏫 المعلمين</button>
+                <span class="text-teal-400 font-bold text-xs">⚡ الإدارة</span>
+                <button onclick="showRoleList('agency')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600">📑 الوكلاء</button>
+                <button onclick="showRoleList('performance')" class="bg-teal-700 px-3 py-1 rounded-lg text-[10px] hover:bg-teal-600">👨‍🏫 المعلمين</button>
                 <button onclick="showUserManagement()" class="bg-slate-700 px-3 py-1 rounded-lg text-[10px] hover:bg-slate-600">👥 المستخدمين</button>
-                <button onclick="copyRegLinkForUsers()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 رابط التسجيل</button>
-                <button onclick="showSendNotifModal()" class="bg-yellow-600 px-3 py-1 rounded-lg text-[10px] hover:bg-yellow-500 font-bold">🔔 إرسال تنبيه</button>
+                <button onclick="copyRegLinkForUsers()" class="bg-blue-700 px-3 py-1 rounded-lg text-[10px] hover:bg-blue-600">🔗 الرابط</button>
             </div>
         </div>
         <iframe id="frame-leadership"></iframe>
@@ -400,43 +318,24 @@
         <div class="monitoring-header">
             <div class="flex items-center gap-3">
                 <span>👁️ متابعة:</span>
-                <span id="monitored-user-name" class="underline">...</span>
-                <span id="monitored-user-role" class="bg-white/20 px-2 py-0.5 rounded text-[10px]">...</span>
+                <span id="monitored-user-name">...</span>
             </div>
             <button onclick="closeApp()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-bold">إغلاق ✖</button>
         </div>
         <iframe id="frame-monitoring"></iframe>
     </div>
 
-    <div id="viewport-agency" class="app-iframe-container">
-        <div id="agency-control-bar" class="bg-slate-800 p-2 border-b-2 border-blue-500 flex items-center gap-4">
-             <span class="text-blue-400 font-bold text-xs">⚡ الوكالة</span>
-             <button onclick="showSendNotifModal()" class="bg-blue-600 px-3 py-1 rounded-lg text-[10px] text-white hover:bg-blue-500 font-bold">🔔 إرسال تنبيه</button>
-        </div>
-        <iframe id="frame-agency"></iframe>
-    </div>
+    <div id="viewport-agency" class="app-iframe-container"><iframe id="frame-agency"></iframe></div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
-
-    <div id="role-list-modal" class="modal">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-6 border-b pb-3">
-                <h3 id="role-list-title" class="text-lg font-bold">القائمة</h3>
-                <button onclick="closeModal('role-list-modal')" class="text-slate-400 hover:text-red-500 font-bold">إغلاق</button>
-            </div>
-            <div id="role-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
-    </div>
 
     <!-- إدارة المستخدمين -->
     <div id="user-management-modal" class="modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-6 border-b pb-3">
-                <div class="flex flex-col">
-                    <h3 class="text-lg font-bold">👥 إدارة مستخدمي النظام</h3>
-                </div>
+                <h3 class="text-lg font-bold">👥 إدارة المستخدمين (السحابي)</h3>
                 <div class="flex gap-2">
-                    <button onclick="openAddUserModal()" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-teal-700 shadow-md">+ إضافة</button>
-                    <button onclick="closeModal('user-management-modal')" class="text-slate-400 hover:text-red-500 font-bold p-1">إغلاق</button>
+                    <button onclick="openAddUserModal()" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold">+ إضافة</button>
+                    <button onclick="closeModal('user-management-modal')" class="text-slate-400 font-bold">إغلاق</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -445,7 +344,6 @@
                         <th class="p-3">الاسم</th>
                         <th class="p-3 text-center">الدور</th>
                         <th class="p-3 text-center">الحالة</th>
-                        <th class="p-3 text-center">تعديل</th>
                         <th class="p-3 text-center">الإجراء</th>
                     </tr></thead>
                     <tbody id="users-table-body"></tbody>
@@ -454,48 +352,34 @@
         </div>
     </div>
 
-    <!-- مودال إضافة حساب جديد (للمدير) -->
+    <!-- مودال إضافة حساب (للمدير) -->
     <div id="add-user-modal" class="modal">
         <div class="modal-content max-w-sm">
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">➕ إضافة حساب جديد</h3>
+            <h3 class="text-lg font-bold mb-4">➕ إضافة حساب سحابي</h3>
             <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold mb-1">الاسم الرباعي</label>
-                    <input type="text" id="new-user-name" class="w-full p-2 border rounded-lg text-sm" placeholder="أدخل الاسم">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1">البريد الإلكتروني</label>
-                    <input type="email" id="new-user-email" class="w-full p-2 border rounded-lg text-sm" placeholder="example@moe.gov.sa">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1">الدور الوظيفي</label>
-                    <select id="new-user-role" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
-                        <option value="performance">معلم</option>
-                        <option value="agency">وكيل مدرسة</option>
-                        <option value="leadership">مدير مدرسة</option>
-                    </select>
-                </div>
-                <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold hover:bg-teal-800 transition-colors">إضافة الحساب الآن</button>
-                <button onclick="closeModal('add-user-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">إلغاء</button>
+                <input type="text" id="new-user-name" class="w-full p-2 border rounded-lg text-sm" placeholder="الاسم">
+                <input type="email" id="new-user-email" class="w-full p-2 border rounded-lg text-sm" placeholder="البريد">
+                <select id="new-user-role" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
+                    <option value="agency">وكيل</option>
+                    <option value="performance">معلم</option>
+                    <option value="leadership">مدير</option>
+                </select>
+                <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold hover:bg-teal-800">إضافة وتفعيل</button>
+                <button onclick="closeModal('add-user-modal')" class="w-full text-slate-400 text-xs mt-2">إلغاء</button>
             </div>
         </div>
     </div>
 
+    <!-- مودال تعديل حساب -->
     <div id="edit-user-modal" class="modal">
         <div class="modal-content max-w-sm">
-            <h3 class="text-lg font-bold mb-4">✏️ تعديل بيانات المنسوب</h3>
+            <h3 class="text-lg font-bold mb-4">✏️ تعديل بيانات الحساب</h3>
             <div class="space-y-4">
                 <input type="hidden" id="edit-uid">
-                <div>
-                    <label class="block text-xs font-bold mb-1">الاسم الرباعي</label>
-                    <input type="text" id="edit-name" class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1">البريد الإلكتروني</label>
-                    <input type="email" id="edit-email" class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <button onclick="saveUserEdit()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">حفظ التغييرات</button>
-                <button onclick="closeModal('edit-user-modal')" class="w-full text-slate-400 text-xs text-center block mt-2">إلغاء</button>
+                <input type="text" id="edit-name" class="w-full p-2 border rounded-lg text-sm" placeholder="الاسم">
+                <input type="email" id="edit-email" class="w-full p-2 border rounded-lg text-sm" placeholder="البريد">
+                <button onclick="saveUserEdit()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">حفظ التعديلات سحابياً</button>
+                <button onclick="closeModal('edit-user-modal')" class="w-full text-slate-400 text-xs mt-2">إلغاء</button>
             </div>
         </div>
     </div>
@@ -504,7 +388,6 @@
 
     <script>
         let allUsers = [];
-        let allNotifications = [];
         let currentUser = null;
         let isManagerVerifiedInSession = false;
 
@@ -521,26 +404,23 @@
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
-            const managerPatterns = ['admin', 'مدير', 'إدارة', 'المدير', 'الادارة'];
-            const managerEmails = ['a123456@jzb.mo.gov.sa', 'a123456@jzb.moe.gov.sa'];
-            return managerPatterns.includes(n) || managerEmails.includes(e);
+            return n === 'admin' || n === 'مدير' || e === 'admin' || e.includes('a123456');
         };
 
         const openRegistrationModal = () => {
-            document.getElementById('reg-name').value = '';
-            document.getElementById('reg-email').value = '';
             document.getElementById('registration-modal').style.display = 'flex';
         };
 
-        // دالة التسجيل (مزامنة محلي + سحابي)
+        // دالة التسجيل السحابي المصححة
         const submitRegistrationRequest = async () => {
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const role = document.getElementById('reg-role').value;
 
-            if (!name || !email) { showToast("يرجى إدخال كافة البيانات"); return; }
+            if (!name || !email) { showToast("يرجى إدخال البيانات"); return; }
 
-            const uid = window.currentUserUid || "user-" + Date.now();
+            const user = await window.ensureAuth();
+            const uid = user.uid;
             const isManager = isManagerAccount(name, email);
             
             const userData = {
@@ -549,13 +429,11 @@
                 dateJoined: new Date().toLocaleString('ar-SA')
             };
 
-            // 1. الحفظ المحلي (للنسخة المحلية)
             localStorage.setItem('pending_reg_data', JSON.stringify(userData));
 
             try {
-                // 2. الحفظ السحابي (للنسخة السحابية)
+                // الحفظ السحابي
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), userData);
-                
                 closeModal('registration-modal');
                 if (isManager) {
                     isManagerVerifiedInSession = true;
@@ -565,7 +443,8 @@
                     document.getElementById('role-selector-screen').style.display = 'none';
                 }
             } catch (err) {
-                showToast("خطأ في الاتصال السحابي، جاري المحاولة محلياً...");
+                showToast("خطأ في المزامنة السحابية");
+                console.error(err);
             }
         };
 
@@ -574,14 +453,18 @@
             location.reload();
         };
 
-        const handleAdminDirectEntry = () => {
+        const handleAdminDirectEntry = async () => {
             const name = document.getElementById('user-display-name').value.trim();
             const email = document.getElementById('user-madrasati-email').value.trim();
             if (isManagerAccount(name, email)) {
                 isManagerVerifiedInSession = true;
+                // تسجيل المدير سحابياً لضمان ظهوره في القائمة
+                const user = await window.ensureAuth();
+                const userData = { id: user.uid, name: name || 'المدير', email: email || 'admin@moe.sa', role: 'leadership', isActive: true };
+                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
                 handleRoleSelection('leadership');
             } else {
-                if (!name || !email) showToast("يرجى إدخال الاسم والبريد");
+                if (!name || !email) showToast("يرجى إدخال البيانات");
                 else checkUserStatus(); 
             }
         };
@@ -593,24 +476,18 @@
             const isManager = isManagerAccount(nameInput, emailInput);
             if (isManager) isManagerVerifiedInSession = true;
             
-            const userData = {
-                id: window.currentUserUid || "manager-" + Date.now(),
-                name: nameInput, email: emailInput, role: role,
-                isActive: isManager ? true : false
-            };
+            const user = await window.ensureAuth();
+            const userData = { id: user.uid, name: nameInput, email: emailInput, role: role, isActive: isManager };
 
             if (isManager) startApp(userData);
 
             try {
-                if (window.currentUserUid) {
-                    await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid), userData, { merge: true });
-                }
+                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, { merge: true });
                 checkUserStatus();
             } catch (err) { console.warn("Cloud sync deferred."); }
         };
 
-        const checkUserStatus = () => {
-            // فحص محلي أولاً للاستجابة السريعة
+        const checkUserStatus = async () => {
             const localPending = localStorage.getItem('pending_reg_data');
             if (localPending && !isManagerVerifiedInSession) {
                 const p = JSON.parse(localPending);
@@ -623,26 +500,27 @@
             const nameInput = document.getElementById('user-display-name').value.trim();
             const emailInput = document.getElementById('user-madrasati-email').value.trim();
             
+            const user = await window.ensureAuth();
+            
             if (isManagerVerifiedInSession || isManagerAccount(nameInput, emailInput)) {
-                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "admin", role: 'leadership', isActive: true, id: window.currentUserUid };
+                const managerObj = { name: nameInput || "مدير النظام", email: emailInput || "admin", role: 'leadership', isActive: true, id: user.uid };
                 startApp(managerObj);
                 return;
             }
 
-            if (!window.currentUserUid) return;
-            window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', window.currentUserUid), (doc) => {
+            window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
                 if (doc.exists()) {
                     const u = doc.data();
                     currentUser = u;
                     if (u.isActive) {
-                        localStorage.removeItem('pending_reg_data'); // تم التفعيل سحابياً، امسح المحلي
+                        localStorage.removeItem('pending_reg_data');
                         startApp(u);
                     } else if (!isManagerAccount(u.name, u.email)) {
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                     }
                 }
-            });
+            }, (error) => { console.error("Firestore Listen Error:", error); });
         };
 
         const startApp = (u) => {
@@ -661,7 +539,7 @@
                 window.fs.onSnapshot(window.fs.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'users'), (snapshot) => {
                     allUsers = snapshot.docs.map(doc => doc.data());
                     if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
-                });
+                }, (err) => console.error(err));
             } catch (e) {}
         };
 
@@ -674,7 +552,7 @@
                 const titles = {'leadership': '🏛️ الإدارة المدرسية', 'agency': '📑 وكالة المدرسة', 'performance': '👨‍🏫 شؤون المعلمين'};
                 const card = document.createElement('div');
                 card.className = "app-card cursor-pointer p-8 text-center border-b-8 border-teal-600 hover:shadow-2xl transition-all";
-                card.innerHTML = `<h2 class="font-extrabold text-xl text-slate-800">${titles[appId]}</h2><p class="text-[10px] text-teal-600 font-bold mt-2">● مفعل سحابياً ومحلياً</p><button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-2xl text-sm font-bold w-full shadow-lg">دخول</button>`;
+                card.innerHTML = `<h2 class="font-extrabold text-xl text-slate-800">${titles[appId]}</h2><p class="text-[10px] text-teal-600 font-bold mt-2">● متصل سحابياً</p><button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-2xl text-sm font-bold w-full shadow-lg">دخول القسم</button>`;
                 card.onclick = () => launchApp(appId);
                 grid.appendChild(card);
             });
@@ -702,17 +580,25 @@
             document.getElementById('add-user-modal').style.display = 'flex';
         };
 
+        // دالة إضافة حساب بواسطة المدير المصححة
         const saveNewUser = async () => {
             const name = document.getElementById('new-user-name').value.trim();
             const email = document.getElementById('new-user-email').value.trim();
             const role = document.getElementById('new-user-role').value;
             if (!name || !email) { showToast("يرجى تعبئة الحقول"); return; }
-            const manualUid = "manual-" + Date.now();
-            await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
-                id: manualUid, name, email, role, isActive: true, dateJoined: new Date().toLocaleString('ar-SA')
-            });
-            showToast("تمت الإضافة سحابياً");
-            closeModal('add-user-modal');
+            
+            const manualUid = "user-" + Date.now() + Math.random().toString(36).substr(2, 5);
+            try {
+                await window.ensureAuth();
+                await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
+                    id: manualUid, name, email, role, isActive: true, dateJoined: new Date().toLocaleString('ar-SA')
+                });
+                showToast("تمت الإضافة والتفعيل سحابياً");
+                closeModal('add-user-modal');
+            } catch (err) {
+                showToast("فشل في إضافة الحساب");
+                console.error(err);
+            }
         };
 
         const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
@@ -721,24 +607,24 @@
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '';
             allUsers.forEach(user => {
-                const isMe = user.id === currentUser.id;
+                const isMe = user.id === window.auth.currentUser.uid;
                 tbody.innerHTML += `<tr>
                     <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنت)' : ''}</td>
                     <td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
                     <td class="p-3 border-b text-center">${user.isActive ? '<span class="text-green-600 font-bold">نشط</span>' : '<span class="text-yellow-600 font-bold">معلق</span>'}</td>
-                    <td class="p-3 border-b text-center"><button onclick="openEditModal('${user.id}', '${user.name}', '${user.email}')" class="text-blue-600 hover:underline text-[10px]">تعديل</button></td>
                     <td class="p-3 border-b text-center flex items-center justify-center gap-2">
+                        <button onclick="openEditModal('${user.id}', '${user.name}', '${user.email}')" class="text-blue-600 font-bold text-[10px]">تعديل</button>
                         ${!isMe ? `
-                            <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'bg-orange-500' : 'bg-green-600'} text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
-                            <button onclick="deleteUser('${user.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">حذف</button>
-                        ` : `<span class="text-[9px] text-teal-600 font-bold">الحساب الحالي</span>`}
+                            <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'text-orange-600' : 'text-green-600'} font-bold text-[10px]">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
+                            <button onclick="deleteUser('${user.id}')" class="text-red-600 font-bold text-[10px]">حذف</button>
+                        ` : ''}
                     </td>
                 </tr>`;
             });
         };
 
         const toggleUserActivation = async (uid, c) => await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !c });
-        const deleteUser = async (uid) => { if (confirm("حذف نهائي؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
+        const deleteUser = async (uid) => { if (confirm("حذف نهائي من السحابة؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
         const openEditModal = (uid, n, e) => { document.getElementById('edit-uid').value = uid; document.getElementById('edit-name').value = n; document.getElementById('edit-email').value = e; document.getElementById('edit-user-modal').style.display = 'flex'; };
         const saveUserEdit = async () => { 
             await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', document.getElementById('edit-uid').value), { 
