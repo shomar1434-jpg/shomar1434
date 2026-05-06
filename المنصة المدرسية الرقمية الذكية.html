@@ -81,6 +81,16 @@
         .back-button { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--moe-primary); color: white; padding: 0.8rem 2rem; border-radius: 9999px; z-index: 1001; font-weight: bold; display: none; }
         .back-button.visible { display: block; }
         .global-admin-badge { background: var(--moe-gold); color: var(--moe-navy); font-size: 0.75rem; font-weight: 800; padding: 0.5rem 1.5rem; border-radius: 9999px; position: absolute; top: 1.5rem; right: 1.5rem; z-index: 100; }
+        
+        .exit-app-btn {
+            background: #ef4444; color: white; font-size: 0.75rem;
+            font-weight: 800; padding: 0.4rem 1.5rem; border-radius: 9999px;
+            position: absolute; top: 1.5rem; left: 1.5rem; z-index: 100;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s;
+        }
+        .exit-app-btn:hover { transform: scale(1.05); background: #dc2626; }
+
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 3000; align-items: center; justify-content: center; padding: 1rem; }
         .modal-content { background: white; color: #1e293b; width: 100%; max-width: 800px; border-radius: 2rem; padding: 2rem; max-height: 85vh; overflow-y: auto; }
         #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; }
@@ -93,7 +103,6 @@
             display: flex; align-items: center; justify-content: center;
             border: 2px solid var(--moe-navy);
         }
-        .bell-yellow { background-color: #facc15 !important; }
     </style>
 </head>
 <body>
@@ -155,8 +164,12 @@
     </div>
 
     <!-- الواجهة الرئيسية -->
-    <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-8 opacity-0 pointer-events-none transition-opacity duration-700">
+    <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-8 opacity-0 pointer-events-none transition-opacity duration-700 relative">
+        <!-- زر الخروج المعاد -->
+        <div class="exit-app-btn" onclick="logout()">🚪 خروج</div>
+        
         <div id="active-role-badge" class="global-admin-badge">تحميل...</div>
+        
         <header class="text-center mb-6">
             <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="w-32 mx-auto mb-4 drop-shadow-2xl">
             <h1 class="text-3xl md:text-4xl font-black text-white drop-shadow-md">منصة المدرسة الرقمية الذكية</h1>
@@ -205,6 +218,15 @@
         <iframe id="frame-agency"></iframe>
     </div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
+
+    <!-- حاوية المتابعة (Monitoring) -->
+    <div id="viewport-monitoring" class="app-iframe-container">
+        <div class="bg-slate-900 p-2 flex items-center justify-between border-b border-teal-500">
+            <span class="text-teal-400 font-bold text-xs">👁️ متابعة: <span id="monitored-user-name"></span></span>
+            <button onclick="closeApp()" class="bg-red-600 text-white px-4 py-1 rounded-lg text-[10px] font-bold">إغلاق المتابعة ✖️</button>
+        </div>
+        <iframe id="frame-monitoring"></iframe>
+    </div>
 
     <!-- مودالات النظام -->
     <div id="role-list-modal" class="modal">
@@ -338,7 +360,6 @@
             const e = document.getElementById('user-madrasati-email').value.trim();
             if (isManagerAccount(n, e)) {
                 try {
-                    // حل جذري: مسح أي طلبات انتظار سابقة لهذا الجهاز عند دخول المدير
                     localStorage.removeItem('pending_reg_data'); 
                     localStorage.setItem('root_access_active', 'true');
 
@@ -346,7 +367,6 @@
                     isManagerVerifiedInSession = true;
                     const userData = { id: user.uid, name: n || 'مدير النظام', email: e || 'admin', role: 'leadership', isActive: true, root: true };
                     
-                    // تحديث قسري للسحابة لضمان حالة "نشط"
                     await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
                     localStorage.setItem('cached_manager_uid', user.uid);
                     
@@ -375,17 +395,19 @@
                 const n = document.getElementById('user-display-name').value.trim();
                 const e = document.getElementById('user-madrasati-email').value.trim();
                 
-                // تجاوز فوري للمدير بناءً على البيانات المخزنة محلياً لسرعة الاستجابة
+                // الحل الجذري: المدير لا يرى شاشة الانتظار أبداً
                 if (isManagerVerifiedInSession || isManagerAccount(n, e) || localStorage.getItem('root_access_active') === 'true') {
+                    document.getElementById('waiting-screen').classList.add('hidden');
                     startApp({ id: user.uid, name: n || 'المدير', email: e || 'admin', role: 'leadership', isActive: true });
                     return;
                 }
 
                 window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
                     if (doc.exists() && doc.data().isActive) {
+                        document.getElementById('waiting-screen').classList.add('hidden');
                         startApp(doc.data());
                     } else {
-                        // إذا لم يكن مديراً والحساب غير نشط، نظهر شاشة الانتظار
+                        // شاشة الانتظار تظهر فقط لغير المديرين
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                     }
@@ -439,7 +461,12 @@
             grid.innerHTML = '';
             const apps = role === 'leadership' ? ['leadership', 'agency', 'performance'] : [role];
             apps.forEach(appId => {
-                const titles = {'leadership': '🏛️ الإدارة', 'agency': '📑 الوكالة', 'performance': '👨‍🏫 المعلم'};
+                // تحديث المسميات لتطابق أسماء التطبيقات المطلوبة
+                const titles = {
+                    'leadership': '🏛️ نظام القيادة المدرسية', 
+                    'agency': '📑 التقارير الرقمية لوكالة المدرسة', 
+                    'performance': '👨‍🏫 نظام تقارير الأداء الذكي'
+                };
                 const card = document.createElement('div');
                 card.className = "app-card p-8 text-center cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:scale-105";
                 card.innerHTML = `<h2 class="font-bold text-xl text-slate-800">${titles[appId]}</h2><p class="text-[10px] text-teal-600 mt-2 font-bold">اتصال جذري مستقر ✅</p><button class="mt-6 bg-teal-700 text-white px-6 py-2 rounded-xl w-full font-bold shadow-md">دخول</button>`;
@@ -454,13 +481,19 @@
             document.getElementById('main-ui').style.display = 'none';
             v.classList.add('active');
             document.getElementById('backBtn').classList.add('visible');
-            const files = {'leadership':'leadership_system.html','agency':'agency_reports.html','performance':'performance_reports.html'};
+            
+            // ربط التطبيقات بملفاتها البرمجية المحددة (أسماء الملفات المرفوعة)
+            const files = {
+                'leadership': 'نظام القيادة المدرسية الذكي.html',
+                'agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html',
+                'performance': 'نظام تقارير الأداء الذكي.html'
+            };
+            
             let suffix = `?role=${currentUser.role}&uid=${currentUser.id}`;
             if (currentUser.role === 'leadership') suffix += `&admin=true&bypass=true`;
             v.querySelector('iframe').src = files[appId] + suffix;
         };
 
-        // إدارة المستخدمين
         const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
         const renderUserTable = () => {
             const tbody = document.getElementById('users-table-body');
@@ -484,7 +517,6 @@
             catch(e) { showToast("خطأ في التحديث"); }
         };
 
-        // عرض القوائم (الوكلاء/المعلمين)
         const showRoleList = (role) => {
             const titleMap = { 'agency': '📑 قائمة الوكلاء والمساعدين', 'performance': '👨‍🏫 قائمة الكادر التعليمي' };
             document.getElementById('role-list-title').innerText = titleMap[role] || 'القائمة';
@@ -503,15 +535,21 @@
 
         const launchMonitoring = (uid, name, role) => {
             const v = document.getElementById('viewport-monitoring');
-            if (v) v.style.display = 'flex';
-            document.getElementById('main-ui').style.display = 'none';
-            document.getElementById('monitored-user-name').innerText = name;
-            const files = { 'agency': 'agency_reports.html', 'performance': 'performance_reports.html' };
-            v.querySelector('iframe').src = files[role] + `?uid=${uid}&monitoring=true`;
+            if (v) {
+                v.classList.add('active');
+                document.getElementById('main-ui').style.display = 'none';
+                document.getElementById('monitored-user-name').innerText = name;
+                document.getElementById('backBtn').classList.add('visible');
+                
+                const files = { 
+                    'agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html', 
+                    'performance': 'نظام تقارير الأداء الذكي.html' 
+                };
+                v.querySelector('iframe').src = files[role] + `?uid=${uid}&monitoring=true`;
+            }
             closeModal('role-list-modal');
         };
 
-        // التنبيهات
         const showSendNotifModal = () => { document.getElementById('send-notif-modal').style.display = 'flex'; };
         const saveNotification = async () => {
             const text = document.getElementById('notif-text').value.trim();
@@ -561,8 +599,6 @@
         const closeApp = () => { 
             document.getElementById('main-ui').style.display = 'flex'; 
             document.querySelectorAll('.app-iframe-container').forEach(v => v.classList.remove('active')); 
-            const monitor = document.getElementById('viewport-monitoring');
-            if (monitor) monitor.style.display = 'none';
             document.getElementById('backBtn').classList.remove('visible'); 
         };
         
