@@ -24,13 +24,12 @@
         window.appId = appId;
         window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
 
-        // دالة تضمن توفر المصادقة سحابياً ومحلياً قبل أي إجراء
+        // دالة تضمن توفر المصادقة سحابياً ومحلياً قبل أي إجراء مع إصلاح جذري
         window.ensureAuth = async () => {
             if (auth.currentUser) return auth.currentUser;
             
             return new Promise((resolve, reject) => {
                 const timeout = setTimeout(async () => {
-                    // إذا تأخر الرد، نحاول الدخول المجهول كخيار أخير
                     try {
                         const user = await signInAnonymously(auth);
                         resolve(user.user);
@@ -317,9 +316,9 @@
     <div id="user-management-modal" class="modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-6 border-b pb-3">
-                <h3 class="text-lg font-bold">👥 إدارة المستخدمين (السحابي)</h3>
+                <h3 class="text-lg font-bold">👥 إدارة المستخدمين (سحابياً ومحلياً)</h3>
                 <div class="flex gap-2">
-                    <button onclick="openAddUserModal()" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold">+ إضافة</button>
+                    <button onclick="openAddUserModal()" class="bg-teal-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md">+ إضافة حساب</button>
                     <button onclick="closeModal('user-management-modal')" class="text-slate-400 font-bold">إغلاق</button>
                 </div>
             </div>
@@ -329,7 +328,7 @@
                         <th class="p-3">الاسم</th>
                         <th class="p-3 text-center">الدور</th>
                         <th class="p-3 text-center">الحالة</th>
-                        <th class="p-3 text-center">الإجراء</th>
+                        <th class="p-3 text-center">الإجراءات</th>
                     </tr></thead>
                     <tbody id="users-table-body"></tbody>
                 </table>
@@ -342,14 +341,14 @@
         <div class="modal-content max-w-sm">
             <h3 class="text-lg font-bold mb-4">➕ إضافة حساب وتفعيل فوري</h3>
             <div class="space-y-4">
-                <input type="text" id="new-user-name" class="w-full p-2 border rounded-lg text-sm" placeholder="الاسم">
-                <input type="email" id="new-user-email" class="w-full p-2 border rounded-lg text-sm" placeholder="البريد">
+                <input type="text" id="new-user-name" class="w-full p-2 border rounded-lg text-sm" placeholder="الاسم الرباعي">
+                <input type="email" id="new-user-email" class="w-full p-2 border rounded-lg text-sm" placeholder="البريد الإلكتروني">
                 <select id="new-user-role" class="w-full p-2 border rounded-lg text-sm bg-slate-50">
                     <option value="performance">معلم</option>
                     <option value="agency">وكيل</option>
                     <option value="leadership">مدير</option>
                 </select>
-                <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">إضافة وتفعيل سحابياً</button>
+                <button onclick="saveNewUser()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold hover:bg-teal-800 transition-colors">حفظ وتفعيل سحابياً</button>
                 <button onclick="closeModal('add-user-modal')" class="w-full text-slate-400 text-xs mt-2">إلغاء</button>
             </div>
         </div>
@@ -363,7 +362,7 @@
                 <input type="hidden" id="edit-uid">
                 <input type="text" id="edit-name" class="w-full p-2 border rounded-lg text-sm" placeholder="الاسم">
                 <input type="email" id="edit-email" class="w-full p-2 border rounded-lg text-sm" placeholder="البريد">
-                <button onclick="saveUserEdit()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">حفظ التعديلات سحابياً</button>
+                <button onclick="saveUserEdit()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold">تحديث البيانات سحابياً</button>
                 <button onclick="closeModal('edit-user-modal')" class="w-full text-slate-400 text-xs mt-2">إلغاء</button>
             </div>
         </div>
@@ -386,15 +385,18 @@
             setTimeout(() => t.remove(), 3000);
         };
 
-        // دالة التعرف الجذري على المدير
+        // دالة التعرف الجذري على حساب المدير (admin) والبريد المرتبط
         const isManagerAccount = (name, email) => {
             const n = (name || "").toLowerCase().trim();
             const e = (email || "").toLowerCase().trim();
             const managerKeywords = ['admin', 'مدير', 'المدير', 'ادارة', 'إدارة'];
-            const isMatch = managerKeywords.some(kw => n.includes(kw) || e.includes(kw)) || e.includes('a123456');
+            // التحقق من admin أو البريد المرتبط بالكود a123456
+            const isMatch = managerKeywords.some(kw => n === kw || e === kw) || e.includes('a123456');
             
-            // تخزين الحالة محلياً إذا كان مديراً لضمان السرعة في المرات القادمة
-            if (isMatch) localStorage.setItem('is_manager_role', 'true');
+            if (isMatch) {
+                localStorage.setItem('is_manager_role', 'true');
+                localStorage.setItem('manager_verified_email', e);
+            }
             return isMatch;
         };
 
@@ -421,7 +423,6 @@
 
                 localStorage.setItem('pending_reg_data', JSON.stringify(userData));
                 
-                // حفظ سحابي جذري
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), userData);
                 
                 closeModal('registration-modal');
@@ -456,10 +457,8 @@
                         lastLogin: new Date().toLocaleString('ar-SA')
                     };
                     
-                    // كتابة سحابية فورية قبل الدخول
+                    // كتابة سحابية فورية وتثبيت حالة المدير
                     await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), userData, {merge:true});
-                    
-                    // حفظ محلي لسرعة التعرف
                     localStorage.setItem('verified_manager_uid', user.uid);
                     
                     startApp(userData);
@@ -507,7 +506,7 @@
             try {
                 const user = await window.ensureAuth();
                 
-                // التعرف المحلي الفوري إذا كان مديراً
+                // التعرف المحلي الفوري إذا كان مديراً مخزناً
                 const localManagerUid = localStorage.getItem('verified_manager_uid');
                 const isLocalManager = localStorage.getItem('is_manager_role') === 'true';
                 
@@ -536,7 +535,7 @@
                     }
                 }
 
-                // مراقبة سحابية مستمرة للحالة
+                // مزامنة حية من السحابة
                 window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
                     if (doc.exists()) {
                         const u = doc.data();
@@ -549,8 +548,6 @@
                             document.getElementById('waiting-screen').classList.remove('hidden');
                         }
                     }
-                }, (error) => {
-                    console.warn("Snapshot Error, falling back to local detection");
                 });
             } catch(e) {}
         };
@@ -611,21 +608,22 @@
             document.getElementById('add-user-modal').style.display = 'flex';
         };
 
+        // دالة إضافة حساب سحابياً بواسطة المدير
         const saveNewUser = async () => {
             const name = document.getElementById('new-user-name').value.trim();
             const email = document.getElementById('new-user-email').value.trim();
             const role = document.getElementById('new-user-role').value;
             if (!name || !email) { showToast("يرجى تعبئة الحقول"); return; }
             
-            const manualUid = "user-" + Date.now() + Math.random().toString(36).substr(2, 4);
+            const manualUid = "cloud-user-" + Date.now();
             try {
-                const user = await window.ensureAuth();
+                await window.ensureAuth();
                 await window.fs.setDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', manualUid), {
                     id: manualUid, name, email, role, isActive: true, dateJoined: new Date().toLocaleString('ar-SA')
                 });
-                showToast("تمت الإضافة سحابياً بنجاح");
+                showToast("تمت إضافة وتفعيل الحساب سحابياً");
                 closeModal('add-user-modal');
-            } catch (err) { showToast("فشل في الكتابة السحابية"); }
+            } catch (err) { showToast("فشل في المزامنة السحابية"); }
         };
 
         const showUserManagement = () => { document.getElementById('user-management-modal').style.display = 'flex'; renderUserTable(); };
@@ -636,14 +634,14 @@
             allUsers.forEach(user => {
                 const isMe = user.id === window.auth.currentUser?.uid;
                 tbody.innerHTML += `<tr>
-                    <td class="p-3 border-b text-xs font-bold">${user.name} ${isMe ? '(أنت)' : ''}</td>
-                    <td class="p-3 border-b text-center text-[10px]">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
+                    <td class="p-3 border-b text-xs font-bold text-slate-700">${user.name} ${isMe ? '(أنت)' : ''}</td>
+                    <td class="p-3 border-b text-center text-[10px] font-bold">${user.role === 'leadership' ? 'مدير' : (user.role === 'agency' ? 'وكيل' : 'معلم')}</td>
                     <td class="p-3 border-b text-center">${user.isActive ? '<span class="text-green-600 font-bold">نشط</span>' : '<span class="text-yellow-600 font-bold">معلق</span>'}</td>
                     <td class="p-3 border-b text-center flex items-center justify-center gap-2">
-                        <button onclick="openEditModal('${user.id}', '${user.name}', '${user.email}')" class="text-blue-600 font-bold text-[10px]">تعديل</button>
+                        <button onclick="openEditModal('${user.id}', '${user.name}', '${user.email}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold text-[10px] hover:bg-blue-100">تعديل</button>
                         ${!isMe ? `
-                            <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'text-orange-600' : 'text-green-600'} font-bold text-[10px]">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
-                            <button onclick="deleteUser('${user.id}')" class="text-red-600 font-bold text-[10px]">حذف</button>
+                            <button onclick="toggleUserActivation('${user.id}', ${user.isActive})" class="${user.isActive ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'} px-2 py-1 rounded font-bold text-[10px] hover:opacity-80">${user.isActive ? 'تعطيل' : 'تفعيل'}</button>
+                            <button onclick="deleteUser('${user.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold text-[10px] hover:bg-red-100">حذف</button>
                         ` : ''}
                     </td>
                 </tr>`;
@@ -651,7 +649,7 @@
         };
 
         const toggleUserActivation = async (uid, c) => await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid), { isActive: !c });
-        const deleteUser = async (uid) => { if (confirm("حذف الحساب نهائياً من النظام؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
+        const deleteUser = async (uid) => { if (confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) await window.fs.deleteDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', uid)); };
         const openEditModal = (uid, n, e) => { document.getElementById('edit-uid').value = uid; document.getElementById('edit-name').value = n; document.getElementById('edit-email').value = e; document.getElementById('edit-user-modal').style.display = 'flex'; };
         const saveUserEdit = async () => { 
             await window.fs.updateDoc(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', document.getElementById('edit-uid').value), { 
@@ -663,7 +661,7 @@
 
         const copyRegLinkForUsers = () => { 
             const regLink = window.location.origin + window.location.pathname + "?mode=register";
-            const t = document.createElement('input'); t.value = regLink; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast("تم نسخ رابط التسجيل"); 
+            const t = document.createElement('input'); t.value = regLink; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast("تم نسخ رابط التسجيل المباشر"); 
         };
 
         const logout = () => { 
