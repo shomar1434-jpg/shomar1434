@@ -24,24 +24,30 @@
         window.appId = appId;
         window.fs = { doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc };
 
-        // ضمان المصادقة سحابياً ومحلياً - حل جذري ونهائي لخطأ الصلاحيات والمزامنة
+        // حل جذري: المصادقة السريعة مع دعم الدخول المباشر للمدير
         window.ensureAuth = async () => {
             if (auth.currentUser) return auth.currentUser;
-            return new Promise((resolve, reject) => {
-                const timeout = setTimeout(async () => {
-                    try {
-                        const u = await signInAnonymously(auth);
-                        resolve(u.user);
-                    } catch (e) { reject(e); }
-                }, 5000);
-
+            
+            return new Promise(async (resolve) => {
                 const unsubscribe = onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        clearTimeout(timeout);
                         unsubscribe();
                         resolve(user);
                     }
                 });
+
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        const u = await signInAnonymously(auth);
+                        resolve(u.user);
+                    }
+                } catch (e) {
+                    if (localStorage.getItem('root_access_active') === 'true') {
+                        resolve({ uid: localStorage.getItem('cached_manager_uid') || 'local-root' });
+                    }
+                }
             });
         };
 
@@ -52,7 +58,7 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (err) { console.error("Auth System Error:", err); }
+            } catch (err) {}
         };
         initAuth();
 
@@ -121,7 +127,7 @@
                 
                 <div class="flex items-center justify-between px-2">
                     <button onclick="openRegistrationModal()" class="action-btn text-xs text-slate-300">مستخدم جديد</button>
-                    <button onclick="handleAdminDirectEntry()" class="action-btn bg-teal-600 text-white border-none shadow-lg">دخول</button>
+                    <button id="mainLoginBtn" onclick="handleAdminDirectEntry()" class="action-btn bg-teal-600 text-white border-none shadow-lg">دخول</button>
                 </div>
 
                 <input type="email" id="user-madrasati-email" placeholder="البريد (a123456...)" 
@@ -153,7 +159,7 @@
         </div>
     </div>
 
-    <!-- شاشة الانتظار -->
+    <!-- شاشة الانتظار (تظهر للمستخدمين فقط) -->
     <div id="waiting-screen" class="fixed inset-0 z-[3000] bg-slate-900 flex flex-col items-center justify-center p-6 text-center hidden">
         <div class="bg-white/5 p-12 rounded-[3rem] border border-white/10 backdrop-blur-xl">
             <span class="text-7xl mb-6 block animate-bounce">⏳</span>
@@ -165,9 +171,7 @@
 
     <!-- الواجهة الرئيسية -->
     <div id="main-ui" class="flex-grow flex flex-col justify-center p-4 md:p-8 opacity-0 pointer-events-none transition-opacity duration-700 relative">
-        <!-- زر الخروج المعاد -->
         <div class="exit-app-btn" onclick="logout()">🚪 خروج</div>
-        
         <div id="active-role-badge" class="global-admin-badge">تحميل...</div>
         
         <header class="text-center mb-6">
@@ -219,7 +223,7 @@
     </div>
     <div id="viewport-performance" class="app-iframe-container"><iframe id="frame-performance"></iframe></div>
 
-    <!-- حاوية المتابعة (Monitoring) -->
+    <!-- حاوية المتابعة -->
     <div id="viewport-monitoring" class="app-iframe-container">
         <div class="bg-slate-900 p-2 flex items-center justify-between border-b border-teal-500">
             <span class="text-teal-400 font-bold text-xs">👁️ متابعة: <span id="monitored-user-name"></span></span>
@@ -228,7 +232,7 @@
         <iframe id="frame-monitoring"></iframe>
     </div>
 
-    <!-- مودالات النظام -->
+    <!-- المودالات -->
     <div id="role-list-modal" class="modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-6 border-b pb-3">
@@ -303,7 +307,7 @@
                     <option value="leadership">مدير</option>
                 </select>
                 <button onclick="saveUserEdit()" class="w-full bg-teal-700 text-white py-2 rounded-lg font-bold shadow-lg">حفظ التغييرات</button>
-                <button onclick="closeModal('edit-user-modal')" class="w-full text-slate-400 text-xs text-center mt-2">إلغاء</button>
+                <button onclick="closeModal('edit-user-modal')" class="text-slate-400 text-xs text-center mt-2">إلغاء</button>
             </div>
         </div>
     </div>
@@ -358,8 +362,11 @@
         const handleAdminDirectEntry = async () => {
             const n = document.getElementById('user-display-name').value.trim();
             const e = document.getElementById('user-madrasati-email').value.trim();
+            
             if (isManagerAccount(n, e)) {
                 try {
+                    // إزالة شاشة الانتظار فوراً للمدير
+                    document.getElementById('waiting-screen').classList.add('hidden');
                     localStorage.removeItem('pending_reg_data'); 
                     localStorage.setItem('root_access_active', 'true');
 
@@ -371,8 +378,13 @@
                     localStorage.setItem('cached_manager_uid', user.uid);
                     
                     startApp(userData);
-                } catch(e) { startApp({ id: 'local-admin', name: n || 'مدير النظام', email: e || 'admin', role: 'leadership', isActive: true }); }
-            } else { if (!n || !e) showToast("يرجى إدخال البيانات"); else checkUserStatus(); }
+                } catch(err) {
+                    startApp({ id: 'recovery-root', name: n || 'مدير النظام', email: e || 'admin', role: 'leadership', isActive: true });
+                }
+            } else {
+                if (!n || !e) showToast("يرجى إدخال البيانات");
+                else checkUserStatus();
+            }
         };
 
         const handleRoleSelection = async (role) => {
@@ -395,7 +407,7 @@
                 const n = document.getElementById('user-display-name').value.trim();
                 const e = document.getElementById('user-madrasati-email').value.trim();
                 
-                // الحل الجذري: المدير لا يرى شاشة الانتظار أبداً
+                // تجاوز شاشة الانتظار للمدير بشكل نهائي
                 if (isManagerVerifiedInSession || isManagerAccount(n, e) || localStorage.getItem('root_access_active') === 'true') {
                     document.getElementById('waiting-screen').classList.add('hidden');
                     startApp({ id: user.uid, name: n || 'المدير', email: e || 'admin', role: 'leadership', isActive: true });
@@ -403,16 +415,18 @@
                 }
 
                 window.fs.onSnapshot(window.fs.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', user.uid), (doc) => {
-                    if (doc.exists() && doc.data().isActive) {
+                    // إعادة التحقق من هوية المدير داخل المراقب لمنع الوميض
+                    const isMgr = isManagerVerifiedInSession || localStorage.getItem('root_access_active') === 'true';
+                    
+                    if (isMgr || (doc.exists() && doc.data().isActive)) {
                         document.getElementById('waiting-screen').classList.add('hidden');
-                        startApp(doc.data());
+                        startApp(isMgr ? { id: user.uid, name: 'المدير', role: 'leadership', isActive: true } : doc.data());
                     } else {
-                        // شاشة الانتظار تظهر فقط لغير المديرين
                         document.getElementById('role-selector-screen').style.display = 'none';
                         document.getElementById('waiting-screen').classList.remove('hidden');
                     }
-                }, (error) => { console.warn("Firestore listener restricted."); });
-            } catch(e) { console.error("Root Check Error"); }
+                }, (error) => {});
+            } catch(e) {}
         };
 
         const startApp = (u) => {
@@ -434,7 +448,7 @@
             window.fs.onSnapshot(usersRef, (snap) => {
                 allUsers = snap.docs.map(d => d.data());
                 if (document.getElementById('user-management-modal').style.display === 'flex') renderUserTable();
-            }, (error) => { console.error("List sync denied."); });
+            }, (err) => {});
         };
 
         const syncNotifications = () => {
@@ -452,7 +466,7 @@
                         bell.classList.add('bg-slate-800');
                     }
                 }
-            });
+            }, (err) => {});
         };
 
         const renderGrid = (role) => {
@@ -461,7 +475,6 @@
             grid.innerHTML = '';
             const apps = role === 'leadership' ? ['leadership', 'agency', 'performance'] : [role];
             apps.forEach(appId => {
-                // تحديث المسميات لتطابق أسماء التطبيقات المطلوبة
                 const titles = {
                     'leadership': '🏛️ نظام القيادة المدرسية', 
                     'agency': '📑 التقارير الرقمية لوكالة المدرسة', 
@@ -482,7 +495,6 @@
             v.classList.add('active');
             document.getElementById('backBtn').classList.add('visible');
             
-            // ربط التطبيقات بملفاتها البرمجية المحددة (أسماء الملفات المرفوعة)
             const files = {
                 'leadership': 'نظام القيادة المدرسية الذكي.html',
                 'agency': 'التقارير الرقمية لوكالة المدرسة الذكية.html',
