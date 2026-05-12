@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>منصة المدرسة الرقمية الذكية</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--primary:#1e7b78;--navy:#0f172a;--gold:#cfae5d;}
+    *{box-sizing:border-box} body{margin:0;font-family:'Cairo',sans-serif;background:#0f172a;color:white;min-height:100vh;overflow:hidden;}
+    body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at 20% 20%,rgba(30,123,120,.45),transparent 35%),linear-gradient(135deg,#0f172a,#11243a 45%,#0f172a);}
+    .glass{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(18px);box-shadow:0 25px 60px rgba(0,0,0,.35)}
+    .role-btn{transition:.25s;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
+    .role-btn:hover{transform:translateY(-4px);background:rgba(255,255,255,.14);border-color:var(--primary)}
+    #appFrameWrap{display:none;position:fixed;inset:0;background:#fff;z-index:20;}
+    #appFrame{width:100%;height:100%;border:0;background:white;}
+    .topbar{position:fixed;top:0;right:0;left:0;z-index:30;display:none;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(15,23,42,.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.12)}
+    .topbar button{background:#1e7b78;color:white;border:0;border-radius:999px;padding:8px 18px;font-weight:800;cursor:pointer}
+    .topbar .exit{background:#ef4444}
+  </style>
+</head>
+<body>
+  <main id="home" class="min-h-screen flex items-center justify-center p-5">
+    <section class="glass w-full max-w-5xl rounded-[2rem] p-7 md:p-10 text-center">
+      <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 border border-white/10 text-sm font-bold text-teal-100 mb-5">
+        منصة المدرسة الرقمية الذكية
+      </div>
+      <h1 class="text-3xl md:text-5xl font-extrabold mb-3">بوابة الدخول الرئيسية</h1>
+      <p class="text-slate-200 max-w-2xl mx-auto mb-8 leading-8">نسخة مستقرة تربط واجهات المدير والوكيل والمعلم كصفحات مستقلة داخل بوابة واحدة، لتجنب تعارض الأكواد أو ظهور الرموز على الشاشة.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <button class="role-btn rounded-3xl p-7 text-right" onclick="openSection('manager')">
+          <div class="text-5xl mb-4">👨‍💼</div>
+          <h2 class="text-2xl font-extrabold mb-2">دخول المدير</h2>
+          <p class="text-slate-300 text-sm leading-7">يفتح واجهة المدير فقط مع الحفاظ على كودها الأصلي.</p>
+        </button>
+        <button class="role-btn rounded-3xl p-7 text-right" onclick="openSection('agent')">
+          <div class="text-5xl mb-4">👨‍🏫</div>
+          <h2 class="text-2xl font-extrabold mb-2">دخول الوكيل</h2>
+          <p class="text-slate-300 text-sm leading-7">يفتح واجهة الوكيل المرتبطة بالمنصة.</p>
+        </button>
+        <button class="role-btn rounded-3xl p-7 text-right" onclick="openSection('teacher')">
+          <div class="text-5xl mb-4">👩‍🏫</div>
+          <h2 class="text-2xl font-extrabold mb-2">دخول المعلم</h2>
+          <p class="text-slate-300 text-sm leading-7">يفتح واجهة المعلم دون ربط خاطئ أو نقص في الملفات.</p>
+        </button>
+      </div>
+      <div class="mt-8 rounded-2xl bg-black/20 border border-white/10 p-4 text-sm text-slate-200 leading-7 text-right">
+        <strong>ملاحظة تشغيل:</strong> يجب أن تبقى الملفات الأربعة في نفس المجلد: <span dir="ltr">index.html</span> و <span dir="ltr">manager.html</span> و <span dir="ltr">agent.html</span> و <span dir="ltr">teacher.html</span>.
+      </div>
+    </section>
+  </main>
+
+  <div id="topbar" class="topbar">
+    <button onclick="goHome()">العودة للبوابة</button>
+    <div id="sectionTitle" class="font-extrabold text-sm md:text-base">القسم</div>
+    <button class="exit" onclick="goHome()">خروج</button>
+  </div>
+  <section id="appFrameWrap"><iframe id="appFrame" title="واجهة القسم"></iframe></section>
+
+  <script>
+    const sections = {
+      manager: { title: 'واجهة المدير', file: 'manager.html' },
+      agent: { title: 'واجهة الوكيل', file: 'agent.html' },
+      teacher: { title: 'واجهة المعلم', file: 'teacher.html' }
+    };
+    function openSection(role){
+      const target = sections[role];
+      if(!target){ alert('القسم غير موجود'); return; }
+      try { localStorage.setItem('smartSchoolActiveRole', role); } catch(e) {}
+      document.getElementById('sectionTitle').textContent = target.title;
+      document.getElementById('appFrame').src = target.file;
+      document.getElementById('home').style.display = 'none';
+      document.getElementById('topbar').style.display = 'flex';
+      document.getElementById('appFrameWrap').style.display = 'block';
+    }
+    function goHome(){
+      document.getElementById('appFrame').src = 'about:blank';
+      document.getElementById('appFrameWrap').style.display = 'none';
+      document.getElementById('topbar').style.display = 'none';
+      document.getElementById('home').style.display = 'flex';
+      try { localStorage.removeItem('smartSchoolActiveRole'); } catch(e) {}
+    }
+  </script>
+</body>
+</html>
